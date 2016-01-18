@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="daytime">
+        <item name="day">@string/daytime_day</item>
+        <item name="night">@string/daytime_night</item>
+    </string-array>
+    <string-array name="dummyarray">
+        <item name="1">dummy</item>
+        <item name="2">dummy</item>
+        <item name="3">dummy</item>
+        <item name="4">dummy</item>
+        <item name="5">dummy</item>
+        <item name="6">dummy</item>
+        <item name="7">dummy</item>
+        <item name="8">dummy</item>
+        <item name="9">dummy</item>
+        <item name="10">dummy10</item>
+        <item name="11">dummy11</item>
+        <item name="12">dummy12</item>
+        <item name="13">dummy13</item>
+    </string-array>
+</resources>
