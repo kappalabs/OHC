@@ -20,6 +20,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -33,6 +34,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -52,7 +55,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class PrepareHuntActivity extends AppCompatActivity implements ConnectionCallbacks, OnConnectionFailedListener, TextWatcher {
+public class PrepareHuntActivity extends AppCompatActivity implements ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private GoogleMap map;
     private GoogleApiClient mGoogleApiClient;
@@ -95,8 +98,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 //        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
-        /* TODO: nechci focus na latitude! -> otevirani klavesnice */
+        /* Get rid of the keyboard at start */
         mStartHuntButton.setSelected(true);
+        mStartHuntButton.setFocusable(true);
+        mStartHuntButton.setFocusableInTouchMode(true);
         mStartHuntButton.requestFocus();
         mStartHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,7 +130,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                         Object obj = ois.readObject();
                         try {
                             Response resp = (Response) obj;
-                            Log.d(TAG, "Mam response: null? "+((resp==null)?"ano":"ne"));
+                            Log.d(TAG, "Mam response: null? " + ((resp == null) ? "ano" : "ne"));
                             if (resp.places != null) {
                                 places.addAll(resp.places);
                                 Log.d(TAG, "mam " + resp.places.size() + " mist");
@@ -141,7 +146,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                             }
                         } catch (ClassCastException ex) {
                             if (obj instanceof OHException) {
-                                Log.d(TAG, "Vypadla mi OHExceptiona: "+obj);
+                                Log.d(TAG, "Vypadla mi OHExceptiona: " + obj);
                             } else {
                                 Log.d(TAG, "Server posila neznamy format tridy");
                             }
@@ -160,41 +165,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                     ex.printStackTrace();
                 }
 
-////                Bitmap b = places.get(0).photos.get(0).image;
-////                DataInputStream data = new DataInputStream(in);
-//                int w = 0;
-//                int h = 0;
-////                try {
-////                    w = data.readInt();
-////                    h = data.readInt();
-////                } catch (IOException e) {
-////                    e.printStackTrace();
-////                }
-//
-//                w = places.get(0).photos.get(0).getWidth();
-//                byte[] imgBytes = new byte[w * h * 4]; // 4 byte ABGR
-////                try {
-////                    data.readFully(imgBytes);
-////                } catch (IOException e) {
-////                    e.printStackTrace();
-////                }
-//
-//                // Convert 4 byte interleaved ABGR to int packed ARGB
-//                int[] pixels = new int[w * h];
-//                for (int i = 0; i < pixels.length; i++) {
-//                    int byteIndex = i * 4;
-//                    pixels[i] =
-//                            ((imgBytes[byteIndex    ] & 0xFF) << 24)
-//                                    | ((imgBytes[byteIndex + 3] & 0xFF) << 16)
-//                                    | ((imgBytes[byteIndex + 2] & 0xFF) <<  8)
-//                                    |  (imgBytes[byteIndex + 1] & 0xFF);
-//                }
-//
-//                // Finally, create bitmap from packed int ARGB, using ARGB_8888
-//                Bitmap bitmap = Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888);
-
-                HuntActivity.green_places = places;
-                HuntActivity.red_places = places;
+                /* TODO: rozdeleni novych/prijatych mist na zelene a cervene */
+                HuntActivity.green_places = new ArrayList<>(places);
+                HuntActivity.red_places = new ArrayList<>(places);
                 Intent i = new Intent();
                 i.setClass(PrepareHuntActivity.this, HuntActivity.class);
 //                i.putExtra(HuntActivity.GREEN_LIST_KEY, places);
@@ -223,10 +196,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                     .build();
         }
 
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_fragment)).getMap();
-        if (map == null) {
-            return;
-        }
+        ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment)).getMapAsync(this);
+//        if (map == null) {
+//            return;
+//        }
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -237,7 +210,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        map.setMyLocationEnabled(true);
+//        map.setMyLocationEnabled(true);
     }
 
     @Override
@@ -321,7 +294,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
             mCircle = map.addCircle(co);
 
             /* Move camera to this last known position */
-            float zoom = (float)(10 - Math.log(radius / 10) / Math.log(2));
+            float zoom = (float) (10 - Math.log(radius / 10) / Math.log(2));
             zoom = Math.min(12, Math.max(zoom, 2));
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .zoom(zoom)
@@ -414,6 +387,32 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 
             setNewArea(latitude, longitude, radius);
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        map = googleMap;
+        /* NOTE: muze byt null kdyz je ready? */
+        if (map == null) {
+            return;
+        }
+        map.setMyLocationEnabled(true);
+//        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+//        map.setMyLocationEnabled(true);
+//        map.setTrafficEnabled(true);
+//        map.setIndoorEnabled(true);
+//        map.setBuildingsEnabled(true);
+//        map.getUiSettings().setZoomControlsEnabled(true);
     }
 
     /* A fragment to display an error dialog */

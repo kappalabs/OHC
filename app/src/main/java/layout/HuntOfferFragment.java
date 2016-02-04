@@ -87,6 +87,7 @@ public class HuntOfferFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "green position: " + position);
+                /* Obarveni polozky */
                 for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
                     hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
@@ -95,6 +96,7 @@ public class HuntOfferFragment extends Fragment {
                 }
                 view.setBackgroundColor(Color.GREEN);
 
+                /* Ohlaseni udalosti */
                 if (mListener != null) {
                     mListener.onItemSelected(mParamGreen.get(position));
                 }
@@ -104,6 +106,7 @@ public class HuntOfferFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "green long pos: " + position);
+                /* Obarveni polozky */
                 for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
                     hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
@@ -111,6 +114,7 @@ public class HuntOfferFragment extends Fragment {
                     hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
 
+                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
                 if (mListener != null) {
                     mListener.onItemUnselected();
                     Place removed = mParamGreen.get(position);
@@ -128,6 +132,7 @@ public class HuntOfferFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "red position: " + position);
+                /* Obarveni polozky */
                 for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
                     hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
@@ -136,6 +141,7 @@ public class HuntOfferFragment extends Fragment {
                 }
                 view.setBackgroundColor(Color.RED);
 
+                /* Ohlaseni udalosti */
                 if (mListener != null) {
                     mListener.onItemSelected(mParamRed.get(position));
                 }
@@ -145,6 +151,7 @@ public class HuntOfferFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "red long pos: " + position);
+                /* Obarveni polozky */
                 for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
                     hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
@@ -152,11 +159,12 @@ public class HuntOfferFragment extends Fragment {
                     hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
                 }
 
+                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
                 if (mListener != null) {
                     mListener.onItemUnselected();
                     Place removed = mParamRed.get(position);
                     mRedAdapter.remove(removed);
-                    mListener.onGreenRejected(removed);
+                    mListener.onRedRejected(removed);
                     mGreenAdapter.add(removed);
                     return true;
                 }

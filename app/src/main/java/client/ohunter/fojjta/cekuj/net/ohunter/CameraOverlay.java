@@ -5,25 +5,31 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
 public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback {
 
-    public static Bitmap mBitmap;
+    public static final String TAG = "CameraOverlay";
+
+    public Bitmap mBitmap;
     SurfaceHolder mHolder;
     static Camera mCamera;
 
-    public static final String TAG = "CameraOverlay";
+
 
     public CameraOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
-
 
         mHolder = getHolder();
         mHolder.addCallback(this);
@@ -156,23 +162,71 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         mCamera = null;
     }
 
-    /***
-     *
+    /**
      *  Take a picture and and convert it from bytes[] to Bitmap.
-     *
      */
-    public static void takeAPicture() {
-        Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-            }
-        };
-        mCamera.takePicture(null, null, mPictureCallback);
+    public void takeAPicture() {
+//        mCamera.takePicture(null, null, mPictureCallback);
+        TakePictureTask takePictureTask = new TakePictureTask();
+        takePictureTask.execute();
 
-        mCamera.stopPreview();
-        mCamera.startPreview();
+//        mCamera.stopPreview();
+//        mCamera.startPreview();
+    }
+
+    Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+
+//            Log.d(TAG, "v onpicturetaken pred filem");
+            String root = Environment.getExternalStorageDirectory().toString();
+            File myDir = new File(root + "/ohunt_camera");
+            if(!myDir.exists()) {
+                myDir.mkdir();
+            }
+            File pictureFile = new File(myDir, System.currentTimeMillis()+".jpg");
+            if (pictureFile.exists()) {
+                pictureFile.delete();
+            }
+            Log.d(TAG, "ukladam do "+pictureFile.getAbsolutePath()+", canonical: "+pictureFile.getPath());
+
+            try {
+                FileOutputStream fos = new FileOutputStream(pictureFile);
+                fos.write(data);
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "File not found: " + e.getMessage());
+            } catch (IOException e) {
+                Log.e(TAG, "Error accessing file: " + e.getMessage());
+            }
+        }
+    };
+
+    private class TakePictureTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPostExecute(Void result) {
+            // This returns the preview back to the live camera feed
+            mCamera.stopPreview();
+            mCamera.startPreview();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            mCamera.takePicture(null, null, mPictureCallback);
+
+//            try {
+//                Thread.sleep(1500); // few seconds preview
+//            } catch (InterruptedException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+
+            return null;
+        }
+
     }
 
 //    private Bitmap bitmap_;

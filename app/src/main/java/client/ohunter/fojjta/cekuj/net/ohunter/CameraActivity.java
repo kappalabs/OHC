@@ -97,7 +97,7 @@ public class CameraActivity extends AppCompatActivity {
 //    };
 
     private ImageView referenceImageView;
-    private FrameLayout camPreviewFrameLayout;
+//    private FrameLayout camPreviewFrameLayout;
     private CameraOverlay cameraOverlay;
     private SeekBar opacitySeekBar;
     private RelativeLayout camRelativeLayout;
@@ -110,7 +110,7 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        camPreviewFrameLayout = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
+//        camPreviewFrameLayout = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
         cameraOverlay = (CameraOverlay) findViewById(R.id.cameraOverlay);
         opacitySeekBar = (SeekBar) findViewById(R.id.seekBar_opacity);
         camRelativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout_cam);
@@ -119,8 +119,9 @@ public class CameraActivity extends AppCompatActivity {
         shootButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CameraOverlay.takeAPicture();
-                Bitmap b = CameraOverlay.mBitmap;
+//                CameraOverlay.takeAPicture();
+                cameraOverlay.takeAPicture();
+                Bitmap b = cameraOverlay.mBitmap;
                 Log.d("Camera", "mam shoot bitmap: " + ((b != null) ? b.toString() : " je null!"));
                 referenceImageView.setImageBitmap(b);
 //                Bitmap bitmap = cameraOverlay.takeAPicture();
