@@ -1,17 +1,28 @@
 package layout;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import client.ohunter.fojjta.cekuj.net.ohunter.R;
@@ -25,11 +36,20 @@ import client.ohunter.fojjta.cekuj.net.ohunter.R;
  * create an instance of this fragment.
  */
 public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
+
     private static final String ARG_PARAM_PLACE = "place_param";
 
+    /* TODO: presunout jinam, radius v metrech */
+    private static final double RADIUS = 150.0;
+
+    private Location mLastLocation;
+    private Circle mCircle;
     private Place mPlace;
     private SupportMapFragment fragment;
     private GoogleMap map;
+
+    private TextView latitudeTextView, longitudeTextView;
+    private TextView distanceTextView;
 
     private OnFragmentInteractionListener mListener;
 
@@ -62,10 +82,14 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_hunt_action, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_hunt_action, container, false);
+
+        latitudeTextView = (TextView) view.findViewById(R.id.textView_target_latitude);
+        longitudeTextView = (TextView) view.findViewById(R.id.textView_target_longitude);
+        distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
+
+        return view;
     }
 
     @Override
@@ -93,8 +117,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
         }
     }
 
@@ -108,6 +131,66 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         /* TODO: zazoomovani na pozici hrace */
+        if (mPlace != null) {
+            if (mCircle != null) {
+                mCircle.remove();
+            }
+
+            /* Add new area around the Place */
+            LatLng ll = new LatLng(mPlace.latitude, mPlace.longitude);
+            CircleOptions co = new CircleOptions()
+                    .center(ll)
+//                    .radius(mPlace.radius * 1000)
+                    .radius(RADIUS)
+                    .strokeColor(Color.argb(230, 230, 0, 0))
+                    .fillColor(Color.argb(80, 0, 0, 255));
+            mCircle = map.addCircle(co);
+
+            map.addMarker(new MarkerOptions()
+                    .position(new LatLng(mPlace.latitude, mPlace.longitude))
+                    .title("Target"));
+
+            /* Move camera to the Place's position */
+            float zoom = (float) (10f - Math.log((double)RADIUS / 10000f) / Math.log(2f));
+            zoom = Math.min(20, Math.max(zoom, 1));
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .zoom(zoom)
+                    .target(ll)
+                    .build();
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
+    }
+
+    private String getMyLatitude() {
+        return mLastLocation == null ? "N" : mLastLocation.getLatitude()+"N";
+    }
+
+    private String getMyLongitude() {
+        return mLastLocation == null ? "E" : mLastLocation.getLongitude()+"E";
+    }
+
+    private String getTargetDistance() {
+        if (mLastLocation == null || mPlace == null) {
+            return "??";
+        }
+        Location placeLoc = new Location("unknown");
+        placeLoc.setLatitude(mPlace.latitude);
+        placeLoc.setLongitude(mPlace.longitude);
+        return mLastLocation.distanceTo(placeLoc)+"m";
+    }
+
+    private void updateLocation() {
+        if (latitudeTextView == null || longitudeTextView == null) {
+            return;
+        }
+        latitudeTextView.setText(getMyLatitude());
+        longitudeTextView.setText(getMyLongitude());
+        distanceTextView.setText(getTargetDistance());
+    }
+
+    public void setLocation(Location location) {
+        mLastLocation = location;
+        updateLocation();
     }
 
     /**
@@ -121,7 +204,6 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+
     }
 }

@@ -83,15 +83,12 @@ public class HuntPlaceFragment extends Fragment {
         mPhotoSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (mPlace == null || mPlace.photos == null) {
+                if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
                     return;
                 }
                 int wid = mPhotoSeekBar.getMax();
-                float step = 1.0f;
-                if (mPlace.photos.size() > 1) {
-                    step = wid / (mPlace.photos.size() - 1);
-                }
-                int indx = (int)Math.ceil(progress / step);
+                float step = wid / mPlace.photos.size();
+                int indx = (int)Math.floor(progress / step);
                 indx = Math.min(Math.max(indx, 0), mPlace.photos.size()-1);
                 Photo photo = mPlace.photos.get(indx);
 
@@ -101,47 +98,37 @@ public class HuntPlaceFragment extends Fragment {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
         });
-
-//        if (mPlace != null && mPlace.photos != null) {
-//            for (Photo photo : mPlace.photos) {
-////                mImageView.setImageBitmap(Utils.toBitmap(photo.image));
-//                ImageView iv = new ImageView(view.getContext());
-//                iv.setImageBitmap(Utils.toBitmap(photo.image));
-//                iv.setScaleType(ImageView.ScaleType.FIT_XY);
-//
-//                LinearLayout ll = new LinearLayout(view.getContext());
-//                ll.setPadding(1, 1, 1, 1);
-//
-//                GradientDrawable drawable = new GradientDrawable();
-//                drawable.setShape(GradientDrawable.RECTANGLE);
-//                drawable.setStroke(3, Color.BLACK);
-//                drawable.setCornerRadius(8);
-//                drawable.setColor(Color.BLUE);
-//
-//                ll.setBackgroundDrawable(drawable);
-//                ll.addView(iv);
-//
-////                mPhotosView.addView(ll);
-//            }
-//        }
+        mPhotoImageView.setImageDrawable(null);
+        updatePlace();
 
         return view;
     }
 
-//    // TODO: Rename method, update argument and hook method into UI event
-//    public void onButtonPressed(Uri uri) {
-//        if (mListener != null) {
-//            mListener.onFragmentInteraction(uri);
-//        }
-//    }
+    private void updatePlace() {
+        if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
+            return;
+        }
+        /* If no image is visible, add the first one and reset the progress bar position to 0 */
+        if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
+            mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
+            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.photos.get(0).image));
+            mPhotoSeekBar.setProgress(0);
+        }
+    }
+
+    public void changePlace(Place newPlace) {
+        mPlace = newPlace;
+        if (mPhotoImageView != null) {
+            mPhotoImageView.setImageDrawable(null);
+            updatePlace();
+        }
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -149,8 +136,7 @@ public class HuntPlaceFragment extends Fragment {
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
         }
     }
 

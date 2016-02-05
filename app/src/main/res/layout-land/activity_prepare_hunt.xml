@@ -20,8 +20,9 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/scrollView">
+        android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_toLeftOf="@+id/scrollView">
 
         <fragment
             android:id="@+id/map_fragment"
@@ -32,11 +33,12 @@
     </FrameLayout>
 
     <ScrollView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
         android:id="@+id/scrollView"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="7dp">
+        android:layout_alignParentBottom="false"
+        android:layout_margin="7dp"
+        android:layout_alignParentRight="true">
 
         <TableLayout
             android:layout_width="fill_parent"
@@ -76,16 +78,15 @@
             </TableRow>
 
             <TableRow
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="2dp">
 
                 <LinearLayout
                     android:orientation="horizontal"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="left|center_vertical|center"
-                    android:layout_weight="1">
+                    android:gravity="left|center_vertical|center">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -98,10 +99,9 @@
                     <EditText
                         android:inputType="numberDecimal"
                         android:id="@+id/editText_north"
-                        android:layout_width="match_parent"
+                        android:layout_width="50dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scrollHorizontally="true"
+                        android:layout_columnWeight="1"
                         android:layout_marginLeft="20dp" />
 
                     <TextView
@@ -110,6 +110,7 @@
                         android:id="@+id/textView9"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_columnWeight="0"
                         android:gravity="center_vertical|center_horizontal"
                         android:layout_marginLeft="5dp" />
 
@@ -117,10 +118,9 @@
                         android:inputType="numberDecimal"
                         android:id="@+id/editText_east"
                         android:layout_height="wrap_content"
-                        android:layout_width="match_parent"
-                        android:layout_marginLeft="10dp"
-                        android:layout_weight="1"
-                        android:scrollHorizontally="true" />
+                        android:layout_width="50dp"
+                        android:layout_columnWeight="1"
+                        android:layout_marginLeft="10dp" />
 
                     <TextView
                         android:textAppearance="?android:attr/textAppearanceMedium"
@@ -128,6 +128,7 @@
                         android:id="@+id/textView10"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_columnWeight="0"
                         android:gravity="center_vertical|center_horizontal"
                         android:layout_marginLeft="5dp" />
 
@@ -221,7 +222,7 @@
                     android:layout_weight="1">
 
                     <Button
-                        android:layout_width="fill_parent"
+                        android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:text="@string/start_hunt_button_label"
                         android:id="@+id/button_start_new_hunt"

@@ -1,8 +1,11 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -17,6 +20,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
@@ -26,10 +36,11 @@ import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener {
+public class HuntActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
 //    public static final String GREEN_LIST_KEY = "green_list_key";
 //    public static final String RED_LIST_KEY = "red_list_key";
+    public static final String TAG = "HuntActivity";
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -46,10 +57,16 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
      */
     private ViewPager mViewPager;
 
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+
     FloatingActionButton fab_info, fab_camera;
     private boolean item_selected = false;
     private Place place_selected;
     public static ArrayList<Place> green_places, red_places;
+    private static HuntOfferFragment mHuntOfferFragment;
+    private static HuntPlaceFragment mHuntPlaceFragment;
+    private static HuntActionFragment mHuntActionFragment;
 
 
     @Override
@@ -57,8 +74,8 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hunt);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -107,34 +124,101 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
 //            green_places = (ArrayList<Place>) extras.getSerializable(GREEN_LIST_KEY);
 //            red_places = (ArrayList<Place>) extras.getSerializable(RED_LIST_KEY);
 //        }
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_hunt, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        // Create an instance of GoogleAPIClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
 
-        return super.onOptionsItemSelected(item);
+        Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
+        mHuntOfferFragment = HuntOfferFragment.newInstance(green_places, red_places);
+        mHuntPlaceFragment = HuntPlaceFragment.newInstance(demoPlace);
+        mHuntActionFragment = HuntActionFragment.newInstance(demoPlace);
     }
+
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            mHuntActionFragment.setLocation(mLastLocation);
+        }
+        createLocationRequest();
+    }
+
+    protected void createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(8000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+//        Log.d(TAG, result.await().getStatus().toString());
+        //TODO
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+    }
+
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_hunt, menu);
+//        return true;
+//    }
+
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
     @Override
     public void onItemSelected(Place place) {
         item_selected = true;
         place_selected = place;
+        mHuntPlaceFragment.changePlace(place);
         fab_info.show();
     }
 
@@ -159,11 +243,6 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
 
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -176,18 +255,6 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
 
         public PlaceholderFragment() {
         }
-
-//        /**
-//         * Returns a new instance of this fragment for the given section
-//         * number.
-//         */
-//        public static PlaceholderFragment newInstance(int sectionNumber) {
-//            PlaceholderFragment fragment = new PlaceholderFragment();
-//            Bundle args = new Bundle();
-//            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-//            fragment.setArguments(args);
-//            return fragment;
-//        }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -213,19 +280,15 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
         public Fragment getItem(int position) {
             Log.d("TAG", "position = "+position+", selection = "+item_selected);
             if (position == 0) {
-                return HuntOfferFragment.newInstance(green_places, red_places);
-//            } if (position == 1 && item_selected) {
-//                return HuntPlaceFragment.newInstance(place_selected);
+                return mHuntOfferFragment;
+//                return HuntOfferFragment.newInstance(green_places, red_places);
             } if (position == 1) {
-                return HuntPlaceFragment.newInstance(green_places.get(0));
-//                return HuntPlaceFragment.newInstance(null);
+                return mHuntPlaceFragment;
+//                return HuntPlaceFragment.newInstance(green_places.get(0));
             } else {
-                return HuntActionFragment.newInstance(green_places.get(0));
-//                return HuntActionFragment.newInstance(null);
+                return mHuntActionFragment;
+//                return HuntActionFragment.newInstance(green_places.get(0));
             }
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-//            return PlaceholderFragment.newInstance(position + 1);
         }
 
         @Override
@@ -233,18 +296,5 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
             // Show 3 total pages.
             return 3;
         }
-
-//        @Override
-//        public CharSequence getPageTitle(int position) {
-//            switch (position) {
-//                case 0:
-//                    return "SECTION 1";
-//                case 1:
-//                    return "SECTION 2";
-//                case 2:
-//                    return "SECTION 3";
-//            }
-//            return null;
-//        }
     }
 }

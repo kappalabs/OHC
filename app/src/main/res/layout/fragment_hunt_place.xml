@@ -7,20 +7,22 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/scrollView4" >
+        android:layout_height="wrap_content"
+        android:id="@+id/scrollView4"
+        android:layout_margin="10dp">
 
         <LinearLayout
             android:orientation="vertical"
+            android:id="@+id/linearLayout_place_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp">
+            android:layout_margin="10dp" >
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Informace:"
+                android:text="@string/place_information"
                 android:id="@+id/textView11" />
 
             <TextView
@@ -28,38 +30,34 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed elit dui, pellentesque a, faucibus vel, interdum nec, diam. Maecenas libero. Aliquam ornare wisi eu metus. Integer tempor. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Morbi leo mi, nonummy eget tristique non, rhoncus non leo. Et harum quidem rerum facilis est et expedita distinctio."
-                android:id="@+id/textView7" />
+                android:id="@+id/textView7"
+                android:layout_margin="5dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Vybraná fotografie:"
+                android:text="@string/image_gallery"
                 android:id="@+id/textView12" />
 
             <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/seekBar_photo" />
+                android:id="@+id/seekBar_photo"
+                android:layout_margin="5dp" />
 
-            <ImageView
+            <LinearLayout
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/imageView_photo" />
+                android:gravity="center|center_horizontal">
 
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_margin="10dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:orientation="horizontal"
+                <ImageView
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:id="@+id/linearLayoutGallery"/>
-            </HorizontalScrollView>
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView_photo" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

@@ -120,7 +120,11 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                         Log.d(TAG, "Data na server");
 //                        Request rr = new RegisterRequest("nickClient", "passwdClient");
                         Player p = new Player(1, "nick", 4242);
-                        Request sr = new SearchRequest(p, 50.0647411, 14.4196972, 200, 1280, 720);
+                        /* GPS Vysehradu */
+//                        Request sr = new SearchRequest(p, 50.0647411, 14.4196972, 200, 1280, 720);4
+                        // TODO: volit max rozmery pozadovanych fotografii?
+                        Request sr = new SearchRequest(p, getLatitude(), getLongitude(),
+                                (int)(getRadius()*1000), 1280, 720);
                         oos.writeObject(sr);
                         oos.flush();
                         Log.d(TAG, "Data OK odeslana");
@@ -213,6 +217,39 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 //        map.setMyLocationEnabled(true);
     }
 
+    private double getLongitude() {
+        double lon;
+        try {
+            lon = Double.parseDouble(mLongitudeEditText.getText().toString());
+        } catch (NumberFormatException nex) {
+            Log.e(TAG, "Longitude edit text contains non-double value!");
+            lon = 0;
+        }
+        return lon;
+    }
+
+    private double getLatitude() {
+        double lat;
+        try {
+            lat = Double.parseDouble(mLatitudeEditText.getText().toString());
+        } catch (NumberFormatException nex) {
+            Log.e(TAG, "Latitude edit text contains non-double value!");
+            lat = 0;
+        }
+        return lat;
+    }
+
+    private double getRadius() {
+        double radius;
+        try {
+            radius = Double.parseDouble(mRadiusEditText.getText().toString());
+        } catch (NumberFormatException nex) {
+            Log.e(TAG, "Radius edit text contains non-double value!");
+            radius = 0;
+        }
+        return radius;
+    }
+
     @Override
     protected void onStart() {
         if (!mResolvingError) {
@@ -294,7 +331,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
             mCircle = map.addCircle(co);
 
             /* Move camera to this last known position */
-            float zoom = (float) (10 - Math.log(radius / 10) / Math.log(2));
+            float zoom = (float) (10f - Math.log(radius / 10f) / Math.log(2f));
             zoom = Math.min(12, Math.max(zoom, 2));
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .zoom(zoom)

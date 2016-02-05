@@ -1,33 +1,40 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="layout.HuntActionFragment">
 
-    <RelativeLayout
-        android:id="@+id/map_layout"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="0.2">
-    </RelativeLayout>
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/linearLayout_info">
+        <FrameLayout
+            android:id="@+id/map_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="0.8">
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/linearLayout_info"
+        android:layout_margin="5dp">
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_margin="2dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Pozice cíle:"
+                android:text="@string/target_position"
                 android:id="@+id/textView15"
                 android:layout_gravity="center" />
 
@@ -35,34 +42,79 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="60N 45E"
-                android:id="@+id/textView16"
+                android:text="@string/empty_number"
+                android:id="@+id/textView_target_latitude"
+                android:layout_gravity="center"
+                android:layout_marginLeft="25dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/empty_number"
+                android:id="@+id/textView_target_longitude"
                 android:layout_marginLeft="25dp"
                 android:layout_gravity="center" />
+
         </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:layout_margin="2dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Vzdálenost od cíle:"
+                android:text="@string/my_position"
+                android:id="@+id/textView3"
+                android:layout_gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/empty_number"
+                android:id="@+id/textView_my_latitude"
+                android:layout_gravity="center"
+                android:layout_marginLeft="25dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/empty_number"
+                android:id="@+id/textView_my_longitude"
+                android:layout_marginLeft="25dp"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/distance_to_target"
                 android:id="@+id/textView13"
                 android:layout_gravity="center" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="150m"
-                android:id="@+id/textView14"
+                android:text="@string/empty_number"
+                android:id="@+id/textView_distance"
                 android:layout_marginLeft="25dp"
                 android:layout_gravity="center" />
         </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>
