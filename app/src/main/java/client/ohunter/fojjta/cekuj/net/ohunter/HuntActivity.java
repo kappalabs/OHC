@@ -2,20 +2,19 @@ package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -64,9 +63,9 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
     private boolean item_selected = false;
     private Place place_selected;
     public static ArrayList<Place> green_places, red_places;
-    private static HuntOfferFragment mHuntOfferFragment;
-    private static HuntPlaceFragment mHuntPlaceFragment;
-    private static HuntActionFragment mHuntActionFragment;
+    private HuntOfferFragment mHuntOfferFragment;
+    private HuntPlaceFragment mHuntPlaceFragment;
+    private HuntActionFragment mHuntActionFragment;
 
 
     @Override
@@ -91,19 +90,27 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
             @Override
             public void onPageSelected(int position) {
                 switch (position) {
-                    case 0:
+                    case 0: // HuntOfferFragment
                         if (item_selected) {
                             fab_info.show();
                         }
                         fab_camera.hide();
                         break;
-                    case 1:
+                    case 1: // HuntPlaceFragment
                         fab_info.hide();
                         fab_camera.hide();
+                        if (mHuntPlaceFragment != null)
+                            mHuntPlaceFragment.onPageSelected();
+                        break;
+                    case 2: // HuntActionFragment
+                        fab_info.hide();
+                        fab_camera.show();
+                        if (mHuntActionFragment != null)
+                            mHuntActionFragment.onPageSelected();
                         break;
                     default:
                         fab_info.hide();
-                        fab_camera.show();
+                        fab_camera.hide();
                         break;
                 }
             }
@@ -134,10 +141,10 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                     .build();
         }
 
-        Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
-        mHuntOfferFragment = HuntOfferFragment.newInstance(green_places, red_places);
-        mHuntPlaceFragment = HuntPlaceFragment.newInstance(demoPlace);
-        mHuntActionFragment = HuntActionFragment.newInstance(demoPlace);
+//        Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
+//        mHuntOfferFragment = HuntOfferFragment.newInstance(green_places, red_places);
+//        mHuntPlaceFragment = HuntPlaceFragment.newInstance(demoPlace);
+//        mHuntActionFragment = HuntActionFragment.newInstance(demoPlace);
     }
 
     protected void onStart() {
@@ -165,7 +172,7 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
-            mHuntActionFragment.setLocation(mLastLocation);
+            mHuntActionFragment.changeLocation(mLastLocation);
         }
         createLocationRequest();
     }
@@ -218,7 +225,8 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onItemSelected(Place place) {
         item_selected = true;
         place_selected = place;
-        mHuntPlaceFragment.changePlace(place);
+        HuntPlaceFragment.changePlace(place);
+        HuntActionFragment.changePlace(place);
         fab_info.show();
     }
 
@@ -272,22 +280,50 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
+//        private SparseArray<Fragment> mFragments;
+
+
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
         @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment) super.instantiateItem(container, position);
+            switch (position) {
+                case 0:
+                    mHuntOfferFragment = (HuntOfferFragment) fragment;
+                    break;
+                case 1:
+                    mHuntPlaceFragment = (HuntPlaceFragment) fragment;
+                    break;
+                default:
+                    mHuntActionFragment = (HuntActionFragment) fragment;
+                    break;
+            }
+//            mFragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+//            mFragments.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        @Override
         public Fragment getItem(int position) {
-            Log.d("TAG", "position = "+position+", selection = "+item_selected);
+            Log.d(TAG, "position = " + position + ", selection = " + item_selected);
+            Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
             if (position == 0) {
-                return mHuntOfferFragment;
-//                return HuntOfferFragment.newInstance(green_places, red_places);
+//                return mHuntOfferFragment;
+                return HuntOfferFragment.newInstance(green_places, red_places);
             } if (position == 1) {
-                return mHuntPlaceFragment;
-//                return HuntPlaceFragment.newInstance(green_places.get(0));
+//                return mHuntPlaceFragment;
+                return HuntPlaceFragment.newInstance(demoPlace);
             } else {
-                return mHuntActionFragment;
-//                return HuntActionFragment.newInstance(green_places.get(0));
+//                return mHuntActionFragment;
+                return HuntActionFragment.newInstance(demoPlace);
             }
         }
 
@@ -296,5 +332,9 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
             // Show 3 total pages.
             return 3;
         }
+
+//        public Fragment getRegisteredFragment(int position) {
+//            return mFragments.get(position);
+//        }
     }
 }

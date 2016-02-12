@@ -19,6 +19,7 @@ import android.widget.SeekBar;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
+import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
 import client.ohunter.fojjta.cekuj.net.ohunter.R;
 import client.ohunter.fojjta.cekuj.net.ohunter.Utils;
 
@@ -30,11 +31,12 @@ import client.ohunter.fojjta.cekuj.net.ohunter.Utils;
  * Use the {@link HuntPlaceFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HuntPlaceFragment extends Fragment {
+public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
     private static final String ARG_PLACE = "place";
 
-    private Place mPlace;
+    private static Place mPlace;
+    private static boolean placeInvalidated = true;
 
     private OnFragmentInteractionListener mListener;
 
@@ -88,11 +90,11 @@ public class HuntPlaceFragment extends Fragment {
                 }
                 int wid = mPhotoSeekBar.getMax();
                 float step = wid / mPlace.photos.size();
-                int indx = (int)Math.floor(progress / step);
-                indx = Math.min(Math.max(indx, 0), mPlace.photos.size()-1);
-                Photo photo = mPlace.photos.get(indx);
+                int index = (int)Math.floor(progress / step);
+                index = Math.min(Math.max(index, 0), mPlace.photos.size()-1);
+                Photo photo = mPlace.photos.get(index);
 
-                mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
+//                mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
                 mPhotoImageView.setImageBitmap(Utils.toBitmap(photo.image));
             }
 
@@ -110,6 +112,15 @@ public class HuntPlaceFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onPageSelected() {
+        if (placeInvalidated && mPhotoImageView != null) {
+            mPhotoImageView.setImageDrawable(null);
+            updatePlace();
+            placeInvalidated = false;
+        }
+    }
+
     private void updatePlace() {
         if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
             return;
@@ -122,12 +133,9 @@ public class HuntPlaceFragment extends Fragment {
         }
     }
 
-    public void changePlace(Place newPlace) {
+    public static void changePlace(Place newPlace) {
         mPlace = newPlace;
-        if (mPhotoImageView != null) {
-            mPhotoImageView.setImageDrawable(null);
-            updatePlace();
-        }
+        placeInvalidated = true;
     }
 
     @Override

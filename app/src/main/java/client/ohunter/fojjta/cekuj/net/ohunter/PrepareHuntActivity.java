@@ -65,7 +65,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
-    private static final double DEFAULT_RADIUS = 20;
+    private static final double DEFAULT_RADIUS = 8;
 
     // Request code to use when launching the resolution activity
     private static final int REQUEST_RESOLVE_ERROR = 1001;
@@ -111,9 +111,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 
                 ArrayList<Place> places = new ArrayList<>();
                 try {
-//                    Socket server = new Socket("192.168.1.196", 4242);
+                    Socket server = new Socket("192.168.1.196", 4242);
 //                    Socket server = new Socket("192.168.42.56", 4242);
-                    Socket server = new Socket("192.168.43.144", 4242);
+//                    Socket server = new Socket("192.168.43.144", 4242);
                     try {
                         Log.d(TAG, "Pred oos");
                         ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
@@ -123,8 +123,11 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                         /* GPS Vysehradu */
 //                        Request sr = new SearchRequest(p, 50.0647411, 14.4196972, 200, 1280, 720);4
                         // TODO: volit max rozmery pozadovanych fotografii?
+                        // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
+                        //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
                         Request sr = new SearchRequest(p, getLatitude(), getLongitude(),
-                                (int)(getRadius()*1000), 1280, 720);
+//                                (int)(getRadius()*1000), 1280, 720);
+                                (int)(getRadius()*1000), 320, 200);
                         oos.writeObject(sr);
                         oos.flush();
                         Log.d(TAG, "Data OK odeslana");

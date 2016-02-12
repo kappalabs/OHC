@@ -3,17 +3,15 @@ package layout;
 import android.content.Context;
 import android.graphics.Color;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -25,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
+import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
 import client.ohunter.fojjta.cekuj.net.ohunter.R;
 
 /**
@@ -35,20 +34,25 @@ import client.ohunter.fojjta.cekuj.net.ohunter.R;
  * Use the {@link HuntActionFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
+public class HuntActionFragment extends Fragment implements OnMapReadyCallback, PageChangeAdapter {
 
+    private static final String TAG = "HuntActionFragment";
     private static final String ARG_PARAM_PLACE = "place_param";
 
     /* TODO: presunout jinam, radius v metrech */
-    private static final double RADIUS = 150.0;
+    private static final int RADIUS = 150;
 
     private Location mLastLocation;
     private Circle mCircle;
-    private Place mPlace;
     private SupportMapFragment fragment;
     private GoogleMap map;
 
-    private TextView latitudeTextView, longitudeTextView;
+    private static Place mPlace;
+    private static boolean zoomInvalidated = true;
+    private static boolean infoInvalidated = true;
+
+    private TextView targetLatitudeTextView, playerLatitudeTextView,
+            targetLongitudeTextView, playerLongitudeTextView;
     private TextView distanceTextView;
 
     private OnFragmentInteractionListener mListener;
@@ -85,8 +89,10 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_hunt_action, container, false);
 
-        latitudeTextView = (TextView) view.findViewById(R.id.textView_target_latitude);
-        longitudeTextView = (TextView) view.findViewById(R.id.textView_target_longitude);
+        targetLatitudeTextView = (TextView) view.findViewById(R.id.textView_target_latitude);
+        targetLongitudeTextView = (TextView) view.findViewById(R.id.textView_target_longitude);
+        playerLatitudeTextView = (TextView) view.findViewById(R.id.textView_player_latitude);
+        playerLongitudeTextView = (TextView) view.findViewById(R.id.textView_player_longitude);
         distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
 
         return view;
@@ -104,11 +110,23 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
     }
 
     @Override
+    public void onPageSelected() {
+        Log.d(TAG, "action page selected");
+        if (zoomInvalidated) {
+            zoomToPlace();
+        }
+        if (infoInvalidated) {
+            updateInformation();
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         if (map == null) {
             fragment.getMapAsync(this);
         }
+        onPageSelected();
     }
 
     @Override
@@ -130,67 +148,104 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        /* TODO: zazoomovani na pozici hrace */
-        if (mPlace != null) {
-            if (mCircle != null) {
-                mCircle.remove();
-            }
+        zoomInvalidated = true;
+        zoomToPlace();
+    }
 
-            /* Add new area around the Place */
-            LatLng ll = new LatLng(mPlace.latitude, mPlace.longitude);
-            CircleOptions co = new CircleOptions()
-                    .center(ll)
-//                    .radius(mPlace.radius * 1000)
-                    .radius(RADIUS)
-                    .strokeColor(Color.argb(230, 230, 0, 0))
-                    .fillColor(Color.argb(80, 0, 0, 255));
-            mCircle = map.addCircle(co);
-
-            map.addMarker(new MarkerOptions()
-                    .position(new LatLng(mPlace.latitude, mPlace.longitude))
-                    .title("Target"));
-
-            /* Move camera to the Place's position */
-            float zoom = (float) (10f - Math.log((double)RADIUS / 10000f) / Math.log(2f));
-            zoom = Math.min(20, Math.max(zoom, 1));
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .zoom(zoom)
-                    .target(ll)
-                    .build();
-            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    private void zoomToPlace() {
+        if (mPlace == null || map == null) {
+            return;
         }
+
+        /* Remove the old highlighted area */
+        if (mCircle != null) {
+            mCircle.remove();
+        }
+
+        /* Add new area around the Place */
+        LatLng ll = new LatLng(mPlace.latitude, mPlace.longitude);
+        CircleOptions co = new CircleOptions()
+                .center(ll)
+//                .radius(mPlace.radius * 1000)
+                .radius(RADIUS)
+                .strokeColor(Color.argb(230, 230, 0, 0))
+                .fillColor(Color.argb(80, 0, 0, 255));
+        mCircle = map.addCircle(co);
+
+        map.addMarker(new MarkerOptions()
+                .position(new LatLng(mPlace.latitude, mPlace.longitude))
+                .title("Target"));
+
+        /* Move camera to the Place's position */
+        float zoom = (float) (10f - Math.log(RADIUS / 10000f) / Math.log(2f));
+        zoom = Math.min(20, Math.max(zoom, 1));
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .zoom(zoom)
+                .target(ll)
+                .build();
+        map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        zoomInvalidated = false;
     }
 
-    private String getMyLatitude() {
-        return mLastLocation == null ? "N" : mLastLocation.getLatitude()+"N";
+    private String getTargetLatitude() {
+        return mPlace == null ? "??N" : String.format("%.6f", mPlace.latitude) + "N";
     }
 
-    private String getMyLongitude() {
-        return mLastLocation == null ? "E" : mLastLocation.getLongitude()+"E";
+    private String getTargetLongitude() {
+        return mPlace == null ? "??N" : String.format("%.6f", mPlace.longitude) + "N";
+    }
+
+    private String getPlayerLatitude() {
+        return mLastLocation == null ? "??N" : String.format("%.6f", mLastLocation.getLatitude()) + "N";
+    }
+
+    private String getPlayerLongitude() {
+        return mLastLocation == null ? "??E" : String.format("%.6f", mLastLocation.getLongitude()) + "E";
     }
 
     private String getTargetDistance() {
         if (mLastLocation == null || mPlace == null) {
-            return "??";
+            return "??m";
         }
         Location placeLoc = new Location("unknown");
         placeLoc.setLatitude(mPlace.latitude);
         placeLoc.setLongitude(mPlace.longitude);
-        return mLastLocation.distanceTo(placeLoc)+"m";
+        return mLastLocation.distanceTo(placeLoc) + "m";
     }
 
-    private void updateLocation() {
-        if (latitudeTextView == null || longitudeTextView == null) {
+    private void updateInformation() {
+        if (targetLatitudeTextView == null) {
             return;
         }
-        latitudeTextView.setText(getMyLatitude());
-        longitudeTextView.setText(getMyLongitude());
+        targetLatitudeTextView.setText(getTargetLatitude());
+        targetLongitudeTextView.setText(getTargetLongitude());
+        playerLatitudeTextView.setText(getPlayerLatitude());
+        playerLongitudeTextView.setText(getPlayerLongitude());
         distanceTextView.setText(getTargetDistance());
+
+        infoInvalidated = false;
     }
 
-    public void setLocation(Location location) {
+    /**
+     * Change the location of the player.
+     *
+     * @param location The new location of the player.
+     */
+    public void changeLocation(Location location) {
         mLastLocation = location;
-        updateLocation();
+        infoInvalidated = true;
+    }
+
+    /**
+     * Change Place, which this fragment should activate on the map.
+     *
+     * @param place The new Place, which this fragment should activate on the map.
+     */
+    public static void changePlace(Place place) {
+        mPlace = place;
+        infoInvalidated = true;
+        zoomInvalidated = true;
     }
 
     /**

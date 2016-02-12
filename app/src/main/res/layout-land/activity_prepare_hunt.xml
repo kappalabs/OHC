@@ -86,7 +86,8 @@
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="left|center_vertical|center">
+                    android:gravity="left|center_vertical|center"
+                    android:layout_weight="1">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -99,10 +100,11 @@
                     <EditText
                         android:inputType="numberDecimal"
                         android:id="@+id/editText_north"
-                        android:layout_width="50dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
-                        android:layout_marginLeft="20dp" />
+                        android:layout_marginLeft="20dp"
+                        android:layout_weight="1" />
 
                     <TextView
                         android:textAppearance="?android:attr/textAppearanceMedium"
@@ -118,9 +120,10 @@
                         android:inputType="numberDecimal"
                         android:id="@+id/editText_east"
                         android:layout_height="wrap_content"
-                        android:layout_width="50dp"
+                        android:layout_width="match_parent"
                         android:layout_columnWeight="1"
-                        android:layout_marginLeft="10dp" />
+                        android:layout_marginLeft="10dp"
+                        android:layout_weight="1" />
 
                     <TextView
                         android:textAppearance="?android:attr/textAppearanceMedium"

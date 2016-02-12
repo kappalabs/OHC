@@ -77,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="@string/empty_number"
-                android:id="@+id/textView_my_latitude"
+                android:id="@+id/textView_player_latitude"
                 android:layout_gravity="center"
                 android:layout_marginLeft="25dp" />
 
@@ -86,7 +86,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="@string/empty_number"
-                android:id="@+id/textView_my_longitude"
+                android:id="@+id/textView_player_longitude"
                 android:layout_marginLeft="25dp"
                 android:layout_gravity="center" />
 
