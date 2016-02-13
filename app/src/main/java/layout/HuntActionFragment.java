@@ -66,23 +66,15 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param place Place being hunted.
      * @return A new instance of fragment HuntActionFragment.
      */
-    public static HuntActionFragment newInstance(Place place) {
-        HuntActionFragment fragment = new HuntActionFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_PARAM_PLACE, place);
-        fragment.setArguments(args);
-        return fragment;
+    public static HuntActionFragment newInstance() {
+        return new HuntActionFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mPlace = (Place) getArguments().getSerializable(ARG_PARAM_PLACE);
-        }
     }
 
     @Override
@@ -94,6 +86,9 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         playerLatitudeTextView = (TextView) view.findViewById(R.id.textView_player_latitude);
         playerLongitudeTextView = (TextView) view.findViewById(R.id.textView_player_longitude);
         distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
+
+        infoInvalidated = true;
+        update();
 
         return view;
     }
@@ -111,13 +106,8 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
 
     @Override
     public void onPageSelected() {
-        Log.d(TAG, "action page selected");
-        if (zoomInvalidated) {
-            zoomToPlace();
-        }
-        if (infoInvalidated) {
-            updateInformation();
-        }
+        infoInvalidated = true;
+        update();
     }
 
     @Override
@@ -150,6 +140,15 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         map = googleMap;
         zoomInvalidated = true;
         zoomToPlace();
+    }
+
+    private void update() {
+        if (zoomInvalidated) {
+            zoomToPlace();
+        }
+        if (infoInvalidated) {
+            updateInformation();
+        }
     }
 
     private void zoomToPlace() {

@@ -51,34 +51,21 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     /**
      * Create a new instance of this fragment.
      *
-     * @param place Place which details should be shown in this fragment.
      * @return A new instance of this fragment.
      */
-    public static HuntPlaceFragment newInstance(Place place) {
-        HuntPlaceFragment fragment = new HuntPlaceFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_PLACE, place);
-        fragment.setArguments(args);
-
-        return fragment;
+    public static HuntPlaceFragment newInstance() {
+        return new HuntPlaceFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mPlace = (Place) getArguments().getSerializable(ARG_PLACE);
-        }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        //NOTE: volana po onCreate()
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         final View view = inflater.inflate(R.layout.fragment_hunt_place, container, false);
-//        mImageView = (ImageView) view.findViewById(R.id.imageView_photos);
-//        mPhotosView = (LinearLayout) view.findViewById(R.id.linearLayoutGallery);
         mPhotoImageView = (ImageView) view.findViewById(R.id.imageView_photo);
         mPhotoSeekBar = (SeekBar) view.findViewById(R.id.seekBar_photo);
 

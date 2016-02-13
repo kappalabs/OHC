@@ -8,6 +8,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -89,29 +90,32 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
 
             @Override
             public void onPageSelected(int position) {
+                Fragment fragment = null;
                 switch (position) {
                     case 0: // HuntOfferFragment
                         if (item_selected) {
                             fab_info.show();
                         }
                         fab_camera.hide();
+                        fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
                         fab_info.hide();
                         fab_camera.hide();
-                        if (mHuntPlaceFragment != null)
-                            mHuntPlaceFragment.onPageSelected();
+                        fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
                         fab_info.hide();
                         fab_camera.show();
-                        if (mHuntActionFragment != null)
-                            mHuntActionFragment.onPageSelected();
+                        fragment = mHuntActionFragment;
                         break;
                     default:
                         fab_info.hide();
                         fab_camera.hide();
                         break;
+                }
+                if (fragment != null) {
+                    ((PageChangeAdapter)fragment).onPageSelected();
                 }
             }
 
@@ -125,13 +129,6 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
         fab_camera = (FloatingActionButton) findViewById(R.id.fab_camera);
         fab_camera.setVisibility(View.GONE);
 
-        /* Get data from parent activity */
-//        Bundle extras = getIntent().getExtras();
-//        if (extras != null) {
-//            green_places = (ArrayList<Place>) extras.getSerializable(GREEN_LIST_KEY);
-//            red_places = (ArrayList<Place>) extras.getSerializable(RED_LIST_KEY);
-//        }
-
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -140,11 +137,6 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                     .addApi(LocationServices.API)
                     .build();
         }
-
-//        Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
-//        mHuntOfferFragment = HuntOfferFragment.newInstance(green_places, red_places);
-//        mHuntPlaceFragment = HuntPlaceFragment.newInstance(demoPlace);
-//        mHuntActionFragment = HuntActionFragment.newInstance(demoPlace);
     }
 
     protected void onStart() {
@@ -157,6 +149,9 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onStop();
     }
 
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -252,35 +247,10 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_hunt, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
-    }
-
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * A {@link FragmentStatePagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-//        private SparseArray<Fragment> mFragments;
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -301,40 +271,30 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                     mHuntActionFragment = (HuntActionFragment) fragment;
                     break;
             }
-//            mFragments.put(position, fragment);
             return fragment;
         }
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-//            mFragments.remove(position);
             super.destroyItem(container, position, object);
         }
 
         @Override
         public Fragment getItem(int position) {
-            Log.d(TAG, "position = " + position + ", selection = " + item_selected);
             Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
             if (position == 0) {
-//                return mHuntOfferFragment;
                 return HuntOfferFragment.newInstance(green_places, red_places);
             } if (position == 1) {
-//                return mHuntPlaceFragment;
-                return HuntPlaceFragment.newInstance(demoPlace);
+                return HuntPlaceFragment.newInstance();
             } else {
-//                return mHuntActionFragment;
-                return HuntActionFragment.newInstance(demoPlace);
+                return HuntActionFragment.newInstance();
             }
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 3;
         }
 
-//        public Fragment getRegisteredFragment(int position) {
-//            return mFragments.get(position);
-//        }
     }
 }

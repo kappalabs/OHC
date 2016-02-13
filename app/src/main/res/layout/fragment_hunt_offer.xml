@@ -9,13 +9,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:baselineAligned="false"
-        android:layout_margin="10dp">
+        android:layout_margin="5dp">
 
         <ListView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:id="@+id/listView_hmenu_green"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:scrollbars="none" />
 
         <View
             android:layout_width="3dp"
@@ -26,7 +27,8 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:id="@+id/listView_hmenu_red"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:scrollbars="none" />
     </LinearLayout>
 
 </FrameLayout>

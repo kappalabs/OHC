@@ -16,6 +16,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 
+import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
 import client.ohunter.fojjta.cekuj.net.ohunter.R;
 
 /**
@@ -26,10 +27,19 @@ import client.ohunter.fojjta.cekuj.net.ohunter.R;
  * Use the {@link HuntOfferFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HuntOfferFragment extends Fragment {
+public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static final String PARAM_GREENS_KEY = "param_green_key";
     private static final String PARAM_RED_KEY = "param_red_key";
+    private static final String SELECTED_GREEN_INDX_KEY = "selected_green_indx_key";
+    private static final String SELECTED_RED_INDX_KEY = "selected_red_indx_key";
+
+    private static final int SELECTED_GREEN_COLOR = Color.GREEN;
+    private static final int SELECTED_RED_COLOR = Color.RED;
+    private static final int ACTIVATED_PLACE_COLOR = Color.YELLOW;
+    private static final int UNSELECTED_PLACE_COLOR = Color.TRANSPARENT;
+
+    private static final int UNKNOWN_INDEX = -1;
 
     private ArrayList<Place> mParamGreen;
     private ArrayList<Place> mParamRed;
@@ -39,8 +49,10 @@ public class HuntOfferFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    private ListView hmenu_green_listview;
-    private ListView hmenu_red_listview;
+    private ListView hmenuGreenListview;
+    private ListView hmenuRedListview;
+
+    private int selectedGreenIndex = UNKNOWN_INDEX, selectedRedIndex = UNKNOWN_INDEX;
 
     private static final String TAG = "HuntOfferFragment";
 
@@ -72,6 +84,10 @@ public class HuntOfferFragment extends Fragment {
             mParamGreen = (ArrayList<Place>) getArguments().getSerializable(PARAM_GREENS_KEY);
             mParamRed = (ArrayList<Place>) getArguments().getSerializable(PARAM_RED_KEY);
         }
+        if (savedInstanceState != null) {
+            selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
+            selectedRedIndex = savedInstanceState.getInt(SELECTED_RED_INDX_KEY);
+        }
     }
 
     @Override
@@ -79,22 +95,19 @@ public class HuntOfferFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_hunt_offer, container, false);
 
-        hmenu_green_listview = (ListView) view.findViewById(R.id.listView_hmenu_green);
-        hmenu_red_listview = (ListView) view.findViewById(R.id.listView_hmenu_red);
+        hmenuGreenListview = (ListView) view.findViewById(R.id.listView_hmenu_green);
+        hmenuRedListview = (ListView) view.findViewById(R.id.listView_hmenu_red);
 
         /* GREEN ==================== */
-        hmenu_green_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        hmenuGreenListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "green position: " + position);
+//                Log.d(TAG, "green position: " + position);
                 /* Obarveni polozky */
-                for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
-                    hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                for (int i = 0; i < hmenu_red_listview.getChildCount(); i++) {
-                    hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                view.setBackgroundColor(Color.GREEN);
+                clearHighlighted();
+                view.setBackgroundColor(SELECTED_GREEN_COLOR);
+                selectedGreenIndex = position;
+                selectedRedIndex = UNKNOWN_INDEX;
 
                 /* Ohlaseni udalosti */
                 if (mListener != null) {
@@ -102,17 +115,14 @@ public class HuntOfferFragment extends Fragment {
                 }
             }
         });
-        hmenu_green_listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        hmenuGreenListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "green long pos: " + position);
-                /* Obarveni polozky */
-                for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
-                    hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                for (int i = 0; i < hmenu_red_listview.getChildCount(); i++) {
-                    hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
+//                Log.d(TAG, "green long pos: " + position);
+                /* Odbarveni polozky */
+                clearHighlighted();
+                selectedGreenIndex = UNKNOWN_INDEX;
+                selectedRedIndex = UNKNOWN_INDEX;
 
                 /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
                 if (mListener != null) {
@@ -128,18 +138,15 @@ public class HuntOfferFragment extends Fragment {
         });
 
         /* RED ==================== */
-        hmenu_red_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "red position: " + position);
+//                Log.d(TAG, "red position: " + position);
                 /* Obarveni polozky */
-                for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
-                    hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                for (int i = 0; i < hmenu_red_listview.getChildCount(); i++) {
-                    hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                view.setBackgroundColor(Color.RED);
+                clearHighlighted();
+                view.setBackgroundColor(SELECTED_RED_COLOR);
+                selectedGreenIndex = UNKNOWN_INDEX;
+                selectedRedIndex = position;
 
                 /* Ohlaseni udalosti */
                 if (mListener != null) {
@@ -147,17 +154,14 @@ public class HuntOfferFragment extends Fragment {
                 }
             }
         });
-        hmenu_red_listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        hmenuRedListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "red long pos: " + position);
-                /* Obarveni polozky */
-                for (int i = 0; i < hmenu_green_listview.getChildCount(); i++) {
-                    hmenu_green_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                for (int i = 0; i < hmenu_red_listview.getChildCount(); i++) {
-                    hmenu_red_listview.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
+//                Log.d(TAG, "red long pos: " + position);
+                /* Odbarveni polozky */
+                clearHighlighted();
+                selectedGreenIndex = UNKNOWN_INDEX;
+                selectedRedIndex = UNKNOWN_INDEX;
 
                 /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
                 if (mListener != null) {
@@ -172,15 +176,72 @@ public class HuntOfferFragment extends Fragment {
             }
         });
 
-        mGreenAdapter = new ArrayAdapter<>(hmenu_green_listview.getContext(),
-                android.R.layout.simple_list_item_1, mParamGreen);
-        mRedAdapter = new ArrayAdapter<>(hmenu_red_listview.getContext(),
-                android.R.layout.simple_list_item_1, mParamRed);
+        mGreenAdapter = new ArrayAdapter<Place>(hmenuGreenListview.getContext(),
+                android.R.layout.simple_list_item_1, mParamGreen) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (selectedGreenIndex != UNKNOWN_INDEX && position == selectedGreenIndex) {
+                    view.setBackgroundColor(SELECTED_GREEN_COLOR);
+                } else {
+                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
+                }
+                return view;
+            }
+        };
+        mRedAdapter = new ArrayAdapter<Place>(hmenuRedListview.getContext(),
+                android.R.layout.simple_list_item_1, mParamRed) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (selectedRedIndex != UNKNOWN_INDEX && position == selectedRedIndex) {
+                    view.setBackgroundColor(SELECTED_RED_COLOR);
+                } else {
+                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
+                }
+                return view;
+            }
+        };
 
-        hmenu_green_listview.setAdapter(mGreenAdapter);
-        hmenu_red_listview.setAdapter(mRedAdapter);
+        hmenuGreenListview.setAdapter(mGreenAdapter);
+        hmenuRedListview.setAdapter(mRedAdapter);
 
         return view;
+    }
+
+    @Override
+    public void onPageSelected() {
+//        updatePlaceSelection();
+    }
+
+    private void clearHighlighted() {
+        for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
+            hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+        }
+        for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
+            hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+        }
+    }
+
+//    private void updatePlaceSelection() {
+//        if (mListener == null) {
+//            return;
+//        }
+//        // TODO: zda se, ze neni nutne...
+////        if (selectedGreenIndex != UNKNOWN_INDEX) {
+////            mListener.onItemSelected(mParamGreen.get(selectedGreenIndex));
+////        }
+////        if (selectedRedIndex != UNKNOWN_INDEX) {
+////            mListener.onItemSelected(mParamRed.get(selectedRedIndex));
+////        }
+//    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt(SELECTED_GREEN_INDX_KEY, selectedGreenIndex);
+        outState.putInt(SELECTED_RED_INDX_KEY, selectedRedIndex);
+
+        super.onSaveInstanceState(outState);
     }
 
     @Override
