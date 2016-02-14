@@ -1,5 +1,6 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -23,24 +24,37 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import layout.HuntActionFragment;
 import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
-//    public static final String GREEN_LIST_KEY = "green_list_key";
+    //    public static final String GREEN_LIST_KEY = "green_list_key";
 //    public static final String RED_LIST_KEY = "red_list_key";
     public static final String TAG = "HuntActivity";
+    public static final String REQUESTING_LOCATION_UPDATES_KEY = "requesting_location_updates_key";
+    public static final String LOCATION_KEY = "location_key";
+    public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
+
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -58,7 +72,10 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
     private ViewPager mViewPager;
 
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
+    private Location mLastLocation, mCurrentLocation;
+    private LocationRequest mLocationRequest;
+    private String mLastUpdateTime;
+    private boolean mRequestingLocationUpdates = false;
 
     FloatingActionButton fab_info, fab_camera;
     private boolean item_selected = false;
@@ -115,7 +132,7 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                         break;
                 }
                 if (fragment != null) {
-                    ((PageChangeAdapter)fragment).onPageSelected();
+                    ((PageChangeAdapter) fragment).onPageSelected();
                 }
             }
 
@@ -137,6 +154,27 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                     .addApi(LocationServices.API)
                     .build();
         }
+
+        updateValuesFromBundle(savedInstanceState);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    private void stopLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        mRequestingLocationUpdates = false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
     }
 
     protected void onStart() {
@@ -150,7 +188,29 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY, mRequestingLocationUpdates);
+        outState.putParcelable(LOCATION_KEY, mCurrentLocation);
+        outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
+
         super.onSaveInstanceState(outState);
+    }
+
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
+                mRequestingLocationUpdates = savedInstanceState.getBoolean(REQUESTING_LOCATION_UPDATES_KEY);
+            }
+            if (savedInstanceState.keySet().contains(LOCATION_KEY)) {
+                mCurrentLocation = savedInstanceState.getParcelable(LOCATION_KEY);
+            }
+            if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
+                mLastUpdateTime = savedInstanceState.getString(LAST_UPDATED_TIME_STRING_KEY);
+            }
+
+            if (mHuntActionFragment != null) {
+                mHuntActionFragment.changeLocation(mCurrentLocation);
+            }
+        }
     }
 
     @Override
@@ -166,14 +226,15 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
             return;
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
+        if (mHuntActionFragment != null) {
             mHuntActionFragment.changeLocation(mLastLocation);
         }
         createLocationRequest();
     }
 
     protected void createLocationRequest() {
-        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest = new LocationRequest();
+        //TODO: behem komunikace se serverem prenastavit na mensi nebo vypnout pro zamezeni prehlceni
         mLocationRequest.setInterval(8000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -182,8 +243,52 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addLocationRequest(mLocationRequest);
         PendingResult<LocationSettingsResult> result =
                 LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-//        Log.d(TAG, result.await().getStatus().toString());
-        //TODO
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location requests here.
+                        //...
+                        startLocationUpdates();
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(HuntActivity.this, REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way
+                        // to fix the settings so we won't show the dialog.
+                        //...
+                        break;
+                }
+            }
+        });
+    }
+
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        mRequestingLocationUpdates = true;
     }
 
     @Override
@@ -192,6 +297,15 @@ public class HuntActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        mCurrentLocation = location;
+        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        if (mHuntActionFragment != null) {
+            mHuntActionFragment.changeLocation(mCurrentLocation);
+        }
     }
 
 //    @Override

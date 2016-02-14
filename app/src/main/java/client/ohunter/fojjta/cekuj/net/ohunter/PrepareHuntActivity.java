@@ -65,7 +65,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
-    private static final double DEFAULT_RADIUS = 8;
+    private static final double DEFAULT_RADIUS = 10;
 
     // Request code to use when launching the resolution activity
     private static final int REQUEST_RESOLVE_ERROR = 1001;

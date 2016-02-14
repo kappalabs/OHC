@@ -16,10 +16,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -223,7 +225,22 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         playerLongitudeTextView.setText(getPlayerLongitude());
         distanceTextView.setText(getTargetDistance());
 
+        updatePlayerPin();
+
         infoInvalidated = false;
+    }
+
+    Marker playerMarker;
+    private void updatePlayerPin() {
+        if (map != null && mLastLocation != null) {
+            if (playerMarker != null) {
+                playerMarker.remove();
+            }
+            MarkerOptions mo = new MarkerOptions()
+                    .position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+            playerMarker = map.addMarker(mo);
+        }
     }
 
     /**
@@ -234,6 +251,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     public void changeLocation(Location location) {
         mLastLocation = location;
         infoInvalidated = true;
+        updateInformation();
     }
 
     /**
