@@ -1,5 +1,6 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
+import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -112,6 +113,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     case 0: // HuntOfferFragment
                         if (item_selected) {
                             fab_info.show();
+                        } else {
+                            fab_info.hide();
                         }
                         fab_camera.hide();
                         fragment = mHuntOfferFragment;
@@ -123,7 +126,12 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         break;
                     case 2: // HuntActionFragment
                         fab_info.hide();
-                        fab_camera.show();
+                        // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
+                        if (mHuntOfferFragment != null && mHuntOfferFragment.hasActivatedPlace()) {
+                            fab_camera.show();
+                        } else {
+                            fab_camera.hide();
+                        }
                         fragment = mHuntActionFragment;
                         break;
                     default:
@@ -143,6 +151,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         fab_info = (FloatingActionButton) findViewById(R.id.fab_info);
         fab_info.setVisibility(View.GONE);
+        fab_info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mHuntOfferFragment != null) {
+                    mHuntOfferFragment.activateSelectedPlace();
+                }
+            }
+        });
         fab_camera = (FloatingActionButton) findViewById(R.id.fab_camera);
         fab_camera.setVisibility(View.GONE);
 
@@ -165,8 +181,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     }
 
     private void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        mRequestingLocationUpdates = false;
+        if (mGoogleApiClient.isConnected()){
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mRequestingLocationUpdates = false;
+        }
     }
 
     @Override

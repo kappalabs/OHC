@@ -2,6 +2,7 @@
 
     <color name="black_overlay">#66000000</color>
     <color name="kappa_blue">#0066ff</color>
+    <color name="yellow">#ffff00</color>
     <color name="dark_pink">#9900cc</color>
 
 </resources>

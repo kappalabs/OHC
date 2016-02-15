@@ -49,9 +49,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_dialog_info"
+        android:src="@android:drawable/ic_lock_idle_lock"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/kappa_blue" />
+        app:backgroundTint="@color/yellow" />
 
 </android.support.design.widget.CoordinatorLayout>

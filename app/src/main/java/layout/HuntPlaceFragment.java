@@ -2,6 +2,7 @@ package layout;
 
 import android.app.ActionBar;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
@@ -72,17 +73,8 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         mPhotoSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
-                    return;
-                }
-                int wid = mPhotoSeekBar.getMax();
-                float step = wid / mPlace.photos.size();
-                int index = (int)Math.floor(progress / step);
-                index = Math.min(Math.max(index, 0), mPlace.photos.size()-1);
-                Photo photo = mPlace.photos.get(index);
-
 //                mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                mPhotoImageView.setImageBitmap(Utils.toBitmap(photo.image));
+                mPhotoImageView.setImageBitmap(getSelectedPicture());
             }
 
             @Override
@@ -106,6 +98,34 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             updatePlace();
             placeInvalidated = false;
         }
+    }
+
+    /**
+     * Get the position of selected photo for active place.
+     *
+     * @return The position of selected photo for active place.
+     */
+    public int getSelectedPicturePosition() {
+        if (mPhotoSeekBar == null) {
+            return 0;
+        }
+        int wid = mPhotoSeekBar.getMax();
+        float step = wid / mPlace.photos.size();
+        int index = (int)Math.floor(mPhotoSeekBar.getProgress() / step);
+        return Math.min(Math.max(index, 0), mPlace.photos.size()-1);
+    }
+
+    /**
+     * Get the selected photo for active place.
+     *
+     * @return The selected photo for active place.
+     */
+    public Bitmap getSelectedPicture() {
+        if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
+            return null;
+        }
+        Photo photo = mPlace.photos.get(getSelectedPicturePosition());
+        return Utils.toBitmap(photo.image);
     }
 
     private void updatePlace() {

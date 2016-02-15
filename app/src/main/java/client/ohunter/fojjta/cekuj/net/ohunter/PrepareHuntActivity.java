@@ -204,7 +204,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                 }
 
                 /* TODO: rozdeleni novych/prijatych mist na zelene a cervene */
-                HuntActivity.green_places = new ArrayList<>(places);
+                HuntActivity.green_places = new ArrayList<>();
                 HuntActivity.red_places = new ArrayList<>(places);
                 Intent i = new Intent();
                 i.setClass(PrepareHuntActivity.this, HuntActivity.class);
