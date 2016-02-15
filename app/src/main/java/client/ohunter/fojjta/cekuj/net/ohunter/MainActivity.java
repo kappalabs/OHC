@@ -1,6 +1,8 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -34,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //TODO: pouze test image...
+                Bitmap b_ = BitmapFactory.decodeResource(getResources(), R.drawable.img);
+                Bitmap b = Bitmap.createScaledBitmap(b_, 400, 240, true);
+                CameraActivity.backgroundImage = b;
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, CameraActivity.class);
                 startActivity(i);

@@ -103,6 +103,11 @@ public class CameraActivity extends AppCompatActivity {
     private RelativeLayout camRelativeLayout;
     private Button shootButton;
 
+    int[][] sobel1 = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+    int[][] sobel2 = {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}};
+
+    public static Bitmap backgroundImage;
+
     public static final int DEFAULT_ALPHA = 50;
 
     @Override
@@ -123,7 +128,7 @@ public class CameraActivity extends AppCompatActivity {
                 cameraOverlay.takeAPicture();
                 Bitmap b = cameraOverlay.mBitmap;
                 Log.d("Camera", "mam shoot bitmap: " + ((b != null) ? b.toString() : " je null!"));
-                referenceImageView.setImageBitmap(b);
+//                referenceImageView.setImageBitmap(b);
 //                Bitmap bitmap = cameraOverlay.takeAPicture();
 //                referenceImageView.setImageBitmap(bitmap);
             }
@@ -146,23 +151,25 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         referenceImageView = (ImageView) findViewById(R.id.imageView_reference);
-//        Drawable d = getResources().getDrawable(R.drawable.img, null);
-//        referenceImageView.setImageDrawable(d);
+        sobel();
+        referenceImageView.setImageBitmap(backgroundImage);
+        referenceImageView.setAlpha(DEFAULT_ALPHA / 100.f);
 
-        ViewTreeObserver observer = camRelativeLayout.getViewTreeObserver();
-        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.img);
-                int wid = camRelativeLayout.getWidth();
-                int hei = camRelativeLayout.getHeight();
-                Log.d("Camera", "wid*hei = "+wid+"*"+hei);
-                referenceImageView.setImageBitmap(Bitmap.createScaledBitmap(b, wid, hei, false));
-                referenceImageView.setAlpha(DEFAULT_ALPHA / 100.f);
+//        ViewTreeObserver observer = camRelativeLayout.getViewTreeObserver();
+//        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.img);
+//                int wid = camRelativeLayout.getWidth();
+//                int hei = camRelativeLayout.getHeight();
+//                Log.d("Camera", "wid*hei = "+wid+"*"+hei);
+//                referenceImageView.setImageBitmap(Bitmap.createScaledBitmap(b, wid, hei, false));
+//                referenceImageView.setAlpha(DEFAULT_ALPHA / 100.f);
+//
+//                camRelativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+//            }
+//        });
 
-                camRelativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-            }
-        });
 //        mVisible = true;
 //        mControlsView = findViewById(R.id.fullscreen_content_controls);
 //        mContentView = findViewById(R.id.fullscreen_content);
@@ -200,11 +207,57 @@ public class CameraActivity extends AppCompatActivity {
             }
 //            camRelativeLayout.widt
         }
+
 //
 //        // Trigger the initial hide() shortly after the activity has been
 //        // created, to briefly hint to the user that UI controls
 //        // are available.
 //        delayedHide(100);
+    }
+
+    private void sobel() {
+        Bitmap b0 = backgroundImage;
+        Bitmap b = Bitmap.createScaledBitmap(backgroundImage, b0.getWidth()*2, b0.getHeight()*2, true);
+        int width = b.getWidth();
+        int height = b.getHeight();
+        int siz = sobel1.length;
+        int roz = (int)Math.floor(siz / 2);
+        Bitmap b_ = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int souc1 = 0, souc2 = 0, souc3 = 0, souc4 = 0;
+                int souc5 = 0, souc6 = 0, souc7 = 0, souc8 = 0;
+                int poc = 0;
+                for (int i = -roz; i <= roz; i++) {
+                    for (int j = -roz; j <= roz; j++) {
+                        int xi = x + i, yj = y + j;
+                        if (xi >= 0 && xi < width && yj >= 0 && yj < height) {
+                            // NOTE: pozor, pokud neni v obrazku zelena slozka...!
+                            int gray = (b.getPixel(xi, yj) >> 8) & 0xFF;
+                            souc1 += gray * sobel1[i + roz][j + roz];
+                            souc2 += gray * sobel2[i + roz][j + roz];
+                            souc3 += gray * sobel1[roz - i][roz - j];
+                            souc4 += gray * sobel2[roz - i][roz - j];
+                            souc5 += gray * sobel1[roz - i][j + roz];
+                            souc6 += gray * sobel2[roz - i][j + roz];
+                            souc7 += gray * sobel1[i + roz][roz - j];
+                            souc8 += gray * sobel2[i + roz][roz - j];
+                            poc++;
+                        }
+                    }
+                }
+                int myGray = 0xff - Math.max(souc1, Math.max(souc2, Math.max(souc3, Math.max(souc4,
+                        Math.max(souc5, Math.max(souc6, Math.max(souc7, souc8))))))) / poc;
+//                myGray /= poc;
+                // NOTE: alfa slozka je vynasobena 4 pro zvyrazneni
+                int newPixel = ((0xff - myGray) << 26) | (myGray << 16) | (myGray << 8) | myGray;
+                b_.setPixel(x, y, newPixel);
+            }
+        }
+        backgroundImage = Bitmap.createScaledBitmap(b_, b0.getWidth(), b0.getHeight(), true);
+        b0.recycle();
+        b.recycle();
+        b_.recycle();
     }
 //
 //    private void toggle() {

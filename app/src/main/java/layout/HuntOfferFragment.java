@@ -44,8 +44,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static final int UNKNOWN_INDEX = -1;
 
-    private ArrayList<Place> mParamGreen;
-    private ArrayList<Place> mParamRed;
+    public static ArrayList<Place> mParamGreen;
+    public static ArrayList<Place> mParamRed;
 
     private ArrayAdapter<Place> mGreenAdapter;
     private ArrayAdapter<Place> mRedAdapter;
@@ -67,26 +67,25 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     /**
      * Create a new instance of this fragment.
      *
-     * @param green_places Green (selected) places in the ohunter-menu.
-     * @param red_places Red (offer) places in the ohunter-menu.
      * @return A new instance of fragment HuntOfferFragment.
      */
-    public static HuntOfferFragment newInstance(ArrayList<Place> green_places, ArrayList<Place> red_places) {
-        HuntOfferFragment fragment = new HuntOfferFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(PARAM_GREENS_KEY, green_places);
-        args.putSerializable(PARAM_RED_KEY, red_places);
-        fragment.setArguments(args);
-        return fragment;
+    public static HuntOfferFragment newInstance() {
+//        HuntOfferFragment fragment = new HuntOfferFragment();
+//        Bundle args = new Bundle();
+//        args.putSerializable(PARAM_GREENS_KEY, green_places);
+//        args.putSerializable(PARAM_RED_KEY, red_places);
+//        fragment.setArguments(args);
+//        return fragment;
+        return new HuntOfferFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParamGreen = (ArrayList<Place>) getArguments().getSerializable(PARAM_GREENS_KEY);
-            mParamRed = (ArrayList<Place>) getArguments().getSerializable(PARAM_RED_KEY);
-        }
+//        if (getArguments() != null) {
+//            mParamGreen = (ArrayList<Place>) getArguments().getSerializable(PARAM_GREENS_KEY);
+//            mParamRed = (ArrayList<Place>) getArguments().getSerializable(PARAM_RED_KEY);
+//        }
         if (savedInstanceState != null) {
             if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
                 selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
@@ -169,7 +168,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Log.d(TAG, "red position: " + position);
+                Log.d(TAG, "red position: " + position);
                 /* Obarveni polozky */
                 selectedGreenIndex = UNKNOWN_INDEX;
                 selectedRedIndex = position;
@@ -275,22 +274,39 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private void updateHighlights() {
         clearHighlighted();
         if (activatedIndex != UNKNOWN_INDEX) {
-            hmenuGreenListview.getChildAt(activatedIndex).setBackgroundColor(ACTIVATED_PLACE_COLOR);
+//            hmenuGreenListview.getChildAt(activatedIndex).setBackgroundColor(ACTIVATED_PLACE_COLOR);
+            getViewByPosition(activatedIndex, hmenuGreenListview).setBackgroundColor(ACTIVATED_PLACE_COLOR);
         }
         if (selectedGreenIndex != UNKNOWN_INDEX && selectedGreenIndex != activatedIndex) {
-            hmenuGreenListview.getChildAt(selectedGreenIndex).setBackgroundColor(SELECTED_GREEN_COLOR);
+//            hmenuGreenListview.getChildAt(selectedGreenIndex).setBackgroundColor(SELECTED_GREEN_COLOR);
+            getViewByPosition(selectedGreenIndex, hmenuGreenListview).setBackgroundColor(SELECTED_GREEN_COLOR);
         }
         if (selectedRedIndex != UNKNOWN_INDEX) {
-            hmenuRedListview.getChildAt(selectedRedIndex).setBackgroundColor(SELECTED_RED_COLOR);
+//            hmenuRedListview.getChildAt(selectedRedIndex).setBackgroundColor(SELECTED_RED_COLOR);
+            getViewByPosition(selectedRedIndex, hmenuRedListview).setBackgroundColor(SELECTED_RED_COLOR);
         }
     }
 
     private void clearHighlighted() {
         for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
             hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//            getViewByPosition(i, hmenuGreenListview).setBackgroundColor(UNSELECTED_PLACE_COLOR);
         }
         for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
             hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//            getViewByPosition(i, hmenuRedListview).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+        }
+    }
+
+    private View getViewByPosition(int pos, ListView listView) {
+        final int firstListItemPosition = listView.getFirstVisiblePosition();
+        final int lastListItemPosition = firstListItemPosition + listView.getChildCount() - 1;
+
+        if (pos < firstListItemPosition || pos > lastListItemPosition ) {
+            return listView.getAdapter().getView(pos, null, listView);
+        } else {
+            final int childIndex = pos - firstListItemPosition;
+            return listView.getChildAt(childIndex);
         }
     }
 

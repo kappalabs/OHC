@@ -3,6 +3,8 @@ package client.ohunter.fojjta.cekuj.net.ohunter;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -21,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -161,6 +164,33 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         });
         fab_camera = (FloatingActionButton) findViewById(R.id.fab_camera);
         fab_camera.setVisibility(View.GONE);
+        fab_camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mHuntPlaceFragment == null) {
+                    Log.e(TAG, "Can't access the place fragment yet!");
+                    return;
+                }
+                Bitmap bitmap = mHuntPlaceFragment.getSelectedPicture();
+                if (bitmap == null) {
+                    Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                /* Change the orientation of the picture if necessary */
+                if (bitmap.getWidth() < bitmap.getHeight()) {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(90);
+
+                    Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                    bitmap.recycle();
+                    bitmap = rotatedBitmap;
+                }
+                CameraActivity.backgroundImage = bitmap;
+                Intent intent = new Intent();
+                intent.setClass(HuntActivity.this, CameraActivity.class);
+                startActivity(intent);
+            }
+        });
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -209,6 +239,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY, mRequestingLocationUpdates);
         outState.putParcelable(LOCATION_KEY, mCurrentLocation);
         outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
+        //TODO: stav tlacitka - viditelnost po rotaci!
 
         super.onSaveInstanceState(outState);
     }
@@ -413,9 +444,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         @Override
         public Fragment getItem(int position) {
-            Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
+//            Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
             if (position == 0) {
-                return HuntOfferFragment.newInstance(green_places, red_places);
+                HuntOfferFragment.mParamGreen = green_places;
+                HuntOfferFragment.mParamRed = red_places;
+                return HuntOfferFragment.newInstance();
             } if (position == 1) {
                 return HuntPlaceFragment.newInstance();
             } else {

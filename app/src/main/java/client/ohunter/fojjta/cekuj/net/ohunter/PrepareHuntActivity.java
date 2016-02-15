@@ -158,7 +158,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                         //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
                         Request sr = new SearchRequest(p, getLatitude(), getLongitude(),
 //                                (int)(getRadius()*1000), 1280, 720);
-                                (int)(getRadius()*1000), prefferedDaytime, 320, 200);
+                                (int)(getRadius()*1000), prefferedDaytime, 400, 240);
                         oos.writeObject(sr);
                         oos.flush();
                         Log.d(TAG, "Data OK odeslana");

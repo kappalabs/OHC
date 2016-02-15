@@ -51,4 +51,6 @@
     <string name="image_gallery">Galerie fotografií:</string>
     <string name="place_information">Informace:</string>
     <string name="my_position">Moje pozice:</string>
+
+    <string name="select_photo_error">You must select a photo on place detail page!</string>
 </resources>
