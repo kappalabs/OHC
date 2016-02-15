@@ -12,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
@@ -21,8 +22,11 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -40,6 +44,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -63,6 +68,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
     private Circle mCircle;
     private static final String TAG = "PrepareHunt";
 
+    private static final String NUM_TARGETS_TEXTVIEW_KEY = "num_targets_textview_key";
+    private static final String LATITUDE_TEXTVIEW_KEY = "latitude_textview_key";
+    private static final String LONGITUDE_TEXTVIEW_KEY = "longitude_textview_key";
+    private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
+    private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
+
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
@@ -76,9 +87,14 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
     private Button mStartHuntButton;
+    private TextView mNumTargetsTextView;
     private EditText mLongitudeEditText;
     private EditText mLatitudeEditText;
     private EditText mRadiusEditText;
+    private Spinner mDaytimeSpinner;
+
+    private int numberOfTargets = -1;
+    private Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,16 +102,31 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
         setContentView(R.layout.activity_prepare_hunt);
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
 //        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        mNumTargetsTextView = (TextView) findViewById(R.id.textView_numtargets);
+
+        mDaytimeSpinner = (Spinner) findViewById(R.id.spinner_daytime);
+        mDaytimeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        prefferedDaytime = Photo.DAYTIME.DAY;
+                        break;
+                    case 1:
+                        prefferedDaytime = Photo.DAYTIME.NIGHT;
+                        break;
+                    //NOTE: pripadne dalsi pri rozsireni knihovny
+                    default:
+                        prefferedDaytime = Photo.DAYTIME.UNKNOWN;
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { /* EMPTY */ }
+        });
 
         mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
         /* Get rid of the keyboard at start */
@@ -127,7 +158,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                         //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
                         Request sr = new SearchRequest(p, getLatitude(), getLongitude(),
 //                                (int)(getRadius()*1000), 1280, 720);
-                                (int)(getRadius()*1000), 320, 200);
+                                (int)(getRadius()*1000), prefferedDaytime, 320, 200);
                         oos.writeObject(sr);
                         oos.flush();
                         Log.d(TAG, "Data OK odeslana");
@@ -177,8 +208,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                 HuntActivity.red_places = new ArrayList<>(places);
                 Intent i = new Intent();
                 i.setClass(PrepareHuntActivity.this, HuntActivity.class);
-//                i.putExtra(HuntActivity.GREEN_LIST_KEY, places);
-//                i.putExtra(HuntActivity.RED_LIST_KEY, places);
                 startActivity(i);
             }
         });
@@ -190,34 +219,53 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
         mRadiusEditText = (EditText) findViewById(R.id.editText_radius);
         mRadiusEditText.addTextChangedListener(this);
 
-        mResolvingError = savedInstanceState != null
-                && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-
-        // Create an instance of GoogleAPIClient.
+        /* Create an instance of GoogleAPIClient */
         if (mGoogleApiClient == null) {
-            Log.d(TAG, "trying to connect to API");
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(LocationServices.API)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
         }
-
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment)).getMapAsync(this);
-//        if (map == null) {
-//            return;
-//        }
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+
+        updateValuesFromBundle(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
+        outState.putString(NUM_TARGETS_TEXTVIEW_KEY, mNumTargetsTextView.getText().toString());
+        outState.putString(LATITUDE_TEXTVIEW_KEY, mLatitudeEditText.getText().toString());
+        outState.putString(LONGITUDE_TEXTVIEW_KEY, mLongitudeEditText.getText().toString());
+        outState.putString(RADIUS_TEXTVIEW_KEY, mRadiusEditText.getText().toString());
+        outState.putInt(DAYTIME_SPINNER_KEY, mDaytimeSpinner.getSelectedItemPosition());
+
+        super.onSaveInstanceState(outState);
+    }
+
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            mResolvingError = savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
+            if (savedInstanceState.keySet().contains(NUM_TARGETS_TEXTVIEW_KEY)) {
+                mNumTargetsTextView.setText(savedInstanceState.getString(NUM_TARGETS_TEXTVIEW_KEY));
+            }
+            if (savedInstanceState.keySet().contains(LATITUDE_TEXTVIEW_KEY)) {
+                mLatitudeEditText.setText(savedInstanceState.getString(LATITUDE_TEXTVIEW_KEY));
+            }
+            if (savedInstanceState.keySet().contains(LONGITUDE_TEXTVIEW_KEY)) {
+                mLongitudeEditText.setText(savedInstanceState.getString(LONGITUDE_TEXTVIEW_KEY));
+            }
+            if (savedInstanceState.keySet().contains(RADIUS_TEXTVIEW_KEY)) {
+                mRadiusEditText.setText(savedInstanceState.getString(RADIUS_TEXTVIEW_KEY));
+            }
+            if (savedInstanceState.keySet().contains(DAYTIME_SPINNER_KEY)) {
+                int pos = savedInstanceState.getInt(DAYTIME_SPINNER_KEY);
+                if (pos >= 0 && pos < mDaytimeSpinner.getAdapter().getCount()) {
+                    mDaytimeSpinner.setSelection(pos);
+                }
+            }
         }
-//        map.setMyLocationEnabled(true);
     }
 
     private double getLongitude() {
@@ -227,6 +275,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Longitude edit text contains non-double value!");
             lon = 0;
+            mRadiusEditText.setText(String.valueOf(DEFAULT_LONGITUDE));
         }
         return lon;
     }
@@ -238,6 +287,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Latitude edit text contains non-double value!");
             lat = 0;
+            mRadiusEditText.setText(String.valueOf(DEFAULT_LATITUDE));
         }
         return lat;
     }
@@ -248,14 +298,15 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
             radius = Double.parseDouble(mRadiusEditText.getText().toString());
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Radius edit text contains non-double value!");
-            radius = 0;
+            radius = DEFAULT_RADIUS;
+            mRadiusEditText.setText(String.valueOf(DEFAULT_RADIUS));
         }
         return radius;
     }
 
     @Override
     protected void onStart() {
-        if (!mResolvingError) {
+        if (!mResolvingError && mGoogleApiClient != null) {
             mGoogleApiClient.connect();
         }
         super.onStart();
@@ -263,16 +314,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
 
     @Override
     protected void onStop() {
-        if (!mResolvingError) {
+        if (!mResolvingError && mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
         }
         super.onStop();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
     }
 
     @Override
@@ -306,15 +351,18 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
             mLastLocation.setLatitude(latitude);
             mLastLocation.setLongitude(longitude);
 
+            // TODO: toto neni moc cool reseni...
             if (latitude == DEFAULT_LATITUDE && longitude == DEFAULT_LONGITUDE) {
                 Toast.makeText(this, getString(R.string.last_pos_not_known), Toast.LENGTH_SHORT).show();
             }
         }
         mLongitudeEditText.setText(String.valueOf(mLastLocation.getLongitude()));
         mLatitudeEditText.setText(String.valueOf(mLastLocation.getLatitude()));
-        mRadiusEditText.setText(String.valueOf(DEFAULT_RADIUS));
+        if (mRadiusEditText.getText().toString().isEmpty()) {
+            mRadiusEditText.setText(String.valueOf(DEFAULT_RADIUS));
+        }
 
-        setNewArea(mLastLocation.getLatitude(), mLastLocation.getLongitude(), DEFAULT_RADIUS);
+        setNewArea(mLastLocation.getLatitude(), mLastLocation.getLongitude(), getRadius());
     }
 
     private void setNewArea(double latitude, double longitude, double radius) {

@@ -198,7 +198,7 @@
                     <Spinner
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:id="@+id/spinner"
+                        android:id="@+id/spinner_daytime"
                         android:entries="@array/daytime"
                         android:gravity="end"
                         android:layout_gravity="right"
