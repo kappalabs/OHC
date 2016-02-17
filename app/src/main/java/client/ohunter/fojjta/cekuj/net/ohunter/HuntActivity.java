@@ -13,16 +13,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -179,13 +174,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 /* Change the orientation of the picture if necessary */
                 if (bitmap.getWidth() < bitmap.getHeight()) {
                     Matrix matrix = new Matrix();
-                    matrix.postRotate(90);
+                    matrix.postRotate(-90);
 
                     Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                     bitmap.recycle();
                     bitmap = rotatedBitmap;
                 }
-                CameraActivity.backgroundImage = bitmap;
+                CameraActivity.setTemplateImage(bitmap);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivity(intent);
@@ -216,14 +211,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             mRequestingLocationUpdates = false;
         }
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
+//
+//    @Override
+//    public void onResume() {
+//        super.onResume();
+//        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+//            startLocationUpdates();
+//        }
+//    }
 
     protected void onStart() {
         mGoogleApiClient.connect();
@@ -281,7 +276,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         createLocationRequest();
     }
 
-    protected void createLocationRequest() {
+    private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         //TODO: behem komunikace se serverem prenastavit na mensi nebo vypnout pro zamezeni prehlceni
         mLocationRequest.setInterval(8000);

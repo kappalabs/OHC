@@ -22,37 +22,52 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
 
     public static final String TAG = "CameraOverlay";
 
-    public Bitmap mBitmap;
-    SurfaceHolder mHolder;
-    static Camera mCamera;
+    private OnCameraActionListener mListener;
+    public static Bitmap mBitmap;
+    private SurfaceHolder mHolder;
+    private Camera mCamera;
 
 
+    public CameraOverlay(Context context, Camera camera) {
+        super(context);
+        mCamera = camera;
+
+        init(context);
+    }
 
     public CameraOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init(context);
+    }
 
+    public CameraOverlay(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init(context);
+    }
+
+    private void init(Context context) {
+        if (context instanceof OnCameraActionListener) {
+            mListener = (OnCameraActionListener) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement OnCameraActionListener");
+        }
         mHolder = getHolder();
         mHolder.addCallback(this);
+        // deprecated setting, but required on Android versions prior to 3.0
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         try {
-            mCamera = Camera.open();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-
-            //Setting the camera's aspect ratio
-            Camera.Parameters parameters = mCamera.getParameters();
-            List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
-            Camera.Size optimalSize = getOptimalPreviewSize(sizes,
-                    getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
-//            Camera.Size optimalSize = sizes.get(0);
-            parameters.setPreviewSize(optimalSize.width, optimalSize.height);
-            mCamera.setParameters(parameters);
+//            //Setting the camera's aspect ratio
+//            Camera.Parameters parameters = mCamera.getParameters();
+//            List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
+//            Camera.Size optimalSize = getOptimalPreviewSize(sizes,
+//                    getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
+////            Camera.Size optimalSize = sizes.get(0);
+//            parameters.setPreviewSize(optimalSize.width, optimalSize.height);
+//            mCamera.setParameters(parameters);
 
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
@@ -61,66 +76,49 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
-//    private Camera.Size optimalSize;
+//    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+//        Log.d("Camera", "Vybiram nejlepsi pro rozmery w*h = "+w+"*"+h);
+//        final double ASPECT_TOLERANCE = 0.1;
+//        double targetRatio = (double)h / w;
 //
-//    @Override
-//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+//        if (sizes == null) return null;
 //
-//        final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
-//        final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
-//        setMeasuredDimension(width, height);
+//        Camera.Size optimalSize = null;
+//        double minDiff = Double.MAX_VALUE;
 //
-//        Camera.Parameters parameters = mCamera.getParameters();
-//        List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
-//        if (sizes != null) {
-//            optimalSize = getOptimalPreviewSize(sizes, width, height);
+//        int targetHeight = h;
+//
+//        for (Camera.Size size : sizes) {
+//            double ratio = (double) size.width / size.height;
+//            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+//            if (Math.abs(size.height - targetHeight) < minDiff) {
+//                optimalSize = size;
+//                minDiff = Math.abs(size.height - targetHeight);
+//            }
 //        }
+//
+//        if (optimalSize == null) {
+//            minDiff = Double.MAX_VALUE;
+//            for (Camera.Size size : sizes) {
+//                if (Math.abs(size.height - targetHeight) < minDiff) {
+//                    optimalSize = size;
+//                    minDiff = Math.abs(size.height - targetHeight);
+//                }
+//            }
+//        }
+//        Log.d("Camera", "nejlepsi je "+optimalSize.width+"*"+optimalSize.height);
+//        return optimalSize;
+//    }
+//
+//    public Camera.Parameters getParameters() {
+//        if (mCamera != null) {
+//            return mCamera.getParameters();
+//        }
+//        return null;
 //    }
 
-    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-        Log.d("Camera", "Vybiram nejlepsi pro rozmery w*h = "+w+"*"+h);
-        final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double)h / w;
-
-        if (sizes == null) return null;
-
-        Camera.Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
-
-        int targetHeight = h;
-
-        for (Camera.Size size : sizes) {
-            double ratio = (double) size.width / size.height;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
-            if (Math.abs(size.height - targetHeight) < minDiff) {
-                optimalSize = size;
-                minDiff = Math.abs(size.height - targetHeight);
-            }
-        }
-
-        if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
-            for (Camera.Size size : sizes) {
-                if (Math.abs(size.height - targetHeight) < minDiff) {
-                    optimalSize = size;
-                    minDiff = Math.abs(size.height - targetHeight);
-                }
-            }
-        }
-        Log.d("Camera", "nejlepsi je "+optimalSize.width+"*"+optimalSize.height);
-        return optimalSize;
-    }
-
-    public Camera.Parameters getParameters() {
-        if (mCamera != null) {
-            return mCamera.getParameters();
-        }
-        return null;
-    }
-
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,int height) {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         // If your preview can change or rotate, take care of those events here.
         // Make sure to stop the preview before resizing or reformatting it.
 
@@ -141,13 +139,11 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.getSupportedPreviewSizes();
         mCamera.setParameters(parameters);
-        mCamera.startPreview();
 
         // start preview with new settings
         try {
             mCamera.setPreviewDisplay(mHolder);
             mCamera.startPreview();
-
         } catch (Exception e){
             Log.d(TAG, "Error starting camera preview: " + e.getMessage());
         }
@@ -166,21 +162,30 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
      *  Take a picture and and convert it from bytes[] to Bitmap.
      */
     public void takeAPicture() {
-//        mCamera.takePicture(null, null, mPictureCallback);
         TakePictureTask takePictureTask = new TakePictureTask();
         takePictureTask.execute();
-
-//        mCamera.stopPreview();
-//        mCamera.startPreview();
     }
 
     Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
             BitmapFactory.Options options = new BitmapFactory.Options();
+            /* Release the previous picture */
+            if (mBitmap != null) {
+                mBitmap.recycle();
+            }
+            /* Retrieve the new picture */
             mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
 
-//            Log.d(TAG, "v onpicturetaken pred filem");
+            /* Allows to see the preview again */
+            mCamera.stopPreview();
+            mCamera.startPreview();
+
+            /* Let the parent know about the new prepared picture */
+            if (mListener != null) {
+                mListener.onImageReady();
+            }
+
             String root = Environment.getExternalStorageDirectory().toString();
             File myDir = new File(root + "/ohunt_camera");
             if(!myDir.exists()) {
@@ -208,41 +213,18 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
 
         @Override
         protected void onPostExecute(Void result) {
-            // This returns the preview back to the live camera feed
-            mCamera.stopPreview();
-            mCamera.startPreview();
         }
 
         @Override
         protected Void doInBackground(Void... params) {
             mCamera.takePicture(null, null, mPictureCallback);
 
-//            try {
-//                Thread.sleep(1500); // few seconds preview
-//            } catch (InterruptedException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-
             return null;
         }
 
     }
 
-//    private Bitmap bitmap_;
-//
-//    public Bitmap takeAPicture() {
-//        Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
-//            @Override
-//            public void onPictureTaken(byte[] data, Camera camera) {
-//                BitmapFactory.Options options = new BitmapFactory.Options();
-//                bitmap_ = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-//            }
-//        };
-//        mCamera.takePicture(null, null, mPictureCallback);
-//
-//        mCamera.stopPreview();
-//        mCamera.startPreview();
-//        return bitmap_;
-//    }
+    public interface OnCameraActionListener {
+        void onImageReady();
+    }
 }

@@ -1,6 +1,7 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -60,7 +61,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class PrepareHuntActivity extends AppCompatActivity implements ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
+public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private GoogleMap map;
     private GoogleApiClient mGoogleApiClient;
@@ -140,75 +141,19 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                 StrictMode.setThreadPolicy(policy);
 
-                ArrayList<Place> places = new ArrayList<>();
-                try {
-                    Socket server = new Socket("192.168.1.196", 4242);
-//                    Socket server = new Socket("192.168.42.56", 4242);
-//                    Socket server = new Socket("192.168.43.144", 4242);
-                    try {
-                        Log.d(TAG, "Pred oos");
-                        ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
-                        Log.d(TAG, "Data na server");
-//                        Request rr = new RegisterRequest("nickClient", "passwdClient");
-                        Player p = new Player(1, "nick", 4242);
-                        /* GPS Vysehradu */
-//                        Request sr = new SearchRequest(p, 50.0647411, 14.4196972, 200, 1280, 720);4
-                        // TODO: volit max rozmery pozadovanych fotografii?
-                        // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
-                        //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-                        Request sr = new SearchRequest(p, getLatitude(), getLongitude(),
-//                                (int)(getRadius()*1000), 1280, 720);
-                                (int)(getRadius()*1000), prefferedDaytime, 400, 240);
-                        oos.writeObject(sr);
-                        oos.flush();
-                        Log.d(TAG, "Data OK odeslana");
+                // TODO: ziskani real objektu hrace!
+                Player player = new Player(1, "nick", 4242);
+                // TODO: volit max rozmery pozadovanych fotografii?
+                // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
+                //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
+                Request request = new SearchRequest(player, getLatitude(), getLongitude(),
+                        (int)(getRadius() * 1000), prefferedDaytime, 400, 240);
 
-                        Log.d(TAG, "Pred ois");
-                        ObjectInputStream ois = new ObjectInputStream(server.getInputStream());
-                        Object obj = ois.readObject();
-                        try {
-                            Response resp = (Response) obj;
-                            Log.d(TAG, "Mam response: null? " + ((resp == null) ? "ano" : "ne"));
-                            if (resp.places != null) {
-                                places.addAll(resp.places);
-                                Log.d(TAG, "mam " + resp.places.size() + " mist");
-                                for (Place pl : resp.places) {
-                                    Log.d(TAG, pl.toString());
-                                }
-                            }
-                            if (resp.player != null) {
-                                Log.d(TAG, "mam hrace: " + resp.player);
-                            }
-                            if (resp.similarity != Float.NaN) {
-                                Log.d(TAG, "mam similarity: " + resp.similarity);
-                            }
-                        } catch (ClassCastException ex) {
-                            if (obj instanceof OHException) {
-                                Log.d(TAG, "Vypadla mi OHExceptiona: " + obj);
-                            } else {
-                                Log.d(TAG, "Server posila neznamy format tridy");
-                            }
-                        }
-                        oos.close();
-                        ois.close();
-                        server.close();
-                    } catch (IOException | ClassNotFoundException e) {
-//                        Log.e(TAG, e.getLocalizedMessage());
-//                        Log.e(TAG, e.getMessage());
-                        e.printStackTrace();
-                    }
-                } catch (IOException ex) {
-//                    Log.e(TAG, ex.getLocalizedMessage());
-//                    Log.e(TAG, ex.getMessage());
-                    ex.printStackTrace();
-                }
-
-                /* TODO: rozdeleni novych/prijatych mist na zelene a cervene */
-                HuntActivity.green_places = new ArrayList<>();
-                HuntActivity.red_places = new ArrayList<>(places);
-                Intent i = new Intent();
-                i.setClass(PrepareHuntActivity.this, HuntActivity.class);
-                startActivity(i);
+                /* Asynchronously execute and wait for callback when result ready*/
+                Utils.RetrieveResponseTask responseTask =
+                        new Utils().new RetrieveResponseTask(PrepareHuntActivity.this,
+                                Utils.getServerCommunicationDialog(PrepareHuntActivity.this));
+                responseTask.execute(request);
             }
         });
 
@@ -266,6 +211,39 @@ public class PrepareHuntActivity extends AppCompatActivity implements Connection
                 }
             }
         }
+    }
+
+    @Override
+    public void onTaskCompleted(Response response, OHException ohex) {
+        /* Problem on server side */
+        if (ohex != null) {
+            Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
+                    Toast.LENGTH_SHORT).show();
+            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            return;
+        }
+        /* Problem on client side */
+        if (response == null) {
+            Toast.makeText(PrepareHuntActivity.this, getString(R.string.server_unreachable_error),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        /* Success */
+        ArrayList<Place> places = new ArrayList<>();
+        if (response.places != null) {
+            places.addAll(response.places);
+            Log.d(TAG, "Ziskano: " + response.places.size() + " mist");
+            for (Place pl : response.places) {
+                Log.d(TAG, pl.toString());
+            }
+        }
+
+        /* TODO: rozdeleni novych/prijatych mist na zelene a cervene */
+        HuntActivity.green_places = new ArrayList<>();
+        HuntActivity.red_places = new ArrayList<>(places);
+        Intent i = new Intent();
+        i.setClass(PrepareHuntActivity.this, HuntActivity.class);
+        startActivity(i);
     }
 
     private double getLongitude() {

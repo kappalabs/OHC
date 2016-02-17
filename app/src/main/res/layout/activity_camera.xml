@@ -1,11 +1,13 @@
-<LinearLayout
+
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="client.ohunter.fojjta.cekuj.net.ohunter.CameraActivity"
-    android:orientation="horizontal"
-    android:baselineAligned="false">
+    android:fitsSystemWindows="true"
+    tools:context="client.ohunter.fojjta.cekuj.net.ohunter.CameraActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -15,19 +17,8 @@
 
         <FrameLayout
             android:id="@+id/frameLayout_cam_preview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentLeft="true"
-            android:layout_marginLeft="0dp"
-            android:layout_alignParentTop="true"
-            android:layout_marginTop="0dp">
-
-            <client.ohunter.fojjta.cekuj.net.ohunter.CameraOverlay
-                android:id="@+id/cameraOverlay"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-            </client.ohunter.fojjta.cekuj.net.ohunter.CameraOverlay>
-
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" >
         </FrameLayout>
 
         <LinearLayout
@@ -41,29 +32,32 @@
             android:layout_alignParentTop="true"
             android:layout_marginTop="0dp">
 
-            <ImageView android:id="@+id/imageView_reference"
+            <ImageView android:id="@+id/imageView_template"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center" />
-            <!--<TextView-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textAppearance="?android:attr/textAppearanceLarge"-->
-                <!--android:text="Ahoj Svete !!!!!!!!!!"-->
-                <!--android:id="@+id/textView11" />-->
         </LinearLayout>
 
         <ScrollView
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="match_parent"
             android:id="@+id/scrollView3"
             android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true">
+            android:layout_alignParentRight="true"
+            android:layout_margin="15dp">
 
             <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content"
+                android:gravity="top|center_horizontal">
+
+                <Button
+                    style="?android:attr/buttonStyleSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:text="Shoot"
+                    android:id="@+id/button_shoot" />
 
                 <SeekBar
                     android:layout_width="match_parent"
@@ -71,64 +65,51 @@
                     android:id="@+id/seekBar_opacity"
                     android:max="100" />
 
-                <Button
-                    style="?android:attr/buttonStyleSmall"
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <Button
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="&lt;-"
+                        android:id="@+id/button_rotateLeft"
+                        android:layout_weight="1" />
+
+                    <Button
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="->"
+                        android:id="@+id/button_rotateRight"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Shoot"
-                    android:id="@+id/button_shoot" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/textView_numberOfPhotos"
+                    android:textStyle="bold"
+                    android:textSize="25sp" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView_lastPhoto" />
+
             </LinearLayout>
         </ScrollView>
     </RelativeLayout>
 
-</LinearLayout>
-<!--<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--xmlns:tools="http://schemas.android.com/tools"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:background="#0099cc"-->
-    <!--tools:context="client.ohunter.fojjta.cekuj.net.ohunter.CameraActivity">-->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_upload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@android:drawable/ic_dialog_email"
+        app:layout_anchor="@id/relativeLayout_cam"
+        app:layout_anchorGravity="center|bottom"
+        app:backgroundTint="@color/kappa_blue" />
 
-    <!--&lt;!&ndash; The primary full-screen view. This can be replaced with whatever view-->
-         <!--is needed to present your content, e.g. VideoView, SurfaceView,-->
-         <!--TextureView, etc. &ndash;&gt;-->
-    <!--<TextView-->
-        <!--android:id="@+id/fullscreen_content"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:gravity="center"-->
-        <!--android:keepScreenOn="true"-->
-        <!--android:text="@string/dummy_content"-->
-        <!--android:textColor="#33b5e5"-->
-        <!--android:textSize="50sp"-->
-        <!--android:textStyle="bold" />-->
-
-    <!--&lt;!&ndash; This FrameLayout insets its children based on system windows using-->
-         <!--android:fitsSystemWindows. &ndash;&gt;-->
-    <!--<FrameLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:fitsSystemWindows="true">-->
-
-        <!--<LinearLayout-->
-            <!--android:id="@+id/fullscreen_content_controls"-->
-            <!--style="?metaButtonBarStyle"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="bottom|center_horizontal"-->
-            <!--android:background="@color/black_overlay"-->
-            <!--android:orientation="horizontal"-->
-            <!--tools:ignore="UselessParent">-->
-
-            <!--<Button-->
-                <!--android:id="@+id/dummy_button"-->
-                <!--style="d:layout_height="wrap_content"-->
-                <!--androi?metaButtonBarButtonStyle"-->
-                <!--android:layout_width="0dp"-->
-                <!--android:layout_weight="1"-->
-                <!--android:text="@string/dummy_button" />-->
-
-        <!--</LinearLayout>-->
-    <!--</FrameLayout>-->
-
-<!--</FrameLayout>-->
+</android.support.design.widget.CoordinatorLayout>

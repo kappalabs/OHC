@@ -70,22 +70,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @return A new instance of fragment HuntOfferFragment.
      */
     public static HuntOfferFragment newInstance() {
-//        HuntOfferFragment fragment = new HuntOfferFragment();
-//        Bundle args = new Bundle();
-//        args.putSerializable(PARAM_GREENS_KEY, green_places);
-//        args.putSerializable(PARAM_RED_KEY, red_places);
-//        fragment.setArguments(args);
-//        return fragment;
         return new HuntOfferFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        if (getArguments() != null) {
-//            mParamGreen = (ArrayList<Place>) getArguments().getSerializable(PARAM_GREENS_KEY);
-//            mParamRed = (ArrayList<Place>) getArguments().getSerializable(PARAM_RED_KEY);
-//        }
         if (savedInstanceState != null) {
             if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
                 selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
@@ -168,7 +158,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "red position: " + position);
                 /* Obarveni polozky */
                 selectedGreenIndex = UNKNOWN_INDEX;
                 selectedRedIndex = position;
@@ -274,15 +263,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private void updateHighlights() {
         clearHighlighted();
         if (activatedIndex != UNKNOWN_INDEX) {
-//            hmenuGreenListview.getChildAt(activatedIndex).setBackgroundColor(ACTIVATED_PLACE_COLOR);
             getViewByPosition(activatedIndex, hmenuGreenListview).setBackgroundColor(ACTIVATED_PLACE_COLOR);
         }
         if (selectedGreenIndex != UNKNOWN_INDEX && selectedGreenIndex != activatedIndex) {
-//            hmenuGreenListview.getChildAt(selectedGreenIndex).setBackgroundColor(SELECTED_GREEN_COLOR);
             getViewByPosition(selectedGreenIndex, hmenuGreenListview).setBackgroundColor(SELECTED_GREEN_COLOR);
         }
         if (selectedRedIndex != UNKNOWN_INDEX) {
-//            hmenuRedListview.getChildAt(selectedRedIndex).setBackgroundColor(SELECTED_RED_COLOR);
             getViewByPosition(selectedRedIndex, hmenuRedListview).setBackgroundColor(SELECTED_RED_COLOR);
         }
     }
@@ -290,11 +276,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private void clearHighlighted() {
         for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
             hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//            getViewByPosition(i, hmenuGreenListview).setBackgroundColor(UNSELECTED_PLACE_COLOR);
         }
         for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
             hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//            getViewByPosition(i, hmenuRedListview).setBackgroundColor(UNSELECTED_PLACE_COLOR);
         }
     }
 
@@ -316,8 +300,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
         }
     }
 
