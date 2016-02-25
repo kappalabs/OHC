@@ -231,6 +231,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
         };
 
+        //NOTE: java.lang.NullPointerException: Attempt to invoke interface method 'int java.util.List.size()' on a null object reference
+        // nastala po presunu na druhou page ze treti, OHunter byl nejspis aktivni, byla vyvolan spravce SM z odemykaci obrazovky...
         hmenuGreenListview.setAdapter(mGreenAdapter);
         hmenuRedListview.setAdapter(mRedAdapter);
 

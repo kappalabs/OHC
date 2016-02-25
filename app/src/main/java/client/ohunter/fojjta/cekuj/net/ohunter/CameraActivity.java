@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,7 +32,7 @@ import java.nio.ByteBuffer;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class CameraActivity extends AppCompatActivity implements CameraOverlay.OnCameraActionListener, Utils.OnTaskCompleted {
+public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener, Utils.OnResponseTaskCompleted {
 
     public static final String TAG = "CameraActivity";
 
@@ -54,9 +55,6 @@ public class CameraActivity extends AppCompatActivity implements CameraOverlay.O
     private Camera mCamera;
     private CameraOverlay mPreview;
 
-    /* Matrices for Sobel filter */
-    private static final int[][] SOBEL_ROW = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
-    private static final int[][] SOBEL_DIAG = {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}};
 
 
     @Override
@@ -146,9 +144,10 @@ public class CameraActivity extends AppCompatActivity implements CameraOverlay.O
 
         /* Show the reference photo edges on top of the photo preview */
         templateImageView = (ImageView) findViewById(R.id.imageView_template);
-        edgesImage = sobel();
-        templateImageView.setImageBitmap(edgesImage);
-        templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
+        Utils.CountEdgesTask edgesTask = new Utils().new CountEdgesTask(this, Utils.getStandardDialog(this,
+                getString(R.string.executing_task),
+                getString(R.string.waiting_for_result)), referenceImage);
+        edgesTask.execute();
 
         /* Create an instance of Camera, our Preview view and set it as the content of our activity */
         mCamera = getCameraInstance();
@@ -201,7 +200,7 @@ public class CameraActivity extends AppCompatActivity implements CameraOverlay.O
     }
 
     @Override
-    public void onTaskCompleted(Response response, OHException ohex) {
+    public void onResponseTaskCompleted(Response response, OHException ohex) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(CameraActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -295,51 +294,10 @@ public class CameraActivity extends AppCompatActivity implements CameraOverlay.O
         referenceImage = templateImage;
     }
 
-    private Bitmap sobel() {
-        Bitmap edges = null;
-        Bitmap orig = referenceImage;
-        /* Make the image bigger, so that it's blured */
-        Bitmap bigOrig = Bitmap.createScaledBitmap(referenceImage,
-                orig.getWidth() * 2, orig.getHeight() * 2, true);
-        int width = bigOrig.getWidth();
-        int height = bigOrig.getHeight();
-        Bitmap bigEdges = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int souc1 = 0, souc2 = 0, souc3 = 0, souc4 = 0;
-                int souc5 = 0, souc6 = 0, souc7 = 0, souc8 = 0;
-                int poc = 0;
-                for (int i = -1; i <= 1; i++) {
-                    for (int j = -1; j <= 1; j++) {
-                        int xi = x + i, yj = y + j;
-                        if (xi >= 0 && xi < width && yj >= 0 && yj < height) {
-                            // NOTE: pozor, pokud neni v obrazku zelena slozka...!
-                            int gray = (bigOrig.getPixel(xi, yj) >> 8) & 0xFF;
-                            souc1 += gray * SOBEL_ROW[i + 1][j + 1];
-                            souc2 += gray * SOBEL_DIAG[i + 1][j + 1];
-                            souc3 += gray * SOBEL_ROW[1 - i][1 - j];
-                            souc4 += gray * SOBEL_DIAG[1 - i][1 - j];
-                            souc5 += gray * SOBEL_ROW[1 - i][j + 1];
-                            souc6 += gray * SOBEL_DIAG[1 - i][j + 1];
-                            souc7 += gray * SOBEL_ROW[i + 1][1 - j];
-                            souc8 += gray * SOBEL_DIAG[i + 1][1 - j];
-                            poc++;
-                        }
-                    }
-                }
-                int myGray = 0xff - Math.max(souc1, Math.max(souc2, Math.max(souc3, Math.max(souc4,
-                        Math.max(souc5, Math.max(souc6, Math.max(souc7, souc8))))))) / poc;
-                // NOTE: alfa slozka je vynasobena 4 pro zvyrazneni
-                int newPixel = ((0xff - myGray) << 26) | (myGray << 16) | (myGray << 8) | myGray;
-                bigEdges.setPixel(x, y, newPixel);
-            }
-        }
-        /* Original size is different from this one -> resize back */
-        edges = Bitmap.createScaledBitmap(bigEdges, orig.getWidth(), orig.getHeight(), true);
-        bigOrig.recycle();
-        bigEdges.recycle();
-
-        return edges;
+    @Override
+    public void onEdgesTaskCompleted(Bitmap edges) {
+        edgesImage = edges;
+        templateImageView.setImageBitmap(edgesImage);
+        templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
     }
 }

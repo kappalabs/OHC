@@ -12,18 +12,12 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button mNewHuntButton;
-    private Button mStatisticsButton;
-    private Button mHelpButton;
-    private Button mAboutButton;
-    private Button mLogOutButton;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNewHuntButton = (Button) findViewById(R.id.button_new_hunt);
+        Button mNewHuntButton = (Button) findViewById(R.id.button_new_hunt);
         mNewHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -32,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-        mStatisticsButton = (Button) findViewById(R.id.button_statistics);
+        Button mStatisticsButton = (Button) findViewById(R.id.button_statistics);
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -46,9 +40,21 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-        mHelpButton = (Button) findViewById(R.id.button_help);
-        mAboutButton = (Button) findViewById(R.id.button_about);
-        mLogOutButton = (Button) findViewById(R.id.button_logout);
+        Button mHelpButton = (Button) findViewById(R.id.button_help);
+        mHelpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //TODO
+            }
+        });
+        Button mAboutButton = (Button) findViewById(R.id.button_about);
+        mAboutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //TODO
+            }
+        });
+        Button mLogOutButton = (Button) findViewById(R.id.button_logout);
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -60,8 +60,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Locale;
 
-public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
+public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private GoogleMap map;
     private GoogleApiClient mGoogleApiClient;
@@ -130,11 +131,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
         });
 
         mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
-        /* Get rid of the keyboard at start */
-        mStartHuntButton.setSelected(true);
-        mStartHuntButton.setFocusable(true);
-        mStartHuntButton.setFocusableInTouchMode(true);
-        mStartHuntButton.requestFocus();
         mStartHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -172,6 +168,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
                     .addOnConnectionFailedListener(this)
                     .build();
         }
+        /* Register callback on the map fragment */
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment)).getMapAsync(this);
 
         updateValuesFromBundle(savedInstanceState);
@@ -214,7 +211,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
     }
 
     @Override
-    public void onTaskCompleted(Response response, OHException ohex) {
+    public void onResponseTaskCompleted(Response response, OHException ohex) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -253,7 +250,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Longitude edit text contains non-double value!");
             lon = 0;
-            mRadiusEditText.setText(String.valueOf(DEFAULT_LONGITUDE));
+            mLongitudeEditText.setText(String.valueOf(DEFAULT_LONGITUDE));
         }
         return lon;
     }
@@ -265,7 +262,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Latitude edit text contains non-double value!");
             lat = 0;
-            mRadiusEditText.setText(String.valueOf(DEFAULT_LATITUDE));
+            mLatitudeEditText.setText(String.valueOf(DEFAULT_LATITUDE));
         }
         return lat;
     }
@@ -312,7 +309,11 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
             return;
         }
         Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
+        if (getLatitude() != 0 && getLongitude() != 0) {
+            mLastLocation = new Location("dummyprovider");
+            mLastLocation.setLatitude(getLatitude());
+            mLastLocation.setLongitude(getLongitude());
+        } else if (mLastLocation != null) {
             /* Ziskanou pozici si ulozim */
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
@@ -424,8 +425,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
             mResolvingError = false;
             if (resultCode == RESULT_OK) {
                 // Make sure the app is not already connected or attempting to connect
-                if (!mGoogleApiClient.isConnecting() &&
-                        !mGoogleApiClient.isConnected()) {
+                if (!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()) {
                     mGoogleApiClient.connect();
                 }
             }
@@ -457,6 +457,20 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+//        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+//        map.setTrafficEnabled(true);
+//        map.setIndoorEnabled(true);
+//        map.setBuildingsEnabled(true);
+        map.getUiSettings().setZoomControlsEnabled(true);
+        map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                setNewArea(latLng.latitude, latLng.longitude, getRadius());
+                mLongitudeEditText.setText(String.format(Locale.ENGLISH, "%.7f", latLng.longitude));
+                mLatitudeEditText.setText(String.format(Locale.ENGLISH, "%.7f", latLng.latitude));
+            }
+        });
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -467,18 +481,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnTa
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        map = googleMap;
-        /* NOTE: muze byt null kdyz je ready? */
-        if (map == null) {
-            return;
-        }
         map.setMyLocationEnabled(true);
-//        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-//        map.setMyLocationEnabled(true);
-//        map.setTrafficEnabled(true);
-//        map.setIndoorEnabled(true);
-//        map.setBuildingsEnabled(true);
-//        map.getUiSettings().setZoomControlsEnabled(true);
     }
 
     /* A fragment to display an error dialog */
