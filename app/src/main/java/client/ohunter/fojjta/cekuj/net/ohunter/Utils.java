@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ComposePathEffect;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.ImageView;
@@ -31,14 +32,53 @@ public class Utils {
 //    public static final String ADRESS = "192.168.1.196";    // AP doma
 //    public static final String ADRESS = "192.168.42.56";  // USB tether
 //    public static final String ADRESS = "192.168.43.144"; // Android AP
-    public static final String ADRESS = "195.113.16.233"; // Eduroam
-    public static final int PORT = 4242;
+//    public static final String ADRESS = "195.113.16.233"; // Eduroam
+    public static final String DEFAULT_ADDRESS = "localhost";
+    public static final int DEFAULT_PORT = 4242;
+
+    private static String mAddress = DEFAULT_ADDRESS;
+    private static int mPort = DEFAULT_PORT;
 
     /* Matrices for Sobel filter */
     private static final int[][] SOBEL_ROW = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
     private static final int[][] SOBEL_DIAG = {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}};
 
 
+    /**
+     * Sets the server address and port.
+     *
+     * @param address The server address to be used.
+     * @param port The server port to be used.
+     */
+    public static void initServer(String address, int port) {
+        mAddress = address;
+        mPort = port;
+    }
+
+    /**
+     * Gets the current server address in use.
+     *
+     * @return The current server address in use.
+     */
+    public static String getAddress() {
+        return mAddress;
+    }
+
+    /**
+     * Gets the current server port in use.
+     *
+     * @return The current server port in use.
+     */
+    public static int getPort() {
+        return mPort;
+    }
+
+    /**
+     * Transforms the SImage object from OHunter library to Android Bitmap.
+     *
+     * @param sImage The SImage object from OHunter library.
+     * @return Converted SImage object into Android Bitmap.
+     */
     public static Bitmap toBitmap(SImage sImage) {
         byte[] imgBytes = sImage.getImage();
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
@@ -94,11 +134,16 @@ public class Utils {
     }
 
     public static Response getServerResponse(Request request) throws OHException {
-        Log.d(TAG, "getServerResponse(): start");
+        /* Check if server address is set */
+        if (mAddress == null || mPort == 0) {
+            throw new RuntimeException("Utils must have server set before any communication!");
+        }
+
+        Log.d(TAG, "getServerResponse(): start, asking server ["+mAddress+":"+mPort+"]");
         Response response = null;
         Socket server = null;
         try {
-            server = new Socket(ADRESS, PORT);
+            server = new Socket(mAddress, mPort);
             ObjectOutputStream oos = null;
             ObjectInputStream ois = null;
             try {

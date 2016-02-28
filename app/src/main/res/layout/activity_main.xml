@@ -20,14 +20,11 @@
             android:layout_weight="0.1">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Your nickname"
-                android:id="@+id/textView2"
-                android:layout_alignParentTop="true"
-                android:layout_alignRight="@+id/textView"
-                android:layout_alignEnd="@+id/textView"
+                android:text="@string/your_nickname"
+                android:id="@+id/textView_player"
                 android:layout_gravity="right"
                 android:layout_weight="0.1"
                 android:gravity="center_vertical|center_horizontal" />
@@ -46,7 +43,7 @@
                 <Button
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
-                    android:text="Start new hunt"
+                    android:text="@string/start_new_hunt_button"
                     android:id="@+id/button_new_hunt"
                     android:layout_weight="1"
                     android:layout_marginLeft="5dp"
@@ -60,7 +57,7 @@
                 <Button
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:text="Statistics"
+                    android:text="@string/statistics_button"
                     android:id="@+id/button_statistics"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
@@ -74,7 +71,7 @@
                 <Button
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:text="Help"
+                    android:text="@string/help_button"
                     android:id="@+id/button_help"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
@@ -88,7 +85,7 @@
                 <Button
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:text="About"
+                    android:text="@string/about_button"
                     android:id="@+id/button_about"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
@@ -102,7 +99,7 @@
                 <Button
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:text="Log out"
+                    android:text="@string/log_out_button"
                     android:id="@+id/button_logout"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"

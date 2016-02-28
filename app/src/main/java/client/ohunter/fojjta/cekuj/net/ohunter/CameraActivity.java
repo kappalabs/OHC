@@ -208,7 +208,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     private void serverCommunication() {
-        // TODO: real player object!
+        // TODO: real mPlayer object!
         Player player = new Player(1, "nick", 4242);
 
         Bitmap b;
