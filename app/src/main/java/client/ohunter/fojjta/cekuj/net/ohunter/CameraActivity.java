@@ -2,7 +2,12 @@ package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.app.ProgressDialog;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
@@ -42,9 +47,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private ImageView templateImageView;
     private SeekBar opacitySeekBar;
+    private SeekBar colorSeekBar;
     private Button shootButton;
     private Button rotateLeftButton, rotateRightButton;
     private TextView numberOfPhotosTextview;
+    private TextView scoreTextview;
     private ImageView lastPhotoImageview;
     private FloatingActionButton uploadFab;
 
@@ -66,6 +73,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
         numberOfPhotosTextview = (TextView) findViewById(R.id.textView_numberOfPhotos);
         numberOfPhotosTextview.setText(DEFAULT_NUM_ATTEMPTS + getString(R.string.number_sign));
+
+        scoreTextview = (TextView) findViewById(R.id.textView_score);
+        scoreTextview.setVisibility(View.GONE);
 
         shootButton = (Button) findViewById(R.id.button_shoot);
         shootButton.setOnClickListener(new View.OnClickListener() {
@@ -122,12 +132,25 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
+            public void onStartTrackingTouch(SeekBar seekBar) { }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+
+        colorSeekBar = (SeekBar) findViewById(R.id.seekBar_color);
+        colorSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                changeBitmapColor(edgesImage, templateImageView,
+                        Color.HSVToColor(new float[]{(float)progress / seekBar.getMax() * 360, 1, 1}));
             }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStartTrackingTouch(SeekBar seekBar) { }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) { }
         });
 
         uploadFab = (FloatingActionButton) findViewById(R.id.fab_upload);
@@ -154,6 +177,18 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         mPreview = new CameraOverlay(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
         preview.addView(mPreview);
+    }
+
+    private void changeBitmapColor(Bitmap sourceBitmap, ImageView image, int color) {
+        Bitmap resultBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0,
+                sourceBitmap.getWidth(), sourceBitmap.getHeight());
+        Paint p = new Paint();
+        ColorFilter filter = new LightingColorFilter(color, 0);
+        p.setColorFilter(filter);
+        image.setImageBitmap(resultBitmap);
+
+        Canvas canvas = new Canvas(resultBitmap);
+        canvas.drawBitmap(resultBitmap, 0, 0, p);
     }
 
     /**
@@ -219,6 +254,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         Toast.makeText(CameraActivity.this,
                 getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
         Log.d(TAG, "response similarity: " + response.similarity);
+        scoreTextview.setText(response.similarity * 100 + "%");
     }
 
 //    @Override

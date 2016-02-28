@@ -38,6 +38,19 @@
                 android:layout_gravity="center" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/textView_score"
+            android:layout_margin="17dp"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentBottom="false"
+            android:layout_alignParentRight="false"
+            android:layout_centerInParent="true"
+            android:background="#ffffff" />
+
         <ScrollView
             android:layout_width="100dp"
             android:layout_height="match_parent"
@@ -91,7 +104,13 @@
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:id="@+id/textView_numberOfPhotos"
                     android:textStyle="bold"
-                    android:textSize="25sp" />
+                    android:textSize="25sp"
+                    android:background="#ffffff" />
+
+                <SeekBar
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/seekBar_color" />
 
                 <ImageView
                     android:layout_width="match_parent"
