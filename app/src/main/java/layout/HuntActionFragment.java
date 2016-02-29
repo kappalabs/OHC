@@ -259,9 +259,9 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     /**
-     * Change the location of the mPlayer.
+     * Change the location of the player.
      *
-     * @param location The new location of the mPlayer.
+     * @param location The new location of the player.
      */
     public void changeLocation(Location location) {
         mLastLocation = location;

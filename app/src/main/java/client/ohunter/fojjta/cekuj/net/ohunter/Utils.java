@@ -4,45 +4,57 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ComposePathEffect;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.ImageView;
 
-import com.kappa_labs.ohunter.lib.entities.Place;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
-import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * Class providing useful functions for different types of usage.
+ * Singleton class providing useful functions for different types of usage.
  */
 public class Utils {
 
     public static final String TAG = "Utils";
 
-//    public static final String ADRESS = "192.168.1.196";    // AP doma
-//    public static final String ADRESS = "192.168.42.56";  // USB tether
-//    public static final String ADRESS = "192.168.43.144"; // Android AP
-//    public static final String ADRESS = "195.113.16.233"; // Eduroam
     public static final String DEFAULT_ADDRESS = "localhost";
     public static final int DEFAULT_PORT = 4242;
+    public static final int DEFAULT_TIMEOUT = 5000;
 
     private static String mAddress = DEFAULT_ADDRESS;
     private static int mPort = DEFAULT_PORT;
+    private static int mTimeout = DEFAULT_TIMEOUT;
 
     /* Matrices for Sobel filter */
     private static final int[][] SOBEL_ROW = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
     private static final int[][] SOBEL_DIAG = {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}};
 
+    private static Utils mInstance = null;
+
+
+    private Utils() {
+        /* Exists only to defeat instantiation */
+    }
+
+    /**
+     * Get instance of this singleton class.
+     *
+     * @return The instance of this singleton class.
+     */
+    public static Utils getInstance() {
+        if (mInstance == null) {
+            mInstance = new Utils();
+        }
+        return mInstance;
+    }
 
     /**
      * Sets the server address and port.
@@ -53,6 +65,29 @@ public class Utils {
     public static void initServer(String address, int port) {
         mAddress = address;
         mPort = port;
+    }
+
+    /**
+     * Sets the server address and port.
+     *
+     * @param address The server IP:port to be used.
+     */
+    public static boolean initServer(String address) {
+        System.out.println("initing with "+address);
+        String[] parts = address.split(":");
+        if (parts.length != 2) {
+            mAddress = DEFAULT_ADDRESS;
+            return false;
+        }
+        mAddress = parts[0];
+        try {
+            mPort = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException ex) {
+            Log.e(TAG, "initServer(): Given address has wrong port format!");
+            mPort = DEFAULT_PORT;
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -143,7 +178,8 @@ public class Utils {
         Response response = null;
         Socket server = null;
         try {
-            server = new Socket(mAddress, mPort);
+            server = new Socket();
+            server.connect(new InetSocketAddress(mAddress, mPort), mTimeout);
             ObjectOutputStream oos = null;
             ObjectInputStream ois = null;
             try {
@@ -223,11 +259,9 @@ public class Utils {
     }
 
     private Bitmap sobel(Bitmap referenceImage) {
-        Bitmap edges = null;
-        Bitmap orig = referenceImage;
         /* Make the image bigger, so that it's blured */
         Bitmap bigOrig = Bitmap.createScaledBitmap(referenceImage,
-                orig.getWidth() * 2, orig.getHeight() * 2, true);
+                referenceImage.getWidth() * 2, referenceImage.getHeight() * 2, true);
         int width = bigOrig.getWidth();
         int height = bigOrig.getHeight();
         Bitmap bigEdges = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -263,7 +297,7 @@ public class Utils {
             }
         }
         /* Original size is different from this one -> resize back */
-        edges = Bitmap.createScaledBitmap(bigEdges, orig.getWidth(), orig.getHeight(), true);
+        Bitmap edges = Bitmap.createScaledBitmap(bigEdges, referenceImage.getWidth(), referenceImage.getHeight(), true);
         bigOrig.recycle();
         bigEdges.recycle();
 

@@ -32,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static Player mPlayer = null;
 
-    private SharedPreferences mPreferences;
     private TextView playerTextView;
+    private TextView serverTextView;
 
 
     @Override
@@ -41,13 +41,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPreferences = getPreferences(Context.MODE_PRIVATE);
-
         playerTextView = (TextView) findViewById(R.id.textView_player);
-
-        /* Check if user is logged in */
-        checkLogin();
-        updateInfo();
+        serverTextView = (TextView) findViewById(R.id.textView_server);
 
         Button mNewHuntButton = (Button) findViewById(R.id.button_new_hunt);
         mNewHuntButton.setOnClickListener(new View.OnClickListener() {
@@ -90,16 +85,97 @@ public class MainActivity extends AppCompatActivity {
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO: odhlaseni - nejak vymazat mPlayer ze vsech instanci aktivit ktere ji pouzivali
-                //TODO: -> zabraneni moznosti back z login do mainu
-                Intent i = new Intent();
-                i.setClass(MainActivity.this, LoginActivity.class);
-                startActivity(i);
+                logout();
+                startLoginActivity();
             }
         });
+
+        /* Set the last used server address */
+        SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFS_FILE, MODE_PRIVATE);
+        Utils.getInstance();
+        if (!Utils.initServer(preferences.getString(LoginActivity.PREFS_LAST_SERVER,
+                getString(R.string.prompt_server)))) {
+            /* Wrong server address */
+//            logout();
+            updateInfo();
+        }
+        /* Try to read Player object from file */
+        mPlayer = readPlayer();
     }
 
-    private void checkLogin() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mPlayer == null) {
+            startLoginActivity();
+        }
+        updateInfo();
+    }
+
+    private void startLoginActivity() {
+        Intent i = new Intent();
+        i.setClass(MainActivity.this, LoginActivity.class);
+        startActivityForResult(i, PLAYER_REQUEST_CODE);
+    }
+
+    /**
+     * Gets the current player, who is logged in.
+     *
+     * @return The current player, who is logged in.
+     */
+    public static Player getPlayer() {
+//        if (mPlayer == null) {
+//            //TODO: vyzva k loginu?
+//        }
+        return mPlayer;
+    }
+
+    /**
+     * Update the textView on top of the main menu activity.
+     */
+    private void updateInfo() {
+        /* No player is logged in */
+        if (mPlayer == null) {
+            playerTextView.setText(getString(R.string.your_nickname));
+            return;
+        }
+        /* Player is logged in, show some information about him */
+        String text = String.format(getResources().getString(R.string.main_activity_player_title),
+                mPlayer.getNickname(), mPlayer.getScore());
+        playerTextView.setText(text);
+        /* Show the current server address in use */
+        text = String.format(getResources().getString(R.string.main_activity_server_address),
+                Utils.getAddress(), Utils.getPort());
+        serverTextView.setText(text);
+    }
+
+    private void logout() {
+        mPlayer = null;
+        updateInfo();
+        writePlayer(null);
+    }
+
+    private void writePlayer(Player player) {
+        FileOutputStream outputStream = null;
+        try {
+            outputStream = openFileOutput(PLAYER_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+            oos.writeObject(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private Player readPlayer() {
         FileInputStream inputStream = null;
         try {
             /* Try to read Player object from file */
@@ -107,15 +183,12 @@ public class MainActivity extends AppCompatActivity {
             ObjectInputStream ois = new ObjectInputStream(inputStream);
             Object object = ois.readObject();
             if (object != null && object instanceof Player) {
-                mPlayer = (Player) object;
-                return;
+                return (Player) object;
             }
-
-            /* Player from file is invalid, request login */
-            startLoginActivity();
+            return null;
         } catch (Exception e) {
-            /* File is unavailable, request login */
-            startLoginActivity();
+            /* File is unavailable */
+            return null;
         } finally {
             if (inputStream != null) {
                 try {
@@ -127,40 +200,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startLoginActivity() {
-        Intent i = new Intent();
-        i.setClass(MainActivity.this, LoginActivity.class);
-        startActivityForResult(i, PLAYER_REQUEST_CODE);
-    }
-
-    private void updateInfo() {
-        if (mPlayer == null) {
-            playerTextView.setText(getString(R.string.your_nickname));
-        }
-        playerTextView.setText(mPlayer.getNickname() + " [" + mPlayer.getScore() + "]");
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         /* Login activity returns a Player object */
         if (requestCode == PLAYER_REQUEST_CODE && resultCode == RESULT_OK) {
             /* Write the given Player object into a local file */
-            FileOutputStream outputStream = null;
-            try {
-                outputStream = openFileOutput(PLAYER_FILENAME, Context.MODE_PRIVATE);
-                ObjectOutputStream oos = new ObjectOutputStream(outputStream);
-                oos.writeObject(mPlayer);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            writePlayer(mPlayer);
 
             updateInfo();
         }

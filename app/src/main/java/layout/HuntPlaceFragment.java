@@ -1,20 +1,13 @@
 package layout;
 
-import android.app.ActionBar;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.media.Image;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.SeekBar;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
@@ -33,8 +26,6 @@ import client.ohunter.fojjta.cekuj.net.ohunter.Utils;
  * create an instance of this fragment.
  */
 public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
-
-    private static final String ARG_PLACE = "place";
 
     private static Place mPlace;
     private static boolean placeInvalidated = true;

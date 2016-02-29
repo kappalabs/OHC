@@ -1,6 +1,5 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
-import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -9,10 +8,9 @@ import android.graphics.LightingColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,7 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -31,7 +28,6 @@ import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -167,7 +163,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
         /* Show the reference photo edges on top of the photo preview */
         templateImageView = (ImageView) findViewById(R.id.imageView_template);
-        Utils.CountEdgesTask edgesTask = new Utils().new CountEdgesTask(this, Utils.getStandardDialog(this,
+        Utils.CountEdgesTask edgesTask = Utils.getInstance().
+                new CountEdgesTask(this, Utils.getStandardDialog(this,
                 getString(R.string.executing_task),
                 getString(R.string.waiting_for_result)), referenceImage);
         edgesTask.execute();
@@ -208,9 +205,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     private void serverCommunication() {
-        // TODO: real mPlayer object!
-        Player player = new Player(1, "nick", 4242);
-
         Bitmap b;
         /* First photo */
         b = referenceImage;
@@ -226,11 +220,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo2.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
-        Request request = new CompareRequest(player, photo1, photo2);
+        Request request = new CompareRequest(MainActivity.getPlayer(), photo1, photo2);
 
         /* Asynchronously execute and wait for callback when result ready*/
-        Utils.RetrieveResponseTask responseTask =
-                new Utils().new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
+        Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
         responseTask.execute(request);
     }
 
@@ -255,6 +249,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
         Log.d(TAG, "response similarity: " + response.similarity);
         scoreTextview.setText(response.similarity * 100 + "%");
+        scoreTextview.setVisibility(View.VISIBLE);
     }
 
 //    @Override

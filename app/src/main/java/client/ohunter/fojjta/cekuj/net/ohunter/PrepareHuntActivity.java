@@ -1,19 +1,15 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
@@ -22,7 +18,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,7 +33,6 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -47,18 +41,11 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -137,17 +124,15 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                 StrictMode.setThreadPolicy(policy);
 
-                // TODO: ziskani real objektu hrace!
-                Player player = new Player(1, "nick", 4242);
                 // TODO: volit max rozmery pozadovanych fotografii?
                 // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
                 //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-                Request request = new SearchRequest(player, getLatitude(), getLongitude(),
+                Request request = new SearchRequest(MainActivity.getPlayer(), getLatitude(), getLongitude(),
                         (int)(getRadius() * 1000), prefferedDaytime, 400, 240);
 
                 /* Asynchronously execute and wait for callback when result ready*/
                 Utils.RetrieveResponseTask responseTask =
-                        new Utils().new RetrieveResponseTask(PrepareHuntActivity.this,
+                        Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
                                 Utils.getServerCommunicationDialog(PrepareHuntActivity.this));
                 responseTask.execute(request);
             }
@@ -447,11 +432,15 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         if (map != null && !mLongitudeEditText.getText().toString().isEmpty()
                 && !mLatitudeEditText.getText().toString().isEmpty()
                 && !mRadiusEditText.getText().toString().isEmpty()) {
-            double longitude = Double.parseDouble(mLongitudeEditText.getText().toString());
-            double latitude = Double.parseDouble(mLatitudeEditText.getText().toString());
-            double radius = Double.parseDouble(mRadiusEditText.getText().toString());
+            try {
+                double longitude = Double.parseDouble(mLongitudeEditText.getText().toString());
+                double latitude = Double.parseDouble(mLatitudeEditText.getText().toString());
+                double radius = Double.parseDouble(mRadiusEditText.getText().toString());
 
-            setNewArea(latitude, longitude, radius);
+                setNewArea(latitude, longitude, radius);
+            } catch (NumberFormatException ex) {
+                /* Do nothing, wait for proper input */
+            }
         }
     }
 

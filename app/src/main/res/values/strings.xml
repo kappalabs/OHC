@@ -20,6 +20,7 @@
     <string name="error_field_required">This field is required</string>
     <string name="error_incorrect_user">This user does not exist</string>
     <string name="error_database_problem">Database error, try it again</string>
+    <string name="server_address_template">192.168.0.1:4242</string>
     <string name="permission_rationale">Contacts permissions are needed for providing email
         completions.
     </string>
@@ -30,6 +31,9 @@
     <string name="waiting_for_data">Čekám na data...</string>
     <string name="executing_task">Probíhá výpočet</string>
     <string name="waiting_for_result">Čekám na výsledek...</string>
+
+    <string name="main_activity_player_title">Hello %1$s, your score is %2$d!</string>
+    <string name="main_activity_server_address">%1$s:%2$d</string>
 
     <string name="title_activity_camera">CameraActivity</string>
     <string name="dummy_button">Dummy Button</string>
@@ -66,7 +70,7 @@
     <string name="number_sign">#</string>
 
     <string name="select_photo_error">You must select a photo on place detail page!</string>
-    <string name="server_unreachable_error">Server je nedostupný!</string>
+    <string name="server_unreachable_error">Server je nedostupný! Zkus to znovu.</string>
     <string name="your_nickname">Your nickname</string>
     <string name="start_new_hunt_button">Start new hunt</string>
     <string name="statistics_button">Statistics</string>
