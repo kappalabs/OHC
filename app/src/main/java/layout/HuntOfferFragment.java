@@ -17,6 +17,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import java.util.ArrayList;
 
 import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
+import client.ohunter.fojjta.cekuj.net.ohunter.PlaceArrayAdapter;
 import client.ohunter.fojjta.cekuj.net.ohunter.R;
 
 /**
@@ -202,8 +203,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
         });
 
-        mGreenAdapter = new ArrayAdapter<Place>(hmenuGreenListview.getContext(),
-                android.R.layout.simple_list_item_1, mParamGreen) {
+        mGreenAdapter = new PlaceArrayAdapter(hmenuGreenListview.getContext(),
+                R.layout.place_item_row, mParamGreen) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
@@ -217,8 +218,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 return view;
             }
         };
-        mRedAdapter = new ArrayAdapter<Place>(hmenuRedListview.getContext(),
-                android.R.layout.simple_list_item_1, mParamRed) {
+        mRedAdapter = new PlaceArrayAdapter(hmenuRedListview.getContext(),
+                R.layout.place_item_row, mParamRed) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);

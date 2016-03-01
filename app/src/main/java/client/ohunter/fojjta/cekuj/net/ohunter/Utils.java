@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -302,6 +303,24 @@ public class Utils {
         bigEdges.recycle();
 
         return edges;
+    }
+
+    /**
+     * Convert daytime to string describing given state.
+     *
+     * @param context Context of the requester.
+     * @param daytime Daytime to be converted.
+     * @return The string describing given state.
+     */
+    public static String daytimeToString(Context context, Photo.DAYTIME daytime) {
+        switch (daytime) {
+            case DAY:
+                return context.getString(R.string.daytime_day);
+            case NIGHT:
+                return context.getString(R.string.daytime_night);
+            default:
+                return context.getString(R.string.daytime_unknown);
+        }
     }
 
 }

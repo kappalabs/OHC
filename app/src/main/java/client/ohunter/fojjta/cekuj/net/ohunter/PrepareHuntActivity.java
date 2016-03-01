@@ -48,6 +48,7 @@ import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Random;
 
 public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
@@ -63,6 +64,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
 
+    private static final int DEFAULT_NUM_GREENS = 5;
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
@@ -220,9 +222,17 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             }
         }
 
-        /* TODO: rozdeleni novych/prijatych mist na zelene a cervene */
+        /* Divide the available places into two groups */
         HuntActivity.green_places = new ArrayList<>();
+        int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
+        Random random = new Random();
+        while (numGreens-- > 0) {
+            final int pos = random.nextInt(places.size());
+            HuntActivity.green_places.add(places.get(pos));
+            places.remove(pos);
+        }
         HuntActivity.red_places = new ArrayList<>(places);
+        /* Start the main game activity with these groups of places prepared */
         Intent i = new Intent();
         i.setClass(PrepareHuntActivity.this, HuntActivity.class);
         startActivity(i);
