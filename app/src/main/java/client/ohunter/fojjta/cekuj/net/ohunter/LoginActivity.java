@@ -25,6 +25,9 @@ import com.kappa_labs.ohunter.lib.requests.LoginRequest;
 import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -99,6 +102,12 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         });
 
         updateValuesFromPreferences();
+    }
+
+    @Override
+    public void onBackPressed() {
+        /* Disallow going back to previous activity */
+//        super.onBackPressed();
     }
 
     private void updateValuesFromPreferences() {
@@ -183,7 +192,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
             initServerAddress(server);
 
             /* Prepare the request */
-            Request request = new LoginRequest(nickname, password);
+            Request request = new LoginRequest(nickname, Utils.getDigest(password));
 
             /* Asynchronously execute and wait for callback when result ready */
             mAuthTask = Utils.getInstance().
@@ -216,7 +225,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
             initServerAddress(server);
 
             /* Prepare the request */
-            Request request = new RegisterRequest(nickname, password);
+            Request request = new RegisterRequest(nickname, Utils.getDigest(password));
 
             /* Asynchronously execute and wait for callback when result ready */
             mAuthTask = Utils.getInstance().
@@ -284,11 +293,31 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         /* Success */
         Player player = response.player;
         Log.d(TAG, "response login success: " + player);
+        writePlayer(player);
         Intent intent = new Intent();
         intent.setData(null);
         MainActivity.mPlayer = player;
         setResult(RESULT_OK);
         finish();
+    }
+
+    private void writePlayer(Player player) {
+        FileOutputStream outputStream = null;
+        try {
+            outputStream = openFileOutput(MainActivity.PLAYER_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+            oos.writeObject(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private void populateServerAutoComplete() {

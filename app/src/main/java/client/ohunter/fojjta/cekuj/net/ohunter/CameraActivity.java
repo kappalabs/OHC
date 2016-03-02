@@ -1,5 +1,6 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -220,7 +222,12 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo2.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
-        Request request = new CompareRequest(MainActivity.getPlayer(), photo1, photo2);
+        Player player = MainActivity.getPlayer(CameraActivity.this);
+        if (player == null) {
+            //TODO: nejak vyresit login - zde pozor na moznost offline rezimu
+            return;
+        }
+        Request request = new CompareRequest(player, photo1, photo2);
 
         /* Asynchronously execute and wait for callback when result ready*/
         Utils.RetrieveResponseTask responseTask = Utils.getInstance().
@@ -248,7 +255,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         Toast.makeText(CameraActivity.this,
                 getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
         Log.d(TAG, "response similarity: " + response.similarity);
-        scoreTextview.setText(response.similarity * 100 + "%");
+        scoreTextview.setText(String.format("%.1f%%", response.similarity * 100));
         scoreTextview.setVisibility(View.VISIBLE);
     }
 
@@ -278,6 +285,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         numberOfPhotosTextview.setText((DEFAULT_NUM_ATTEMPTS - numberOfAttempts) + getString(R.string.number_sign));
         if (numberOfAttempts >= DEFAULT_MIN_ATTEMPTS) {
             // TODO: zobrazovat fab uz tady?
+            uploadFab.show();
         }
         if (numberOfAttempts >= DEFAULT_NUM_ATTEMPTS) {
             shootButton.setEnabled(false);

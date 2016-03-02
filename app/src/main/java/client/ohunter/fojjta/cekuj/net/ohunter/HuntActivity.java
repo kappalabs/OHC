@@ -203,15 +203,16 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     @Override
     protected void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        //TODO: podle Google je to vhodne, zpusobuje vsak ojedinele problemy...
+//        stopLocationUpdates();
     }
 
-    private void stopLocationUpdates() {
-        if (mGoogleApiClient.isConnected()){
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mRequestingLocationUpdates = false;
-        }
-    }
+//    private void stopLocationUpdates() {
+//        if (mGoogleApiClient.isConnected()){
+//            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+//            mRequestingLocationUpdates = false;
+//        }
+//    }
 //
 //    @Override
 //    public void onResume() {

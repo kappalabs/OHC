@@ -18,6 +18,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Formatter;
 
 /**
  * Singleton class providing useful functions for different types of usage.
@@ -321,6 +324,33 @@ public class Utils {
             default:
                 return context.getString(R.string.daytime_unknown);
         }
+    }
+
+    /**
+     * Compute SHA hash of given password.
+     *
+     * @param password String to be hashed.
+     * @return The SHA hash output string.
+     */
+    public static String getDigest(String password) {
+        String digest = null;
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA");
+            digest = byteArray2Hex(md.digest(new String(password).getBytes()));
+        } catch (NoSuchAlgorithmException ex) {
+            Log.e(TAG, "Cannog get diggest: " + ex);
+        }
+
+        return digest;
+    }
+
+    private static String byteArray2Hex(final byte[] hash) {
+        Formatter formatter = new Formatter();
+        for (byte b : hash) {
+            formatter.format("%02x", b);
+        }
+        return formatter.toString();
     }
 
 }

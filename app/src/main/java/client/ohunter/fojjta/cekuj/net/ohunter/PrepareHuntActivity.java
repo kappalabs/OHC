@@ -41,6 +41,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
@@ -129,7 +130,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 // TODO: volit max rozmery pozadovanych fotografii?
                 // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
                 //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-                Request request = new SearchRequest(MainActivity.getPlayer(), getLatitude(), getLongitude(),
+                Player player = MainActivity.getPlayer(PrepareHuntActivity.this);
+                if (player == null) {
+                    //TODO: nejak vyresit login
+                    return;
+                }
+                Request request = new SearchRequest(player, getLatitude(), getLongitude(),
                         (int)(getRadius() * 1000), prefferedDaytime, 400, 240);
 
                 /* Asynchronously execute and wait for callback when result ready*/

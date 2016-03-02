@@ -1,5 +1,6 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 
@@ -27,8 +29,8 @@ import java.io.ObjectOutputStream;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String PLAYER_FILENAME = "player_file";
-    private static final int PLAYER_REQUEST_CODE = 1;
+    public static final String PLAYER_FILENAME = "player_file";
+    public static final int PLAYER_REQUEST_CODE = 1;
 
     public static Player mPlayer = null;
 
@@ -124,10 +126,16 @@ public class MainActivity extends AppCompatActivity {
      *
      * @return The current player, who is logged in.
      */
-    public static Player getPlayer() {
-//        if (mPlayer == null) {
-//            //TODO: vyzva k loginu?
-//        }
+    public static Player getPlayer(Activity activity) {
+        if (mPlayer == null) {
+            Toast.makeText(activity, activity.getString(R.string.login_prompt),
+                    Toast.LENGTH_LONG).show();
+
+//            /* Prompt for login */
+//            Intent i = new Intent();
+//            i.setClass(activity, LoginActivity.class);
+//            activity.startActivityForResult(i, PLAYER_REQUEST_CODE);
+        }
         return mPlayer;
     }
 
@@ -204,8 +212,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         /* Login activity returns a Player object */
         if (requestCode == PLAYER_REQUEST_CODE && resultCode == RESULT_OK) {
-            /* Write the given Player object into a local file */
-            writePlayer(mPlayer);
+            //NOTE: presunuto do LoginActivity
+//            /* Write the given Player object into a local file */
+//            writePlayer(mPlayer);
 
             updateInfo();
         }

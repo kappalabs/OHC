@@ -91,4 +91,5 @@
     <string name="address_label">Adresa:</string>
     <string name="num_photos_label">Fotografií:</string>
     <string name="place_icon_description">place_icon</string>
+    <string name="login_prompt">You need to log in!</string>
 </resources>
