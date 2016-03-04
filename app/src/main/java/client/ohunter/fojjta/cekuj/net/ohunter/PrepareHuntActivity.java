@@ -127,14 +127,23 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                 StrictMode.setThreadPolicy(policy);
 
+                /* Get the Player object, if does not exist, show login screen */
+                Player player = SharedDataManager.getPlayer(PrepareHuntActivity.this);
+                if (player == null) {
+                    /* Show login prompt message */
+                    Toast.makeText(PrepareHuntActivity.this, getString(R.string.login_prompt),
+                            Toast.LENGTH_LONG).show();
+
+                    /* Start the login screen activity */
+                    Intent i = new Intent();
+                    i.setClass(PrepareHuntActivity.this, LoginActivity.class);
+                    startActivity(i);
+
+                    return;
+                }
                 // TODO: volit max rozmery pozadovanych fotografii?
                 // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
                 //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-                Player player = MainActivity.getPlayer(PrepareHuntActivity.this);
-                if (player == null) {
-                    //TODO: nejak vyresit login
-                    return;
-                }
                 Request request = new SearchRequest(player, getLatitude(), getLongitude(),
                         (int)(getRadius() * 1000), prefferedDaytime, 400, 240);
 
@@ -214,6 +223,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         }
         /* Problem on client side */
         if (response == null) {
+            Log.e(TAG, "Problem on client side -> cannot start the o-hunt yet...");
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.server_unreachable_error),
                     Toast.LENGTH_SHORT).show();
             return;

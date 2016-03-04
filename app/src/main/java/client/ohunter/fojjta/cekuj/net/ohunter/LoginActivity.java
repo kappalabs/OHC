@@ -1,7 +1,6 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -25,9 +24,6 @@ import com.kappa_labs.ohunter.lib.requests.LoginRequest;
 import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -92,7 +88,6 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
             }
         });
 
-
         Button mRegisterButton = (Button) findViewById(R.id.button_register);
         mRegisterButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -107,7 +102,6 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     @Override
     public void onBackPressed() {
         /* Disallow going back to previous activity */
-//        super.onBackPressed();
     }
 
     private void updateValuesFromPreferences() {
@@ -132,7 +126,10 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         View focusView = null;
 
         /* Check for a valid password, if the user entered one */
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (TextUtils.isEmpty(password)) {
+            mPasswordEditText.setError(getString(R.string.error_field_required));
+            focusView = mPasswordEditText;
+        } else if (!isPasswordValid(password)) {
             mPasswordEditText.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordEditText;
         }
@@ -241,7 +238,6 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
         return password.length() > 4;
     }
 
@@ -285,6 +281,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
 
         /* Problem on client side */
         if (response == null) {
+            Log.e(TAG, "Problem on client side -> cannot leave Login activity yet...");
             Toast.makeText(LoginActivity.this,
                     getString(R.string.server_unreachable_error), Toast.LENGTH_SHORT).show();
             return;
@@ -293,31 +290,11 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         /* Success */
         Player player = response.player;
         Log.d(TAG, "response login success: " + player);
-        writePlayer(player);
-        Intent intent = new Intent();
-        intent.setData(null);
-        MainActivity.mPlayer = player;
+        /* Save and set the current player */
+        SharedDataManager.setPlayer(this, player);
+        /* Let possible caller know, that Player is now available */
         setResult(RESULT_OK);
         finish();
-    }
-
-    private void writePlayer(Player player) {
-        FileOutputStream outputStream = null;
-        try {
-            outputStream = openFileOutput(MainActivity.PLAYER_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
-            oos.writeObject(player);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     private void populateServerAutoComplete() {

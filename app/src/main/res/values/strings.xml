@@ -20,6 +20,7 @@
     <string name="error_field_required">This field is required</string>
     <string name="error_incorrect_user">This user does not exist</string>
     <string name="error_database_problem">Database error, try it again</string>
+    <string name="error_camera_player_null">You must either log in, or enter offline mode!</string>
     <string name="server_address_template">192.168.0.1:4242</string>
     <string name="permission_rationale">Contacts permissions are needed for providing email
         completions.

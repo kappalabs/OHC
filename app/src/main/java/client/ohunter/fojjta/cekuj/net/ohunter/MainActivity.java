@@ -1,38 +1,24 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 
 /**
  * Holds main game menu and takes care of user login prompt.
  */
 public class MainActivity extends AppCompatActivity {
-
-    public static final String PLAYER_FILENAME = "player_file";
-    public static final int PLAYER_REQUEST_CODE = 1;
-
-    public static Player mPlayer = null;
 
     private TextView playerTextView;
     private TextView serverTextView;
@@ -101,15 +87,13 @@ public class MainActivity extends AppCompatActivity {
 //            logout();
             updateInfo();
         }
-        /* Try to read Player object from file */
-        mPlayer = readPlayer();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (mPlayer == null) {
+        if (SharedDataManager.getPlayer(this) == null) {
             startLoginActivity();
         }
         updateInfo();
@@ -118,108 +102,34 @@ public class MainActivity extends AppCompatActivity {
     private void startLoginActivity() {
         Intent i = new Intent();
         i.setClass(MainActivity.this, LoginActivity.class);
-        startActivityForResult(i, PLAYER_REQUEST_CODE);
-    }
-
-    /**
-     * Gets the current player, who is logged in.
-     *
-     * @return The current player, who is logged in.
-     */
-    public static Player getPlayer(Activity activity) {
-        if (mPlayer == null) {
-            Toast.makeText(activity, activity.getString(R.string.login_prompt),
-                    Toast.LENGTH_LONG).show();
-
-//            /* Prompt for login */
-//            Intent i = new Intent();
-//            i.setClass(activity, LoginActivity.class);
-//            activity.startActivityForResult(i, PLAYER_REQUEST_CODE);
-        }
-        return mPlayer;
+        startActivity(i);
     }
 
     /**
      * Update the textView on top of the main menu activity.
      */
     private void updateInfo() {
+        /* Show the current server address in use */
+        String text = String.format(getResources().getString(R.string.main_activity_server_address),
+                Utils.getAddress(), Utils.getPort());
+        serverTextView.setText(text);
+
+        /* Show information about current player */
+        Player player = SharedDataManager.getPlayer(this);
         /* No player is logged in */
-        if (mPlayer == null) {
+        if (player == null) {
             playerTextView.setText(getString(R.string.your_nickname));
             return;
         }
         /* Player is logged in, show some information about him */
-        String text = String.format(getResources().getString(R.string.main_activity_player_title),
-                mPlayer.getNickname(), mPlayer.getScore());
+        text = String.format(getResources().getString(R.string.main_activity_player_title),
+                player.getNickname(), player.getScore());
         playerTextView.setText(text);
-        /* Show the current server address in use */
-        text = String.format(getResources().getString(R.string.main_activity_server_address),
-                Utils.getAddress(), Utils.getPort());
-        serverTextView.setText(text);
     }
 
     private void logout() {
-        mPlayer = null;
         updateInfo();
-        writePlayer(null);
-    }
-
-    private void writePlayer(Player player) {
-        FileOutputStream outputStream = null;
-        try {
-            outputStream = openFileOutput(PLAYER_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
-            oos.writeObject(player);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private Player readPlayer() {
-        FileInputStream inputStream = null;
-        try {
-            /* Try to read Player object from file */
-            inputStream = openFileInput(PLAYER_FILENAME);
-            ObjectInputStream ois = new ObjectInputStream(inputStream);
-            Object object = ois.readObject();
-            if (object != null && object instanceof Player) {
-                return (Player) object;
-            }
-            return null;
-        } catch (Exception e) {
-            /* File is unavailable */
-            return null;
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        /* Login activity returns a Player object */
-        if (requestCode == PLAYER_REQUEST_CODE && resultCode == RESULT_OK) {
-            //NOTE: presunuto do LoginActivity
-//            /* Write the given Player object into a local file */
-//            writePlayer(mPlayer);
-
-            updateInfo();
-        }
-
-        super.onActivityResult(requestCode, resultCode, data);
+        SharedDataManager.setPlayer(this, null);
     }
 
     @Override

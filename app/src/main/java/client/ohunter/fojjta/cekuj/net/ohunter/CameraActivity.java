@@ -1,6 +1,5 @@
 package client.ohunter.fojjta.cekuj.net.ohunter;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -59,7 +58,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private Camera mCamera;
     private CameraOverlay mPreview;
-
 
 
     @Override
@@ -207,6 +205,13 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     private void serverCommunication() {
+        Player player = SharedDataManager.getPlayer(this);
+        if (player == null) {
+            Log.e(TAG, "serverCommunication(): Player is null in CameraActivity!");
+            Toast.makeText(this, getString(R.string.error_camera_player_null), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Bitmap b;
         /* First photo */
         b = referenceImage;
@@ -222,11 +227,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo2.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
-        Player player = MainActivity.getPlayer(CameraActivity.this);
-        if (player == null) {
-            //TODO: nejak vyresit login - zde pozor na moznost offline rezimu
-            return;
-        }
         Request request = new CompareRequest(player, photo1, photo2);
 
         /* Asynchronously execute and wait for callback when result ready*/
@@ -246,6 +246,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         }
         /* Problem on client side */
         if (response == null) {
+            Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
             Toast.makeText(CameraActivity.this, getString(R.string.server_unreachable_error),
                     Toast.LENGTH_SHORT).show();
             return;
@@ -339,4 +340,5 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         templateImageView.setImageBitmap(edgesImage);
         templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
     }
+
 }
