@@ -21,6 +21,7 @@
     <string name="error_incorrect_user">This user does not exist</string>
     <string name="error_database_problem">Database error, try it again</string>
     <string name="error_camera_player_null">You must either log in, or enter offline mode!</string>
+    <string name="error_camera_no_photo">You have to take a picture!</string>
     <string name="server_address_template">192.168.0.1:4242</string>
     <string name="permission_rationale">Contacts permissions are needed for providing email
         completions.
@@ -93,4 +94,6 @@
     <string name="num_photos_label">Fotografií:</string>
     <string name="place_icon_description">place_icon</string>
     <string name="login_prompt">You need to log in!</string>
+    <string name="template_image_description">template_image</string>
+    <string name="last_photo_description">last_photo</string>
 </resources>

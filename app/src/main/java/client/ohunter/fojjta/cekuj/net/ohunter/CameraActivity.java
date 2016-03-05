@@ -13,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -20,6 +21,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.Frame;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
@@ -51,10 +53,13 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     private TextView scoreTextview;
     private ImageView lastPhotoImageview;
     private FloatingActionButton uploadFab;
+    private FrameLayout previewFrameLayout;
+    private FrameLayout limiterTop, limiterLeft, limiterBottom, limiterRight;
 
     private static Bitmap referenceImage, edgesImage;
 
     private int numberOfAttempts = 0;
+    private int vLimit, hLimit;
 
     private Camera mCamera;
     private CameraOverlay mPreview;
@@ -66,6 +71,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         setContentView(R.layout.activity_camera);
 
         lastPhotoImageview = (ImageView) findViewById(R.id.imageView_lastPhoto);
+
+        limiterBottom = (FrameLayout) findViewById(R.id.limiter_bottom);
+        limiterLeft = (FrameLayout) findViewById(R.id.limiter_left);
+        limiterTop = (FrameLayout) findViewById(R.id.limiter_top);
+        limiterRight = (FrameLayout) findViewById(R.id.limiter_right);
 
         numberOfPhotosTextview = (TextView) findViewById(R.id.textView_numberOfPhotos);
         numberOfPhotosTextview.setText(DEFAULT_NUM_ATTEMPTS + getString(R.string.number_sign));
@@ -97,6 +107,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 edgesImage.recycle();
                 edgesImage = rotatedBitmap;
                 templateImageView.setImageBitmap(edgesImage);
+
+                updateLimits();
             }
         });
 
@@ -116,6 +128,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 edgesImage.recycle();
                 edgesImage = rotatedBitmap;
                 templateImageView.setImageBitmap(edgesImage);
+
+                updateLimits();
             }
         });
 
@@ -138,6 +152,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         colorSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (edgesImage == null) {
+                    return;
+                }
                 changeBitmapColor(edgesImage, templateImageView,
                         Color.HSVToColor(new float[]{(float)progress / seekBar.getMax() * 360, 1, 1}));
             }
@@ -172,8 +189,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         /* Create an instance of Camera, our Preview view and set it as the content of our activity */
         mCamera = getCameraInstance();
         mPreview = new CameraOverlay(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
-        preview.addView(mPreview);
+        previewFrameLayout = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
+        previewFrameLayout.addView(mPreview);
     }
 
     private void changeBitmapColor(Bitmap sourceBitmap, ImageView image, int color) {
@@ -193,7 +210,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      *
      * @return Camera object if available, null if camera is unavailable.
      */
-    public static Camera getCameraInstance(){
+    private static Camera getCameraInstance(){
         Camera c = null;
         try {
             c = Camera.open();
@@ -221,7 +238,12 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         photo1.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
         /* Second photo */
-        b = CameraOverlay.mBitmap;
+        b = getCroppedCameraPicture();
+        if (b == null) {
+            Log.e(TAG, "Cannot get the cropped picture from camera!");
+            Toast.makeText(this, getString(R.string.error_camera_no_photo), Toast.LENGTH_SHORT).show();
+            return;
+        }
         Photo photo2 = new Photo();
         stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
@@ -260,24 +282,67 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         scoreTextview.setVisibility(View.VISIBLE);
     }
 
-//    @Override
-//    protected void onPostCreate(Bundle savedInstanceState) {
-//        super.onPostCreate(savedInstanceState);
-//
-//        if (mPreview != null) {
-//            Camera.Parameters pars = mPreview.getParameters();
-//
-//            Log.d("Camera", "preview size: "+camRelativeLayout.getHeight()+"x"+camRelativeLayout.getWidth());
-//
-//            if (pars == null) {
-//                return;
-//            }
-//            List<Camera.Size> ls = pars.getSupportedPictureSizes();
-//            for (Camera.Size s : ls) {
-//                Log.d("Camera", "size: " + s.height + "x" + s.width);
-//            }
-//        }
-//    }
+    @Override
+    public void onPreviewSizeChange(int width, int height) {
+        ViewGroup.LayoutParams params = previewFrameLayout.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        previewFrameLayout.setLayoutParams(params);
+
+        params = templateImageView.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        templateImageView.setLayoutParams(params);
+
+        /* Adjust limits */
+        updateLimits();
+    }
+
+    private void updateLimits() {
+        if (previewFrameLayout == null || edgesImage == null) {
+            return;
+        }
+
+        /* Count the limits */
+        int width = previewFrameLayout.getWidth();
+        int height = previewFrameLayout.getHeight();
+        double wRatio = (double) edgesImage.getWidth() / width;
+        double hRatio = (double) edgesImage.getHeight() / height;
+        if (wRatio > hRatio) {
+            /* Show the vertical stripes, hide horizontals */
+            vLimit = (int)(height - edgesImage.getHeight() / wRatio);
+            hLimit = 0;
+        } else {
+            /* Show the horizontal stripes, hide verticals */
+            hLimit = (int)(width - edgesImage.getWidth() / hRatio);
+            vLimit = 0;
+        }
+
+        ViewGroup.LayoutParams params;
+        /* Draw the horizontal stripes */
+        params = limiterLeft.getLayoutParams();
+        params.width = hLimit / 2;
+        limiterLeft.setLayoutParams(params);
+        params = limiterRight.getLayoutParams();
+        params.width = hLimit / 2;
+        limiterRight.setLayoutParams(params);
+        /* Draw the vertical stripes */
+        params = limiterTop.getLayoutParams();
+        params.height = vLimit / 2;
+        limiterTop.setLayoutParams(params);
+        params = limiterBottom.getLayoutParams();
+        params.height = vLimit / 2;
+        limiterBottom.setLayoutParams(params);
+    }
+
+    private Bitmap getCroppedCameraPicture() {
+        Bitmap photo = CameraOverlay.mBitmap;
+        if (photo == null) {
+            return null;
+        }
+        return Bitmap.createBitmap(photo,
+                hLimit / 2, vLimit / 2, photo.getWidth() - hLimit, photo.getHeight() - vLimit);
+    }
 
     @Override
     public void onImageReady() {
@@ -339,6 +404,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         edgesImage = edges;
         templateImageView.setImageBitmap(edgesImage);
         templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
+        updateLimits();
     }
 
 }

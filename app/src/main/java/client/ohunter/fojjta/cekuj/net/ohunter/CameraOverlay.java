@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,6 +27,8 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
     public static Bitmap mBitmap;
     private SurfaceHolder mHolder;
     private Camera mCamera;
+    private List<Camera.Size> mSupportedPreviewSizes;
+    private Camera.Size mPreviewSize;
 
 
     public CameraOverlay(Context context, Camera camera) {
@@ -53,22 +56,17 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         }
         mHolder = getHolder();
         mHolder.addCallback(this);
-        // deprecated setting, but required on Android versions prior to 3.0
+        /* Deprecated setting, but required on Android versions prior to 3.0 */
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+        if (mCamera != null) {
+            mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
+        }
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         try {
-//            //Setting the camera's aspect ratio
-//            Camera.Parameters parameters = mCamera.getParameters();
-//            List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
-//            Camera.Size optimalSize = getOptimalPreviewSize(sizes,
-//                    getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
-////            Camera.Size optimalSize = sizes.get(0);
-//            parameters.setPreviewSize(optimalSize.width, optimalSize.height);
-//            mCamera.setParameters(parameters);
-
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
         } catch (IOException e) {
@@ -76,46 +74,48 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
-//    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
 //        Log.d("Camera", "Vybiram nejlepsi pro rozmery w*h = "+w+"*"+h);
-//        final double ASPECT_TOLERANCE = 0.1;
-//        double targetRatio = (double)h / w;
-//
-//        if (sizes == null) return null;
-//
-//        Camera.Size optimalSize = null;
-//        double minDiff = Double.MAX_VALUE;
-//
-//        int targetHeight = h;
-//
-//        for (Camera.Size size : sizes) {
-//            double ratio = (double) size.width / size.height;
-//            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
-//            if (Math.abs(size.height - targetHeight) < minDiff) {
-//                optimalSize = size;
-//                minDiff = Math.abs(size.height - targetHeight);
-//            }
-//        }
-//
-//        if (optimalSize == null) {
-//            minDiff = Double.MAX_VALUE;
-//            for (Camera.Size size : sizes) {
-//                if (Math.abs(size.height - targetHeight) < minDiff) {
-//                    optimalSize = size;
-//                    minDiff = Math.abs(size.height - targetHeight);
-//                }
-//            }
-//        }
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double)h / w;
+
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - h) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - h);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - h) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - h);
+                }
+            }
+        }
 //        Log.d("Camera", "nejlepsi je "+optimalSize.width+"*"+optimalSize.height);
-//        return optimalSize;
-//    }
-//
-//    public Camera.Parameters getParameters() {
-//        if (mCamera != null) {
-//            return mCamera.getParameters();
-//        }
-//        return null;
-//    }
+        return optimalSize;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
+        final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
+        setMeasuredDimension(width, height);
+
+        if (mSupportedPreviewSizes != null) {
+            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+        }
+    }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -137,10 +137,24 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         // set preview size and make any resize, rotate or
         // reformatting changes here
         Camera.Parameters parameters = mCamera.getParameters();
-        parameters.getSupportedPreviewSizes();
+        parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+//        parameters.setPreviewSize(parameters.getPictureSize().width / mPreviewSize.width,
+//                parameters.getPictureSize().height / mPreviewSize.height);
         mCamera.setParameters(parameters);
 
-        // start preview with new settings
+        ViewGroup.LayoutParams params = this.getLayoutParams();
+        double min = Math.min(
+                (double) getWidth() / mPreviewSize.width,
+                (double) getHeight() / mPreviewSize.height);
+        params.width = (int)(mPreviewSize.width * min);
+        params.height = (int)(mPreviewSize.height * min);
+        this.setLayoutParams(params);
+        /* Let the parent activity rearrange the views */
+        if (mListener != null) {
+            mListener.onPreviewSizeChange(params.width, params.height);
+        }
+
+        /* Start preview with new settings */
         try {
             mCamera.setPreviewDisplay(mHolder);
             mCamera.startPreview();
@@ -176,6 +190,10 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
             }
             /* Retrieve the new picture */
             mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+
+            Log.d(TAG, "foto original ma velikost " + mBitmap.getWidth() + " x " + mBitmap.getHeight());
+            mBitmap = Bitmap.createScaledBitmap(mBitmap, mPreviewSize.width, mPreviewSize.height, true);
+            Log.d(TAG, "foto zmenena ma velikost " + mBitmap.getWidth() + " x " + mBitmap.getHeight());
 
             /* Allows to see the preview again */
             mCamera.stopPreview();
@@ -225,6 +243,7 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public interface OnCameraActionListener {
+        void onPreviewSizeChange(int width, int height);
         void onImageReady();
     }
 }

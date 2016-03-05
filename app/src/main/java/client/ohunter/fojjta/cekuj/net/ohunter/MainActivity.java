@@ -47,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //TODO: pouze test image...
                 Bitmap b_ = BitmapFactory.decodeResource(getResources(), R.drawable.img);
-                Bitmap b = Bitmap.createScaledBitmap(b_, 400, 240, true);
+                double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
+                Bitmap b = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
                 b_.recycle();
                 CameraActivity.setTemplateImage(b);
                 Intent i = new Intent();
