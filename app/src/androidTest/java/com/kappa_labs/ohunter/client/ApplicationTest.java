@@ -1,4 +1,4 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

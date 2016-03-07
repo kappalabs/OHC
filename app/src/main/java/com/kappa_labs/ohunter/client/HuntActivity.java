@@ -1,4 +1,4 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 import android.content.Intent;
 import android.content.IntentSender;
@@ -12,7 +12,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -31,7 +30,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -46,8 +44,6 @@ import layout.HuntPlaceFragment;
 
 public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
-    //    public static final String GREEN_LIST_KEY = "green_list_key";
-//    public static final String RED_LIST_KEY = "red_list_key";
     public static final String TAG = "HuntActivity";
     public static final String REQUESTING_LOCATION_UPDATES_KEY = "requesting_location_updates_key";
     public static final String LOCATION_KEY = "location_key";
@@ -55,31 +51,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
 
-
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
-
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation, mCurrentLocation;
+    private Location mCurrentLocation;
     private LocationRequest mLocationRequest;
     private String mLastUpdateTime;
     private boolean mRequestingLocationUpdates = false;
 
     FloatingActionButton fab_info, fab_camera;
     private boolean item_selected = false;
-    private Place place_selected;
     public static ArrayList<Place> green_places, red_places;
     private HuntOfferFragment mHuntOfferFragment;
     private HuntPlaceFragment mHuntPlaceFragment;
@@ -93,12 +72,12 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        /* Create the adapter that will return a fragment for each of the three
+           primary sections of the activity */
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
+        /* Set up the ViewPager with the sections adapter */
+        ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -271,7 +250,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mHuntActionFragment != null) {
             mHuntActionFragment.changeLocation(mLastLocation);
         }
@@ -379,7 +358,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     @Override
     public void onItemSelected(Place place) {
         item_selected = true;
-        place_selected = place;
         HuntPlaceFragment.changePlace(place);
         HuntActionFragment.changePlace(place);
         fab_info.show();

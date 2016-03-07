@@ -1,4 +1,4 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -119,7 +119,7 @@ public class Utils {
      * @return Converted SImage object into Android Bitmap.
      */
     public static Bitmap toBitmap(SImage sImage) {
-        byte[] imgBytes = sImage.getImage();
+        byte[] imgBytes = sImage.getBytes();
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
     }
 
@@ -337,7 +337,7 @@ public class Utils {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA");
-            digest = byteArray2Hex(md.digest(new String(password).getBytes()));
+            digest = byteArray2Hex(md.digest(password.getBytes()));
         } catch (NoSuchAlgorithmException ex) {
             Log.e(TAG, "Cannog get diggest: " + ex);
         }

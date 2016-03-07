@@ -1,4 +1,4 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -48,6 +49,7 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Random;
 
@@ -55,7 +57,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
     private GoogleMap map;
     private GoogleApiClient mGoogleApiClient;
-    /* Zvyraznena oblast vyhledavani */
+    /* Highlighted area for place searching */
     private Circle mCircle;
     private static final String TAG = "PrepareHunt";
 
@@ -70,23 +72,23 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
 
-    // Request code to use when launching the resolution activity
+    /* Request code to use when launching the resolution activity */
     private static final int REQUEST_RESOLVE_ERROR = 1001;
-    // Unique tag for the error dialog fragment
+    /* Unique tag for the error dialog fragment */
     private static final String DIALOG_ERROR = "dialog_error";
-    // Bool to track whether the app is already resolving an error
+    /* Bool to track whether the app is already resolving an error */
     private boolean mResolvingError = false;
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
-    private Button mStartHuntButton;
     private TextView mNumTargetsTextView;
     private EditText mLongitudeEditText;
     private EditText mLatitudeEditText;
     private EditText mRadiusEditText;
     private Spinner mDaytimeSpinner;
 
-    private int numberOfTargets = -1;
+//    private int numberOfTargets = -1;
     private Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,7 +122,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             public void onNothingSelected(AdapterView<?> parent) { /* EMPTY */ }
         });
 
-        mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
+        Button mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
         mStartHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -145,7 +147,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
                 //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
                 Request request = new SearchRequest(player, getLatitude(), getLongitude(),
-                        (int)(getRadius() * 1000), prefferedDaytime, 400, 240);
+                        (int) (getRadius() * 1000), prefferedDaytime, 400, 240);
 
                 /* Asynchronously execute and wait for callback when result ready*/
                 Utils.RetrieveResponseTask responseTask =
@@ -231,8 +233,8 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         /* Success */
         ArrayList<Place> places = new ArrayList<>();
         if (response.places != null) {
-            places.addAll(response.places);
-            Log.d(TAG, "Ziskano: " + response.places.size() + " mist");
+            Collections.addAll(places, response.places);
+            Log.d(TAG, "Ziskano: " + response.places.length + " mist");
             for (Place pl : response.places) {
                 Log.d(TAG, pl.toString());
             }
@@ -406,15 +408,16 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult result) {
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
         // This callback is important for handling errors that
         // may occur while attempting to connect with Google.
         //
         // More about this in the 'Handle Connection Failures' section.
         if (mResolvingError) {
-            // Already attempting to resolve an error.
+            /* Already attempting to resolve an error */
             return;
-        } else if (result.hasResolution()) {
+        }
+        if (result.hasResolution()) {
             try {
                 mResolvingError = true;
                 result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
@@ -503,6 +506,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     public static class ErrorDialogFragment extends DialogFragment {
         public ErrorDialogFragment() { }
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             // Get the error code and retrieve the appropriate dialog

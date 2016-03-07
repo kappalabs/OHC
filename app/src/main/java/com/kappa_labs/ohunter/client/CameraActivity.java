@@ -1,5 +1,7 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,6 +12,8 @@ import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -21,8 +25,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.vision.Frame;
 import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -235,7 +239,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         Photo photo1 = new Photo();
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        photo1.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
+        photo1.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
         /* Second photo */
         b = getCroppedCameraPicture();
@@ -247,7 +251,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         Photo photo2 = new Photo();
         stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        photo2.image = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
+        photo2.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
         Request request = new CompareRequest(player, photo1, photo2);
 

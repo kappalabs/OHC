@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +15,10 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 
-import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
-import client.ohunter.fojjta.cekuj.net.ohunter.PlaceArrayAdapter;
-import client.ohunter.fojjta.cekuj.net.ohunter.R;
+import com.kappa_labs.ohunter.client.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.PlaceArrayAdapter;
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.SharedDataManager;
 
 /**
  * A simple {@link Fragment} subclass.

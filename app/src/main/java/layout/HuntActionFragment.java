@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,8 +27,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
-import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
-import client.ohunter.fojjta.cekuj.net.ohunter.R;
+import com.kappa_labs.ohunter.client.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.R;
 
 /**
  * A simple {@link Fragment} subclass.

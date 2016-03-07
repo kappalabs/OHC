@@ -1,4 +1,4 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 /**
  * Interface for letting the pages in Pager know about its visibility.

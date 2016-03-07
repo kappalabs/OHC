@@ -96,4 +96,9 @@
     <string name="login_prompt">You need to log in!</string>
     <string name="template_image_description">template_image</string>
     <string name="last_photo_description">last_photo</string>
+
+    <string name="dialog_store_offline_title">Use offline mode?</string>
+    <string name="dialog_store_offline_message">Internet connection not available. You can store the photos now and evaluate them later.</string>
+    <string name="dialog_store_offline_yes">Store</string>
+    <string name="dialog_store_offline_no">Back</string>
 </resources>

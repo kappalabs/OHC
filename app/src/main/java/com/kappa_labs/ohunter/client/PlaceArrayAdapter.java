@@ -1,9 +1,8 @@
-package client.ohunter.fojjta.cekuj.net.ohunter;
+package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -51,7 +50,7 @@ public class PlaceArrayAdapter extends ArrayAdapter<Place> {
                 //TODO: nacashovat ikony? nebo zobrazovat fotky?
                 /* Show the first available picture */
                 if (place.photos != null && place.photos.size() > 0) {
-                    iconImageView.setImageBitmap(Utils.toBitmap(place.photos.get(0).image));
+                    iconImageView.setImageBitmap(Utils.toBitmap(place.photos.get(0).sImage));
                 }
 //                /* Show the icon */
 //                String icon = place.gfields.get("icon");

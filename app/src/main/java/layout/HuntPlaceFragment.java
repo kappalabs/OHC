@@ -6,7 +6,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +19,9 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.Set;
 
-import client.ohunter.fojjta.cekuj.net.ohunter.PageChangeAdapter;
-import client.ohunter.fojjta.cekuj.net.ohunter.R;
-import client.ohunter.fojjta.cekuj.net.ohunter.Utils;
+import com.kappa_labs.ohunter.client.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.Utils;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -149,7 +148,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             return null;
         }
         Photo photo = mPlace.photos.get(position);
-        return Utils.toBitmap(photo.image);
+        return Utils.toBitmap(photo.sImage);
     }
 
     /**
@@ -162,7 +161,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             return null;
         }
         Photo photo = mPlace.photos.get(getSelectedPicturePosition());
-        return Utils.toBitmap(photo.image);
+        return Utils.toBitmap(photo.sImage);
     }
 
     public void updatePlace() {
@@ -230,7 +229,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         /* If no image is visible, add the first one and reset the progress bar position to 0 */
         if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
             mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
-            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.photos.get(0).image));
+            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.photos.get(0).sImage));
             mPhotoSeekBar.setProgress(0);
             mPhotoInfoTextView.setText(
                     Utils.daytimeToString(getContext(), mPlace.photos.get(0).daytime));
