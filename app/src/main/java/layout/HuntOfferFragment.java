@@ -4,13 +4,19 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.GridLayout;
+import android.widget.GridView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import com.kappa_labs.ohunter.client.PlaceTile;
+import com.kappa_labs.ohunter.client.TileAdapter;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
@@ -53,8 +59,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private OnFragmentInteractionListener mListener;
 
-    private ListView hmenuGreenListview;
-    private ListView hmenuRedListview;
+//    private ListView hmenuGreenListview;
+//    private ListView hmenuRedListview;
+
+    public static ArrayList<String> greenIDs;
+    public static ArrayList<String> redIDs;
 
     private int selectedGreenIndex = UNKNOWN_INDEX;
     private int selectedRedIndex = UNKNOWN_INDEX;
@@ -104,138 +113,176 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_hunt_offer, container, false);
 
-        hmenuGreenListview = (ListView) view.findViewById(R.id.listView_hmenu_green);
-        hmenuRedListview = (ListView) view.findViewById(R.id.listView_hmenu_red);
+        GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
+//        for (int i = 0; i < 10; i++) {
+//            PlaceTile placeTile = new PlaceTile(getContext());
+//            offerGridLayout.(placeTile);
+//        }
 
-        /* GREEN ==================== */
-        hmenuGreenListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        Log.d("Hunt", "mam " + greenIDs.size() + " idecek v greenIDs, jdu je naadaptovat...");
+        // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke
+        TileAdapter adapter = new TileAdapter(getContext(), greenIDs, SharedDataManager.getPlayer(getContext()));
+        offerGridView.setAdapter(adapter);
+
+        offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                /* Obarveni polozky */
-                selectedGreenIndex = position;
-                selectedRedIndex = UNKNOWN_INDEX;
-                updateHighlights();
+                if (view instanceof PlaceTile) {
+                    Log.d(TAG, "je to placetile");
+                    PlaceTile tile = (PlaceTile) view;
+                    tile.setState(PlaceTile.TILE_STATE.GREEN);
 
-                /* Ohlaseni udalosti */
-                if (mListener != null) {
-                    mListener.onItemSelected(mParamGreen.get(position));
-                }
-            }
-        });
-        hmenuGreenListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                /* Odbarveni polozky */
-                if (selectedGreenIndex == position) {
-                    selectedGreenIndex = UNKNOWN_INDEX;
-                } else if (position < selectedGreenIndex) {
-                    --selectedGreenIndex;
-                }
-                if (activatedIndex == position) {
-                    activatedIndex = UNKNOWN_INDEX;
-                } else if (position < activatedIndex) {
-                    --activatedIndex;
-                }
-                updateHighlights();
-
-                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
-                if (mListener != null) {
-                    if (selectedGreenIndex == UNKNOWN_INDEX) {
-                        mListener.onItemUnselected();
-                    } else {
-                        mListener.onItemSelected(mParamGreen.get(selectedGreenIndex));
+                    /* Ohlaseni udalosti */
+                    if (mListener != null) {
+                        mListener.onItemSelected(tile.getPlace());
                     }
-                    Place removed = mParamGreen.get(position);
-                    mGreenAdapter.remove(removed);
-                    mListener.onGreenRejected(removed);
-                    mRedAdapter.add(removed);
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        /* RED ==================== */
-        hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                /* Obarveni polozky */
-                selectedGreenIndex = UNKNOWN_INDEX;
-                selectedRedIndex = position;
-                updateHighlights();
-
-                /* Ohlaseni udalosti */
-                if (mListener != null) {
-                    mListener.onItemSelected(mParamRed.get(position));
-                }
-            }
-        });
-        hmenuRedListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                /* Odbarveni polozky */
-                if (selectedRedIndex == position) {
-                    selectedRedIndex = UNKNOWN_INDEX;
-                } else if (position < selectedRedIndex) {
-                    --selectedRedIndex;
-                }
-                if (activatedIndex == position) {
-                    activatedIndex = UNKNOWN_INDEX;
-                } else if (position < activatedIndex) {
-                    --activatedIndex;
-                }
-                updateHighlights();
-
-                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
-                if (mListener != null) {
-                    if (selectedRedIndex == UNKNOWN_INDEX) {
-                        mListener.onItemUnselected();
-                    } else {
-                        mListener.onItemSelected(mParamRed.get(selectedRedIndex));
-                    }
-                    Place removed = mParamRed.get(position);
-                    mRedAdapter.remove(removed);
-                    mListener.onRedRejected(removed);
-                    mGreenAdapter.add(removed);
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        mGreenAdapter = new PlaceArrayAdapter(hmenuGreenListview.getContext(),
-                R.layout.place_item_row, mParamGreen) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                if (activatedIndex != UNKNOWN_INDEX && position == activatedIndex) {
-                    view.setBackgroundColor(ACTIVATED_PLACE_COLOR);
-                } else if (selectedGreenIndex != UNKNOWN_INDEX && position == selectedGreenIndex) {
-                    view.setBackgroundColor(SELECTED_GREEN_COLOR);
                 } else {
-                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
+                    Log.d(TAG, "neni to placetile");
                 }
-                return view;
+//                /* Obarveni polozky */
+//                selectedGreenIndex = position;
+//                selectedRedIndex = UNKNOWN_INDEX;
+//                updateHighlights();
+//
+//                /* Ohlaseni udalosti */
+//                if (mListener != null) {
+//                    mListener.onItemSelected(mParamGreen.get(position));
+//                }
             }
-        };
-        mRedAdapter = new PlaceArrayAdapter(hmenuRedListview.getContext(),
-                R.layout.place_item_row, mParamRed) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                if (selectedRedIndex != UNKNOWN_INDEX && position == selectedRedIndex) {
-                    view.setBackgroundColor(SELECTED_RED_COLOR);
-                } else {
-                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
-                }
-                return view;
-            }
-        };
+        });
 
-        //NOTE: java.lang.NullPointerException: Attempt to invoke interface method 'int java.util.List.size()' on a null object reference
-        // nastala po presunu na druhou page ze treti, OHunter byl nejspis aktivni, byla vyvolan spravce SM z odemykaci obrazovky...
-        hmenuGreenListview.setAdapter(mGreenAdapter);
-        hmenuRedListview.setAdapter(mRedAdapter);
+//        hmenuGreenListview = (ListView) view.findViewById(R.id.listView_hmenu_green);
+//        hmenuRedListview = (ListView) view.findViewById(R.id.listView_hmenu_red);
+
+//        /* GREEN ==================== */
+//        hmenuGreenListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                /* Obarveni polozky */
+//                selectedGreenIndex = position;
+//                selectedRedIndex = UNKNOWN_INDEX;
+//                updateHighlights();
+//
+//                /* Ohlaseni udalosti */
+//                if (mListener != null) {
+//                    mListener.onItemSelected(mParamGreen.get(position));
+//                }
+//            }
+//        });
+//        hmenuGreenListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+//                /* Odbarveni polozky */
+//                if (selectedGreenIndex == position) {
+//                    selectedGreenIndex = UNKNOWN_INDEX;
+//                } else if (position < selectedGreenIndex) {
+//                    --selectedGreenIndex;
+//                }
+//                if (activatedIndex == position) {
+//                    activatedIndex = UNKNOWN_INDEX;
+//                } else if (position < activatedIndex) {
+//                    --activatedIndex;
+//                }
+//                updateHighlights();
+//
+//                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
+//                if (mListener != null) {
+//                    if (selectedGreenIndex == UNKNOWN_INDEX) {
+//                        mListener.onItemUnselected();
+//                    } else {
+//                        mListener.onItemSelected(mParamGreen.get(selectedGreenIndex));
+//                    }
+//                    Place removed = mParamGreen.get(position);
+//                    mGreenAdapter.remove(removed);
+//                    mListener.onGreenRejected(removed);
+//                    mRedAdapter.add(removed);
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
+//
+//        /* RED ==================== */
+//        hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                /* Obarveni polozky */
+//                selectedGreenIndex = UNKNOWN_INDEX;
+//                selectedRedIndex = position;
+//                updateHighlights();
+//
+//                /* Ohlaseni udalosti */
+//                if (mListener != null) {
+//                    mListener.onItemSelected(mParamRed.get(position));
+//                }
+//            }
+//        });
+//        hmenuRedListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+//                /* Odbarveni polozky */
+//                if (selectedRedIndex == position) {
+//                    selectedRedIndex = UNKNOWN_INDEX;
+//                } else if (position < selectedRedIndex) {
+//                    --selectedRedIndex;
+//                }
+//                if (activatedIndex == position) {
+//                    activatedIndex = UNKNOWN_INDEX;
+//                } else if (position < activatedIndex) {
+//                    --activatedIndex;
+//                }
+//                updateHighlights();
+//
+//                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
+//                if (mListener != null) {
+//                    if (selectedRedIndex == UNKNOWN_INDEX) {
+//                        mListener.onItemUnselected();
+//                    } else {
+//                        mListener.onItemSelected(mParamRed.get(selectedRedIndex));
+//                    }
+//                    Place removed = mParamRed.get(position);
+//                    mRedAdapter.remove(removed);
+//                    mListener.onRedRejected(removed);
+//                    mGreenAdapter.add(removed);
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
+//
+//        mGreenAdapter = new PlaceArrayAdapter(hmenuGreenListview.getContext(),
+//                R.layout.place_item_row, mParamGreen) {
+//            @Override
+//            public View getView(int position, View convertView, ViewGroup parent) {
+//                View view = super.getView(position, convertView, parent);
+//                if (activatedIndex != UNKNOWN_INDEX && position == activatedIndex) {
+//                    view.setBackgroundColor(ACTIVATED_PLACE_COLOR);
+//                } else if (selectedGreenIndex != UNKNOWN_INDEX && position == selectedGreenIndex) {
+//                    view.setBackgroundColor(SELECTED_GREEN_COLOR);
+//                } else {
+//                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//                }
+//                return view;
+//            }
+//        };
+//        mRedAdapter = new PlaceArrayAdapter(hmenuRedListview.getContext(),
+//                R.layout.place_item_row, mParamRed) {
+//            @Override
+//            public View getView(int position, View convertView, ViewGroup parent) {
+//                View view = super.getView(position, convertView, parent);
+//                if (selectedRedIndex != UNKNOWN_INDEX && position == selectedRedIndex) {
+//                    view.setBackgroundColor(SELECTED_RED_COLOR);
+//                } else {
+//                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//                }
+//                return view;
+//            }
+//        };
+//
+//        //NOTE: java.lang.NullPointerException: Attempt to invoke interface method 'int java.util.List.size()' on a null object reference
+//        // nastala po presunu na druhou page ze treti, OHunter byl nejspis aktivni, byla vyvolan spravce SM z odemykaci obrazovky...
+//        hmenuGreenListview.setAdapter(mGreenAdapter);
+//        hmenuRedListview.setAdapter(mRedAdapter);
 
         return view;
     }
@@ -265,24 +312,24 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private void updateHighlights() {
         clearHighlighted();
-        if (activatedIndex != UNKNOWN_INDEX) {
-            getViewByPosition(activatedIndex, hmenuGreenListview).setBackgroundColor(ACTIVATED_PLACE_COLOR);
-        }
-        if (selectedGreenIndex != UNKNOWN_INDEX && selectedGreenIndex != activatedIndex) {
-            getViewByPosition(selectedGreenIndex, hmenuGreenListview).setBackgroundColor(SELECTED_GREEN_COLOR);
-        }
-        if (selectedRedIndex != UNKNOWN_INDEX) {
-            getViewByPosition(selectedRedIndex, hmenuRedListview).setBackgroundColor(SELECTED_RED_COLOR);
-        }
+//        if (activatedIndex != UNKNOWN_INDEX) {
+//            getViewByPosition(activatedIndex, hmenuGreenListview).setBackgroundColor(ACTIVATED_PLACE_COLOR);
+//        }
+//        if (selectedGreenIndex != UNKNOWN_INDEX && selectedGreenIndex != activatedIndex) {
+//            getViewByPosition(selectedGreenIndex, hmenuGreenListview).setBackgroundColor(SELECTED_GREEN_COLOR);
+//        }
+//        if (selectedRedIndex != UNKNOWN_INDEX) {
+//            getViewByPosition(selectedRedIndex, hmenuRedListview).setBackgroundColor(SELECTED_RED_COLOR);
+//        }
     }
 
     private void clearHighlighted() {
-        for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
-            hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-        }
-        for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
-            hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-        }
+//        for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
+//            hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//        }
+//        for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
+//            hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
+//        }
     }
 
     private View getViewByPosition(int pos, ListView listView) {
@@ -316,6 +363,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     public void activateSelectedPlace() {
         if (selectedGreenIndex != UNKNOWN_INDEX) {
             activatedIndex = selectedGreenIndex;
+//            //TODO: pouze docasne, zmenit pri PlaceTile pattern upgradu
+//            SharedDataManager.setActivePlace(getContext(), mParamGreen.get(activatedIndex));
         }
         updateHighlights();
     }

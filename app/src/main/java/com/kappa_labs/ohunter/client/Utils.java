@@ -128,11 +128,31 @@ public class Utils {
         private OHException ohException;
         private OnResponseTaskCompleted mListener;
         private ProgressDialog mProgressDialog;
+        private int mCode;
 
 
+        /**
+         * Create a new task to retrieve data from server.
+         *
+         * @param caller The caller, that will be notified, can be null.
+         * @param progressDialog Reference to dialog, which will be closed after this task.
+         */
         public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog) {
             this.mListener = caller;
             this.mProgressDialog = progressDialog;
+        }
+
+        /**
+         * Create a new task to retrieve data from server.
+         *
+         * @param caller The caller, that will be notified, can be null.
+         * @param progressDialog Reference to dialog, which will be closed after this task.
+         * @param code Code to identify this task.
+         */
+        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog, int code) {
+            this.mListener = caller;
+            this.mProgressDialog = progressDialog;
+            this.mCode = code;
         }
 
         @Override
@@ -147,7 +167,7 @@ public class Utils {
 
         protected void onPostExecute(Response response) {
             if (mListener != null) {
-                mListener.onResponseTaskCompleted(response, ohException);
+                mListener.onResponseTaskCompleted(response, ohException, mCode);
             }
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
@@ -156,7 +176,7 @@ public class Utils {
     }
 
     public interface OnResponseTaskCompleted{
-        void onResponseTaskCompleted(Response response, OHException ohex);
+        void onResponseTaskCompleted(Response response, OHException ohex, int code);
     }
 
     public static ProgressDialog getStandardDialog(Context context, String title, String message) {

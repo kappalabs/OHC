@@ -14,6 +14,10 @@ import android.widget.TextView;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 
+import java.util.ArrayList;
+
+import layout.HuntOfferFragment;
+
 
 /**
  * Holds main game menu and takes care of user login prompt.
@@ -45,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO: pouze test image...
+                //TODO: statistiky
+                //DEBUG: pouze test image...
                 Bitmap b_ = BitmapFactory.decodeResource(getResources(), R.drawable.img);
                 double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
                 Bitmap b = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
@@ -61,6 +66,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //TODO
+                //DEBUG: pouze test funkcionality nabidky
+                ArrayList<String> ids = new ArrayList<>();
+                ids.add("ChIJbcDGzgOVC0cRHVtUxuhyPyc");
+                ids.add("ChIJnzfcNpSUC0cR02jk07H0ROA");
+                ids.add("ChIJAyNP5o6UC0cRH2h_j6e-d9c");
+                ids.add("ChIJL-htB_-UC0cRw5332DTK3qk");
+                ids.add("ChIJTxbyv-OUC0cRFEhcU2Cq8po");
+                ids.add("ChIJF9p_IeqUC0cREiNdJH5eISQ");
+                ids.add("ChIJF-GOjz6uEmsRgENqSlnL0qA");
+                ids.add("ChIJNe6UFBWuEmsRm-raxeK9RdI");
+                HuntOfferFragment.greenIDs = ids;
+                /* Start the main game activity with these groups of places prepared */
+                Intent i = new Intent();
+                i.setClass(MainActivity.this, HuntActivity.class);
+                startActivity(i);
             }
         });
         Button mAboutButton = (Button) findViewById(R.id.button_about);

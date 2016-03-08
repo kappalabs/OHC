@@ -4,31 +4,42 @@
     android:layout_height="match_parent"
     tools:context="layout.HuntOfferFragment">
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <!--<LinearLayout-->
+        <!--android:orientation="horizontal"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:baselineAligned="false"-->
+        <!--android:layout_margin="5dp">-->
+
+        <!--<ListView-->
+            <!--android:layout_width="fill_parent"-->
+            <!--android:layout_height="fill_parent"-->
+            <!--android:id="@+id/listView_hmenu_green"-->
+            <!--android:layout_weight="1"-->
+            <!--android:scrollbars="none" />-->
+
+        <!--<View-->
+            <!--android:layout_width="3dp"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:background="@android:color/darker_gray"/>-->
+
+        <!--<ListView-->
+            <!--android:layout_width="fill_parent"-->
+            <!--android:layout_height="fill_parent"-->
+            <!--android:id="@+id/listView_hmenu_red"-->
+            <!--android:layout_weight="1"-->
+            <!--android:scrollbars="none" />-->
+    <!--</LinearLayout>-->
+
+    <GridView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:baselineAligned="false"
-        android:layout_margin="5dp">
-
-        <ListView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/listView_hmenu_green"
-            android:layout_weight="1"
-            android:scrollbars="none" />
-
-        <View
-            android:layout_width="3dp"
-            android:layout_height="match_parent"
-            android:background="@android:color/darker_gray"/>
-
-        <ListView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/listView_hmenu_red"
-            android:layout_weight="1"
-            android:scrollbars="none" />
-    </LinearLayout>
+        android:id="@+id/gridView_offer"
+        android:layout_margin="7dp"
+        android:numColumns="auto_fit"
+        android:horizontalSpacing="10dp"
+        android:verticalSpacing="10dp"
+        android:gravity="center"
+        android:stretchMode="columnWidth" />
 
 </FrameLayout>

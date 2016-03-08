@@ -45,8 +45,9 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
+import com.kappa_labs.ohunter.lib.requests.RadarSearchRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
-import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +68,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
 
-    private static final int DEFAULT_NUM_GREENS = 5;
+    private static final int RADAR_SEARCH_KEY = 4200;
+    private static final int FILL_PLACES_KEY = 4201;
+
+    private static final int DEFAULT_NUM_GREENS = 6;
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
@@ -88,6 +92,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
 //    private int numberOfTargets = -1;
     private Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
+    // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
+    //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
+    private int prefferedWidth = 800;
+    private int prefferedHeight = 480;
 
 
     @Override
@@ -143,16 +151,14 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
                     return;
                 }
-                // TODO: volit max rozmery pozadovanych fotografii?
-                // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
-                //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-                Request request = new SearchRequest(player, getLatitude(), getLongitude(),
-                        (int) (getRadius() * 1000), prefferedDaytime, 400, 240);
 
-                /* Asynchronously execute and wait for callback when result ready*/
+                Request request = new RadarSearchRequest(
+                        player, getLatitude(), getLongitude(), (int)(getRadius() * 1000));
+
                 Utils.RetrieveResponseTask responseTask =
                         Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
-                                Utils.getServerCommunicationDialog(PrepareHuntActivity.this));
+                                Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
+                                RADAR_SEARCH_KEY);
                 responseTask.execute(request);
             }
         });
@@ -215,7 +221,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     }
 
     @Override
-    public void onResponseTaskCompleted(Response response, OHException ohex) {
+    public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -234,26 +240,47 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         ArrayList<Place> places = new ArrayList<>();
         if (response.places != null) {
             Collections.addAll(places, response.places);
-            Log.d(TAG, "Ziskano: " + response.places.length + " mist");
-            for (Place pl : response.places) {
-                Log.d(TAG, pl.toString());
+        }
+        if (code == RADAR_SEARCH_KEY) {
+            Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
+            /* Divide the available places into two groups */
+            ArrayList<String> greenIDs = new ArrayList<>();
+            int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
+            Random random = new Random();
+            while (numGreens-- > 0) {
+                final int pos = random.nextInt(places.size());
+                greenIDs.add(places.get(pos).getID());
+                places.remove(pos);
             }
-        }
+            SharedDataManager.greenIDs = greenIDs;
+            ArrayList<String> redIDs = new ArrayList<>();
+            for (Place place : places) {
+                redIDs.add(place.getID());
+            }
+            SharedDataManager.redIDs = redIDs;
+            /* Start request for the green places */
+            Request request = new FillPlacesRequest(
+                    SharedDataManager.getPlayer(PrepareHuntActivity.this),
+                    greenIDs.toArray(new String[greenIDs.size()]),
+                    prefferedDaytime, prefferedWidth, prefferedHeight);
+            Utils.RetrieveResponseTask responseTask =
+                    Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
+                            Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
+                            FILL_PLACES_KEY);
+            responseTask.execute(request);
+        } else if (code == FILL_PLACES_KEY) {
+            Log.d(TAG, "FillPlaces vratil " + places.size() + " mist");
+            for (Place place : response.places) {
+                Log.d(TAG, place.toString());
+            }
+            HuntActivity.green_places = new ArrayList<>(places);
+            HuntActivity.red_places = new ArrayList<>();
 
-        /* Divide the available places into two groups */
-        HuntActivity.green_places = new ArrayList<>();
-        int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
-        Random random = new Random();
-        while (numGreens-- > 0) {
-            final int pos = random.nextInt(places.size());
-            HuntActivity.green_places.add(places.get(pos));
-            places.remove(pos);
+            /* Start the main game activity with these groups of places prepared */
+            Intent i = new Intent();
+            i.setClass(PrepareHuntActivity.this, HuntActivity.class);
+            startActivity(i);
         }
-        HuntActivity.red_places = new ArrayList<>(places);
-        /* Start the main game activity with these groups of places prepared */
-        Intent i = new Intent();
-        i.setClass(PrepareHuntActivity.this, HuntActivity.class);
-        startActivity(i);
     }
 
     private double getLongitude() {

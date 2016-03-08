@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -262,7 +263,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     @Override
-    public void onResponseTaskCompleted(Response response, OHException ohex) {
+    public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(CameraActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -275,6 +276,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
             Toast.makeText(CameraActivity.this, getString(R.string.server_unreachable_error),
                     Toast.LENGTH_SHORT).show();
+            //TODO: zobrazovani dialogu s nabidkou offline + pripadne uzamceni mista
+            StoreOfflineDialogFragment dialogFragment = new StoreOfflineDialogFragment();
+            dialogFragment.show(getSupportFragmentManager(), null);
             return;
         }
         /* Success */
@@ -284,6 +288,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         Log.d(TAG, "response similarity: " + response.similarity);
         scoreTextview.setText(String.format("%.1f%%", response.similarity * 100));
         scoreTextview.setVisibility(View.VISIBLE);
+        //TODO: uzamceni mista
     }
 
     @Override
@@ -350,6 +355,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     @Override
     public void onImageReady() {
+        /* Store the photo */
+        //TODO
+//        Place activePlace = SharedDataManager.getActivePlace(this);
+//        SharedDataManager.addBitmapToPlace(this, activePlace, CameraOverlay.mBitmap);
+        /* Update UI information */
         lastPhotoImageview.setImageBitmap(CameraOverlay.mBitmap);
         ++numberOfAttempts;
         numberOfPhotosTextview.setText((DEFAULT_NUM_ATTEMPTS - numberOfAttempts) + getString(R.string.number_sign));
@@ -409,6 +419,37 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         templateImageView.setImageBitmap(edgesImage);
         templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
         updateLimits();
+    }
+
+    public static class StoreOfflineDialogFragment extends DialogFragment {
+
+//        private Context mContext;
+//
+//
+//        public StoreOfflineDialogFragment(Context context) {
+//            mContext = context;
+//        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setTitle(R.string.dialog_store_offline_title)
+                    .setMessage(R.string.dialog_store_offline_message)
+                    .setPositiveButton(R.string.dialog_store_offline_yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            /* Store the photos for later use */
+//                            SharedDataManager.getActivePlace(mContext);
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_store_offline_no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        /* User should turn on mobile data of Wifi now */
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
     }
 
 }

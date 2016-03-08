@@ -2,8 +2,10 @@ package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.io.FileInputStream;
@@ -11,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 
 /**
  * Class managing access to shared values from SharedPreferences and private files
@@ -21,9 +24,14 @@ public class SharedDataManager {
     private static final String TAG = "PreferencesManager";
     private static final String SHARED_DATA_FILENAME = "SHARED_DATA_FILENAME";
     private static final String PLAYER_FILENAME = "PLAYER_FILENAME";
+    private static final String ACTIVE_PLACE_FILENAME = "ACTIVE_PLACE_FILENAME";
+    private static final String PLACE_FILENAME = "PLACE_FILENAME";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
+//    private static Place mActivePlace;
+    private static ArrayList<String> mPlacesIDs = new ArrayList<>();
+    public static ArrayList<String> greenIDs, redIDs;
 
 
     private SharedDataManager() { /* Non-instantiable class */ }
@@ -109,6 +117,56 @@ public class SharedDataManager {
     public static boolean setPlayer(Context context, Player player) {
         mPlayer = player;
         return writeObject(context, player, PLAYER_FILENAME);
+    }
+
+    public static Place getPlace(Context context, String placeID) {
+        //TODO: nejak cashovat?
+//        /* If possible, return cashed Place object */
+//        if (mPlayer != null) {
+//            return mPlayer;
+//        }
+        /* Otherwise try to read the object from file */
+        Object object = readObject(context, placeID + "/" + PLACE_FILENAME);
+        if (object != null && object instanceof Place) {
+            return (Place) object;
+        }
+        return null;
+    }
+
+    public static boolean addPlace(Context context, Place place) {
+        mPlacesIDs.add(place.getID());
+        return writeObject(context, place, place.getID() + "/" + PLACE_FILENAME);
+    }
+
+    public static Place getActivePlace(Context context) {
+//        if (mActivePlace != null) {
+//            return mActivePlace;
+//        }
+//        /* Otherwise try to read the object from file */
+//        Object object = readObject(context, ACTIVE_PLACE_FILENAME);
+//        if (object != null && object instanceof Place) {
+//            mActivePlace = (Place) object;
+//        }
+//        return mActivePlace;
+        return null;
+    }
+
+    public static boolean setActivePlace(Context context, Place place) {
+        //TODO:
+        return false;
+    }
+
+    public static boolean addBitmapToPlace(Context context, Place place, Bitmap photo) {
+        writeObject(context, photo,
+                place.getID() + "/" + ((Long)(System.currentTimeMillis()/1000)).toString() + ".jpg");
+        return false;
+    }
+
+    public static ArrayList<Bitmap> getBitmapsForPlace(Context context, Place place) {
+        ArrayList<Bitmap> photos = new ArrayList<>();
+//        writeObject(context, photo,
+//                place.getID() + "/" + ((Long) (System.currentTimeMillis() / 1000)).toString() + ".jpg");
+        return photos;
     }
 
 }
