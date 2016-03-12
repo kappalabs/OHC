@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".CameraActivity"
-    android:background="@color/kappa_blue">
+    tools:context=".CameraActivity" >
 
     <RelativeLayout
         android:layout_width="match_parent"

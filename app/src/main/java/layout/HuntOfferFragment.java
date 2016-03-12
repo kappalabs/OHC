@@ -1,28 +1,28 @@
 package layout;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.GridLayout;
 import android.widget.GridView;
-import android.widget.ListAdapter;
-import android.widget.ListView;
+import android.widget.ProgressBar;
 
-import com.kappa_labs.ohunter.client.PlaceTile;
+import com.kappa_labs.ohunter.client.HuntActivity;
+import com.kappa_labs.ohunter.client.Target;
+import com.kappa_labs.ohunter.client.TargetTileView;
+import com.kappa_labs.ohunter.client.PlacesManager;
 import com.kappa_labs.ohunter.client.TileAdapter;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Random;
 
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
-import com.kappa_labs.ohunter.client.PlaceArrayAdapter;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.SharedDataManager;
 
@@ -38,40 +38,19 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static final String TAG = "HuntOfferFragment";
 
-    private static final String PARAM_GREENS_KEY = "param_green_key";
-    private static final String PARAM_RED_KEY = "param_red_key";
-    private static final String SELECTED_GREEN_INDX_KEY = "selected_green_indx_key";
-    private static final String SELECTED_RED_INDX_KEY = "selected_red_indx_key";
-    private static final String ACTIVATED_INDX_KEY = "activated_indx_key";
-
-    private static final int SELECTED_GREEN_COLOR = Color.GREEN;
-    private static final int SELECTED_RED_COLOR = Color.RED;
-    private static final int ACTIVATED_PLACE_COLOR = Color.YELLOW;
-    private static final int UNSELECTED_PLACE_COLOR = Color.TRANSPARENT;
-
-    private static final int UNKNOWN_INDEX = -1;
-
-    public static ArrayList<Place> mParamGreen;
-    public static ArrayList<Place> mParamRed;
-
-    private ArrayAdapter<Place> mGreenAdapter;
-    private ArrayAdapter<Place> mRedAdapter;
-
     private OnFragmentInteractionListener mListener;
 
-//    private ListView hmenuGreenListview;
-//    private ListView hmenuRedListview;
+    private ArrayList<Target> targets = new ArrayList<>();
+    private TileAdapter mAdapter;
 
-    public static ArrayList<String> greenIDs;
-    public static ArrayList<String> redIDs;
+    private ProgressBar fetchingProgressBar;
+    GridView offerGridView;
 
-    private int selectedGreenIndex = UNKNOWN_INDEX;
-    private int selectedRedIndex = UNKNOWN_INDEX;
-    private int activatedIndex = UNKNOWN_INDEX;
+    private int selectedIndex;
 
 
     public HuntOfferFragment() {
-        // Required empty public constructor
+        /* Required empty public constructor */
     }
 
     /**
@@ -86,210 +65,219 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
-                selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
-            }
-            if (savedInstanceState.keySet().contains(SELECTED_RED_INDX_KEY)) {
-                selectedRedIndex = savedInstanceState.getInt(SELECTED_RED_INDX_KEY);
-            }
-            if (savedInstanceState.keySet().contains(ACTIVATED_INDX_KEY)) {
-                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDX_KEY);
-            }
-        }
+        //TOOD: ulozit do sharedmanageru selected
+//        if (savedInstanceState != null) {
+//            if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
+//                selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
+//            }
+//            if (savedInstanceState.keySet().contains(SELECTED_RED_INDX_KEY)) {
+//                selectedRedIndex = savedInstanceState.getInt(SELECTED_RED_INDX_KEY);
+//            }
+//            if (savedInstanceState.keySet().contains(ACTIVATED_INDX_KEY)) {
+//                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDX_KEY);
+//            }
+//        }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(SELECTED_GREEN_INDX_KEY, selectedGreenIndex);
-        outState.putInt(SELECTED_RED_INDX_KEY, selectedRedIndex);
-        outState.putInt(ACTIVATED_INDX_KEY, activatedIndex);
-
-        super.onSaveInstanceState(outState);
-    }
+//    @Override
+//    public void onSaveInstanceState(Bundle outState) {
+//        outState.putInt(SELECTED_GREEN_INDX_KEY, selectedGreenIndex);
+//        outState.putInt(SELECTED_RED_INDX_KEY, selectedRedIndex);
+//        outState.putInt(ACTIVATED_INDX_KEY, activatedIndex);
+//
+//        super.onSaveInstanceState(outState);
+//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        /* Inflate the layout for this fragment */
         View view = inflater.inflate(R.layout.fragment_hunt_offer, container, false);
 
-        GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
-//        for (int i = 0; i < 10; i++) {
-//            PlaceTile placeTile = new PlaceTile(getContext());
-//            offerGridLayout.(placeTile);
-//        }
+        fetchingProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_fetching);
+        fetchingProgressBar.setVisibility(View.GONE);
+        offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
 
-        Log.d("Hunt", "mam " + greenIDs.size() + " idecek v greenIDs, jdu je naadaptovat...");
-        // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke
-        TileAdapter adapter = new TileAdapter(getContext(), greenIDs, SharedDataManager.getPlayer(getContext()));
-        offerGridView.setAdapter(adapter);
+        // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke (ale v teto metode to nejde)
+        mAdapter = new TileAdapter(getContext(), targets);
+        offerGridView.setAdapter(mAdapter);
 
+        /* This class will prepare the places - load from local files or retrieve them from Internet */
+        PlacesManager manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
+            @Override
+            public void onPreparationStarted() {
+                fetchingProgressBar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onPreparationEnded() {
+                fetchingProgressBar.setVisibility(View.GONE);
+
+                //TODO: provadet jinde - ne po kazdem navstiveni tohoto fragmentu!
+                /* Divide given places into two groups (green and red) */
+                ArrayList<Integer> range = new ArrayList<>();
+                for (int i = 0; i < targets.size(); i++) {
+                    range.add(i);
+                    targets.get(i).setState(Target.TARGET_STATE.REJECTED);
+                }
+                /* Randomly pick green places */
+                Random random = new Random();
+                int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
+                while (min > 0) {
+                    int index = random.nextInt(range.size());
+                    targets.get(range.remove(index)).setState(Target.TARGET_STATE.ACCEPTED);
+                    --min;
+                }
+
+                //TODO: provadet pravidelne?
+                /* Sort places  */
+                Collections.sort(targets, new Comparator<Target>() {
+                    @Override
+                    public int compare(Target lhs, Target rhs) {
+                        return lhs.getState().compare(rhs.getState());
+                    }
+                });
+
+                mAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onPlaceReady(Place place) {
+                targets.add(new Target(place.getID()));
+                mAdapter.notifyDataSetChanged();
+            }
+        }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
+        manager.preparePlaces();
+
+        /* Short click selects the tile */
         offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (view instanceof PlaceTile) {
-                    Log.d(TAG, "je to placetile");
-                    PlaceTile tile = (PlaceTile) view;
-                    tile.setState(PlaceTile.TILE_STATE.GREEN);
+                if (view instanceof TargetTileView) {
+                    TargetTileView tile = (TargetTileView) view;
+                    selectedIndex = position;
+                    for (Target iTile : targets) {
+                        iTile.setHighlighted(false);
+                    }
+                    mAdapter.notifyDataSetChanged();
+//                    tile.changeRotation();
+                    tile.setHighlighted(true);
+                    tile.update();
 
-                    /* Ohlaseni udalosti */
+                    /* Notify the listener */
                     if (mListener != null) {
                         mListener.onItemSelected(tile.getPlace());
+                        if (tile.isAccepted()) {
+                            mListener.onGreenSelected();
+                        } else if (tile.isRejected()) {
+                            mListener.onRedSelected();
+                        }
                     }
-                } else {
-                    Log.d(TAG, "neni to placetile");
                 }
-//                /* Obarveni polozky */
-//                selectedGreenIndex = position;
-//                selectedRedIndex = UNKNOWN_INDEX;
-//                updateHighlights();
-//
-//                /* Ohlaseni udalosti */
-//                if (mListener != null) {
-//                    mListener.onItemSelected(mParamGreen.get(position));
-//                }
             }
         });
 
-//        hmenuGreenListview = (ListView) view.findViewById(R.id.listView_hmenu_green);
-//        hmenuRedListview = (ListView) view.findViewById(R.id.listView_hmenu_red);
+        /* On long click, go to the information page about selected place */
+        offerGridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (view instanceof TargetTileView) {
+                    TargetTileView tile = (TargetTileView) view;
+                    selectedIndex = position;
 
-//        /* GREEN ==================== */
-//        hmenuGreenListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                /* Obarveni polozky */
-//                selectedGreenIndex = position;
-//                selectedRedIndex = UNKNOWN_INDEX;
-//                updateHighlights();
-//
-//                /* Ohlaseni udalosti */
-//                if (mListener != null) {
-//                    mListener.onItemSelected(mParamGreen.get(position));
-//                }
-//            }
-//        });
-//        hmenuGreenListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//                /* Odbarveni polozky */
-//                if (selectedGreenIndex == position) {
-//                    selectedGreenIndex = UNKNOWN_INDEX;
-//                } else if (position < selectedGreenIndex) {
-//                    --selectedGreenIndex;
-//                }
-//                if (activatedIndex == position) {
-//                    activatedIndex = UNKNOWN_INDEX;
-//                } else if (position < activatedIndex) {
-//                    --activatedIndex;
-//                }
-//                updateHighlights();
-//
-//                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
-//                if (mListener != null) {
-//                    if (selectedGreenIndex == UNKNOWN_INDEX) {
-//                        mListener.onItemUnselected();
-//                    } else {
-//                        mListener.onItemSelected(mParamGreen.get(selectedGreenIndex));
-//                    }
-//                    Place removed = mParamGreen.get(position);
-//                    mGreenAdapter.remove(removed);
-//                    mListener.onGreenRejected(removed);
-//                    mRedAdapter.add(removed);
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
-//
-//        /* RED ==================== */
-//        hmenuRedListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                /* Obarveni polozky */
-//                selectedGreenIndex = UNKNOWN_INDEX;
-//                selectedRedIndex = position;
-//                updateHighlights();
-//
-//                /* Ohlaseni udalosti */
-//                if (mListener != null) {
-//                    mListener.onItemSelected(mParamRed.get(position));
-//                }
-//            }
-//        });
-//        hmenuRedListview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//                /* Odbarveni polozky */
-//                if (selectedRedIndex == position) {
-//                    selectedRedIndex = UNKNOWN_INDEX;
-//                } else if (position < selectedRedIndex) {
-//                    --selectedRedIndex;
-//                }
-//                if (activatedIndex == position) {
-//                    activatedIndex = UNKNOWN_INDEX;
-//                } else if (position < activatedIndex) {
-//                    --activatedIndex;
-//                }
-//                updateHighlights();
-//
-//                /* Ohlaseni udalosti a presunuti polozky do vedlejsiho sloupce */
-//                if (mListener != null) {
-//                    if (selectedRedIndex == UNKNOWN_INDEX) {
-//                        mListener.onItemUnselected();
-//                    } else {
-//                        mListener.onItemSelected(mParamRed.get(selectedRedIndex));
-//                    }
-//                    Place removed = mParamRed.get(position);
-//                    mRedAdapter.remove(removed);
-//                    mListener.onRedRejected(removed);
-//                    mGreenAdapter.add(removed);
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
-//
-//        mGreenAdapter = new PlaceArrayAdapter(hmenuGreenListview.getContext(),
-//                R.layout.place_item_row, mParamGreen) {
-//            @Override
-//            public View getView(int position, View convertView, ViewGroup parent) {
-//                View view = super.getView(position, convertView, parent);
-//                if (activatedIndex != UNKNOWN_INDEX && position == activatedIndex) {
-//                    view.setBackgroundColor(ACTIVATED_PLACE_COLOR);
-//                } else if (selectedGreenIndex != UNKNOWN_INDEX && position == selectedGreenIndex) {
-//                    view.setBackgroundColor(SELECTED_GREEN_COLOR);
-//                } else {
-//                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//                }
-//                return view;
-//            }
-//        };
-//        mRedAdapter = new PlaceArrayAdapter(hmenuRedListview.getContext(),
-//                R.layout.place_item_row, mParamRed) {
-//            @Override
-//            public View getView(int position, View convertView, ViewGroup parent) {
-//                View view = super.getView(position, convertView, parent);
-//                if (selectedRedIndex != UNKNOWN_INDEX && position == selectedRedIndex) {
-//                    view.setBackgroundColor(SELECTED_RED_COLOR);
-//                } else {
-//                    view.setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//                }
-//                return view;
-//            }
-//        };
-//
-//        //NOTE: java.lang.NullPointerException: Attempt to invoke interface method 'int java.util.List.size()' on a null object reference
-//        // nastala po presunu na druhou page ze treti, OHunter byl nejspis aktivni, byla vyvolan spravce SM z odemykaci obrazovky...
-//        hmenuGreenListview.setAdapter(mGreenAdapter);
-//        hmenuRedListview.setAdapter(mRedAdapter);
+                    /* Notify the listener and request to show the next page (with place information) */
+                    if (mListener != null) {
+                        mListener.onItemSelected(tile.getPlace());
+                        if (tile.isAccepted()) {
+                            mListener.onGreenSelected();
+                        } else if (tile.isRejected()) {
+                            mListener.onRedSelected();
+                        }
+                        mListener.onRequestNextPage();
+                    }
+                }
+
+                return true;
+            }
+        });
 
         return view;
     }
 
+    /**
+     * Try to get the currently selected target. Return selected target if available, null otherwise.
+     *
+     * @return The selected target if available, null otherwise.
+     */
+    public Target getSelectedPlaceTile() {
+        if (targets != null && selectedIndex >= 0 && selectedIndex < targets.size()) {
+            return targets.get(selectedIndex);
+        }
+        return null;
+    }
+
+    /**
+     * Rotates currently selected place if possible, i.e. some place is selected.
+     */
+    public void rotateSelectedTile() {
+        Target tile = getSelectedPlaceTile();
+        if (tile != null && mAdapter != null) {
+            tile.changeRotation();
+            mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Activates currently selected place if possible, i.e. place state is sufficient
+     * and some place is selected. Deactivates every other activated tile.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean activateSelectedPlace() {
+        boolean isOk = false;
+        Target tile = getSelectedPlaceTile();
+        if (tile != null) {
+            for (Target iTile : targets) {
+                iTile.deactivate();
+            }
+            isOk = tile.activate();
+        }
+        mAdapter.notifyDataSetChanged();
+        return isOk;
+    }
+
+    /**
+     * Rejects currently selected place if possible, i.e. place state is sufficient
+     * and some place is selected.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean rejectSelectedTile() {
+        boolean isOk;
+        Target tile = getSelectedPlaceTile();
+        isOk = tile != null && tile.rejectPlace();
+        mAdapter.notifyDataSetChanged();
+
+        return isOk;
+    }
+
+    /**
+     * Accepts currently selected place if possible, i.e. place state is sufficient
+     * and some place is selected.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean acceptSelectedTile() {
+        boolean isOk;
+        Target tile = getSelectedPlaceTile();
+        isOk = tile != null && tile.acceptPlace();
+        mAdapter.notifyDataSetChanged();
+
+        return isOk;
+    }
+
     @Override
     public void onPageSelected() {
-//        updatePlaceSelection();
+
     }
 
     /**
@@ -298,51 +286,25 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @return True if activated/hunted Place object exists, false otherwise.
      */
     public boolean hasActivatedPlace() {
-        return activatedIndex >= 0 && activatedIndex < mParamGreen.size();
-    }
-
-    /**
-     * Get currently activated/hunted Place object.
-     *
-     * @return The currently activated/hunted Place object.
-     */
-    public Place getActivePlace() {
-        return hasActivatedPlace() ? mParamGreen.get(activatedIndex) : null;
-    }
-
-    private void updateHighlights() {
-        clearHighlighted();
-//        if (activatedIndex != UNKNOWN_INDEX) {
-//            getViewByPosition(activatedIndex, hmenuGreenListview).setBackgroundColor(ACTIVATED_PLACE_COLOR);
-//        }
-//        if (selectedGreenIndex != UNKNOWN_INDEX && selectedGreenIndex != activatedIndex) {
-//            getViewByPosition(selectedGreenIndex, hmenuGreenListview).setBackgroundColor(SELECTED_GREEN_COLOR);
-//        }
-//        if (selectedRedIndex != UNKNOWN_INDEX) {
-//            getViewByPosition(selectedRedIndex, hmenuRedListview).setBackgroundColor(SELECTED_RED_COLOR);
-//        }
-    }
-
-    private void clearHighlighted() {
-//        for (int i = 0; i < hmenuGreenListview.getChildCount(); i++) {
-//            hmenuGreenListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//        }
-//        for (int i = 0; i < hmenuRedListview.getChildCount(); i++) {
-//            hmenuRedListview.getChildAt(i).setBackgroundColor(UNSELECTED_PLACE_COLOR);
-//        }
-    }
-
-    private View getViewByPosition(int pos, ListView listView) {
-        final int firstListItemPosition = listView.getFirstVisiblePosition();
-        final int lastListItemPosition = firstListItemPosition + listView.getChildCount() - 1;
-
-        if (pos < firstListItemPosition || pos > lastListItemPosition ) {
-            return listView.getAdapter().getView(pos, null, listView);
-        } else {
-            final int childIndex = pos - firstListItemPosition;
-            return listView.getChildAt(childIndex);
+        if (targets == null) {
+            return false;
         }
+        for (Target tile : targets) {
+            if (tile.isActivated()) {
+                return true;
+            }
+        }
+        return false;
     }
+
+//    /**
+//     * Get currently activated/hunted Place object.
+//     *
+//     * @return The currently activated/hunted Place object.
+//     */
+//    public Place getActivePlace() {
+//        return hasActivatedPlace() ? mParamGreen.get(activatedIndex) : null;
+//    }
 
     @Override
     public void onAttach(Context context) {
@@ -360,15 +322,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         mListener = null;
     }
 
-    public void activateSelectedPlace() {
-        if (selectedGreenIndex != UNKNOWN_INDEX) {
-            activatedIndex = selectedGreenIndex;
-//            //TODO: pouze docasne, zmenit pri PlaceTile pattern upgradu
-//            SharedDataManager.setActivePlace(getContext(), mParamGreen.get(activatedIndex));
-        }
-        updateHighlights();
-    }
-
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -381,9 +334,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public interface OnFragmentInteractionListener {
         void onItemSelected(Place place);
-        void onItemUnselected();
-        void onGreenRejected(Place place);
-        void onRedRejected(Place place);
-        void onRedAccepted(Place place);
+        void onGreenSelected();
+        void onRedSelected();
+        void onRequestNextPage();
     }
+
 }

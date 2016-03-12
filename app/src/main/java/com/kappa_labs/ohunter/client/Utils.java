@@ -198,7 +198,7 @@ public class Utils {
             throw new RuntimeException("Utils must have server set before any communication!");
         }
 
-        Log.d(TAG, "getServerResponse(): start, asking server ["+mAddress+":"+mPort+"]");
+        Log.d(TAG, "getServerResponse(): asking server [" + mAddress + ":" + mPort + "]\n -> request info: " + request);
         Response response = null;
         Socket server = null;
         try {
@@ -224,7 +224,7 @@ public class Utils {
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error when communicating with server: " + e);
             } finally {
                 if (oos != null) {
                     oos.close();
@@ -234,13 +234,13 @@ public class Utils {
                 }
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Log.e(TAG, "Error when connecting to server: " + ex);
         } finally {
             if (server != null) {
                 try {
                     server.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error when closing with server: " + e);
                 }
             }
         }

@@ -57,12 +57,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private String mLastUpdateTime;
     private boolean mRequestingLocationUpdates = false;
 
-    FloatingActionButton fab_info, fab_camera;
+    FloatingActionButton rejectFab, acceptFab, rotateFab, activateFab, cameraFab;
     private boolean item_selected = false;
-    public static ArrayList<Place> green_places, red_places;
+//    public static ArrayList<Place> green_places, red_places;
+    public static ArrayList<String> radarPlaceIDs;
     private HuntOfferFragment mHuntOfferFragment;
     private HuntPlaceFragment mHuntPlaceFragment;
     private HuntActionFragment mHuntActionFragment;
+    ViewPager mViewPager;
 
 
     @Override
@@ -77,7 +79,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         /* Set up the ViewPager with the sections adapter */
-        ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -89,32 +91,39 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Fragment fragment = null;
                 switch (position) {
                     case 0: // HuntOfferFragment
+                        //TODO: stavy spis bude lepsi nekam ukladat
                         if (item_selected) {
-                            fab_info.show();
+                            activateFab.show();
                         } else {
-                            fab_info.hide();
+                            activateFab.hide();
                         }
-                        fab_camera.hide();
+                        cameraFab.hide();
+                        rotateFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
-                        fab_info.hide();
-                        fab_camera.hide();
+                        rotateFab.hide();
+                        cameraFab.hide();
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
-                        fab_info.hide();
+                        rejectFab.hide();
+                        acceptFab.hide();
+                        rotateFab.hide();
+                        activateFab.hide();
+                        rotateFab.hide();
                         // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
+                        //TODO: ziskat data z manageru
                         if (mHuntOfferFragment != null && mHuntOfferFragment.hasActivatedPlace()) {
-                            fab_camera.show();
+                            cameraFab.show();
                         } else {
-                            fab_camera.hide();
+                            cameraFab.hide();
                         }
                         fragment = mHuntActionFragment;
                         break;
                     default:
-                        fab_info.hide();
-                        fab_camera.hide();
+                        activateFab.hide();
+                        cameraFab.hide();
                         break;
                 }
                 if (fragment != null) {
@@ -127,19 +136,64 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
         });
 
-        fab_info = (FloatingActionButton) findViewById(R.id.fab_info);
-        fab_info.setVisibility(View.GONE);
-        fab_info.setOnClickListener(new View.OnClickListener() {
+        /* Button to reject a place */
+        rejectFab = (FloatingActionButton) findViewById(R.id.fab_reject);
+        rejectFab.hide();
+        rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null) {
-                    mHuntOfferFragment.activateSelectedPlace();
+                if (mHuntOfferFragment != null && mHuntOfferFragment.rejectSelectedTile()) {
+                    rejectFab.hide();
+                    acceptFab.show();
+                    activateFab.hide();
                 }
             }
         });
-        fab_camera = (FloatingActionButton) findViewById(R.id.fab_camera);
-        fab_camera.setVisibility(View.GONE);
-        fab_camera.setOnClickListener(new View.OnClickListener() {
+
+        /* Button for accept of a place */
+        acceptFab = (FloatingActionButton) findViewById(R.id.fab_accept);
+        acceptFab.hide();
+        acceptFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mHuntOfferFragment != null && mHuntOfferFragment.acceptSelectedTile()) {
+                    rejectFab.show();
+                    acceptFab.hide();
+                    activateFab.show();
+                }
+            }
+        });
+
+        /* Button to rotate the tile */
+        rotateFab = (FloatingActionButton) findViewById(R.id.fab_rotate);
+        rotateFab.hide();
+        rotateFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mHuntOfferFragment != null) {
+                    mHuntOfferFragment.rotateSelectedTile();
+                }
+            }
+        });
+
+        /* Button to activate a place for hunt */
+        activateFab = (FloatingActionButton) findViewById(R.id.fab_activate);
+        activateFab.hide();
+        activateFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mHuntOfferFragment != null && mHuntOfferFragment.activateSelectedPlace()) {
+                    rejectFab.hide();
+                    acceptFab.hide();
+                    activateFab.hide();
+                }
+            }
+        });
+
+        /* Button for starting the camera activity - taking similar photo */
+        cameraFab = (FloatingActionButton) findViewById(R.id.fab_camera);
+        cameraFab.hide();
+        cameraFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mHuntPlaceFragment == null) {
@@ -167,7 +221,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
         });
 
-        // Create an instance of GoogleAPIClient.
+        /* Create an instance of GoogleAPIClient */
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -339,9 +393,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //        getMenuInflater().inflate(R.menu.menu_hunt, menu);
 //        return true;
 //    }
-
+//
 //    @Override
 //    public boolean onOptionsItemSelected(MenuItem item) {
+//        //TODO: pridat akce tlacitkam
+//
 //        // Handle action bar item clicks here. The action bar will
 //        // automatically handle clicks on the Home/Up button, so long
 //        // as you specify a parent activity in AndroidManifest.xml.
@@ -360,28 +416,33 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         item_selected = true;
         HuntPlaceFragment.changePlace(place);
         HuntActionFragment.changePlace(place);
-        fab_info.show();
+
+        /* Hide all buttons, offer will fire method to show the right ones.
+         * NOTE: cannot use hide(), causes strange button behavior */
+        acceptFab.setVisibility(View.INVISIBLE);
+        rejectFab.setVisibility(View.INVISIBLE);
+        activateFab.setVisibility(View.INVISIBLE);
+        rotateFab.show();
     }
 
     @Override
-    public void onItemUnselected() {
-        item_selected = false;
-        fab_info.hide();
+    public void onGreenSelected() {
+        acceptFab.hide();
+        rejectFab.show();
+        activateFab.show();
     }
 
     @Override
-    public void onGreenRejected(Place place) {
-
+    public void onRedSelected() {
+        acceptFab.show();
+        rejectFab.hide();
+        activateFab.hide();
     }
 
     @Override
-    public void onRedRejected(Place place) {
-
-    }
-
-    @Override
-    public void onRedAccepted(Place place) {
-
+    public void onRequestNextPage() {
+        /* Go to the page with place information */
+        mViewPager.setCurrentItem(1, true);
     }
 
     /**
@@ -389,6 +450,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
+
+        private String tabtitles[] = new String[] {
+                getString(R.string.title_fragment_offer),
+                getString(R.string.title_fragment_info),
+                getString(R.string.title_fragment_hunt)};
 
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -421,8 +487,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         public Fragment getItem(int position) {
 //            Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
             if (position == 0) {
-                HuntOfferFragment.mParamGreen = green_places;
-                HuntOfferFragment.mParamRed = red_places;
+//                HuntOfferFragment.mParamGreen = green_places;
+//                HuntOfferFragment.mParamRed = red_places;
                 return HuntOfferFragment.newInstance();
             } if (position == 1) {
                 return HuntPlaceFragment.newInstance();
@@ -436,5 +502,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             return 3;
         }
 
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return tabtitles[position];
+        }
+
     }
+
 }

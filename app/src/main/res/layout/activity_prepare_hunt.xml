@@ -14,9 +14,9 @@
 
         <fragment
             android:id="@+id/map_fragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            class="com.google.android.gms.maps.SupportMapFragment" />
+            android:layout_height="fill_parent" />
 
     </FrameLayout>
 

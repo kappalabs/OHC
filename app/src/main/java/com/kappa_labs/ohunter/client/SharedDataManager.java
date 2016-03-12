@@ -8,7 +8,9 @@ import android.util.Log;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -20,6 +22,16 @@ import java.util.ArrayList;
  * among all the Activities.
  */
 public class SharedDataManager {
+
+    /**
+     * Default number of green places in the initial offer.
+     */
+    public static final int DEFAULT_NUM_GREENS = 6;
+    private static final String PARAM_GREENS_KEY = "param_green_key";
+    private static final String PARAM_RED_KEY = "param_red_key";
+    private static final String SELECTED_GREEN_INDX_KEY = "selected_green_indx_key";
+    private static final String SELECTED_RED_INDX_KEY = "selected_red_indx_key";
+    private static final String ACTIVATED_INDX_KEY = "activated_indx_key";
 
     private static final String TAG = "PreferencesManager";
     private static final String SHARED_DATA_FILENAME = "SHARED_DATA_FILENAME";
@@ -43,37 +55,56 @@ public class SharedDataManager {
         return mPreferences;
     }
 
-    private static boolean writeObject(Context context, Object object, String filename) {
+    private static boolean writeObject(Context context, Object object, String filename, String directory) {
         FileOutputStream outputStream = null;
         try {
+            File file;
+            if (directory != null) {
+                File dirFile = context.getDir(directory, Context.MODE_PRIVATE);
+                file = new File(dirFile, filename);
+                outputStream = new FileOutputStream(file);
+            } else {
+                outputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
+            }
+
             /* Try to write object to file */
-            outputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
             ObjectOutputStream oos = new ObjectOutputStream(outputStream);
             oos.writeObject(object);
 
             return true;
         } catch (Exception e) {
-            Log.e(TAG, "Cannot write the object to file\'" + filename + "\': " + e);
+            Log.e(TAG, "Cannot write the object to file \'" + filename + "\': " + e);
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
                 } catch (IOException e) {
-                    Log.e(TAG, "Cannot close the file\'" + filename + "\': " + e);
+                    Log.e(TAG, "Cannot close the file \'" + filename + "\': " + e);
                 }
             }
         }
         return false;
     }
 
-    private static Object readObject(Context context, String filename) {
+    private static Object readObject(Context context, String filename, String directory) {
         FileInputStream inputStream = null;
         try {
+            File file;
+            if (directory != null) {
+                File dirFile = context.getDir(directory, Context.MODE_PRIVATE);
+                file = new File(dirFile, filename);
+                inputStream = new FileInputStream(file);
+            } else {
+                inputStream = context.openFileInput(filename);
+            }
+
             /* Try to read object from file */
-            inputStream = context.openFileInput(filename);
             ObjectInputStream ois = new ObjectInputStream(inputStream);
             return ois.readObject();
         } catch (Exception e) {
+//            if (!(e instanceof FileNotFoundException)) {
+                Log.e(TAG, "Cannot read object: " + e);
+//            }
             /* File is unavailable */
             return null;
         } finally {
@@ -81,7 +112,7 @@ public class SharedDataManager {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    Log.e(TAG, "Cannot close the file\'" + filename + "\': " + e);
+                    Log.e(TAG, "Cannot close the file \'" + filename + "\': " + e);
                 }
             }
         }
@@ -100,7 +131,7 @@ public class SharedDataManager {
             return mPlayer;
         }
         /* Otherwise try to read the object from file */
-        Object object = readObject(context, PLAYER_FILENAME);
+        Object object = readObject(context, PLAYER_FILENAME, null);
         if (object != null && object instanceof Player) {
             mPlayer = (Player) object;
         }
@@ -116,7 +147,7 @@ public class SharedDataManager {
      */
     public static boolean setPlayer(Context context, Player player) {
         mPlayer = player;
-        return writeObject(context, player, PLAYER_FILENAME);
+        return writeObject(context, player, PLAYER_FILENAME, null);
     }
 
     public static Place getPlace(Context context, String placeID) {
@@ -125,8 +156,9 @@ public class SharedDataManager {
 //        if (mPlayer != null) {
 //            return mPlayer;
 //        }
+        Log.d(TAG, "ctu place "+placeID+" z adresare \""+(placeID + "/" + PLACE_FILENAME)+"\"");
         /* Otherwise try to read the object from file */
-        Object object = readObject(context, placeID + "/" + PLACE_FILENAME);
+        Object object = readObject(context, PLACE_FILENAME, placeID);
         if (object != null && object instanceof Place) {
             return (Place) object;
         }
@@ -135,7 +167,8 @@ public class SharedDataManager {
 
     public static boolean addPlace(Context context, Place place) {
         mPlacesIDs.add(place.getID());
-        return writeObject(context, place, place.getID() + "/" + PLACE_FILENAME);
+        Log.d(TAG, "ukladam place " + place.getID() + " do adresare \"" + (place.getID() + "/" + PLACE_FILENAME) + "\"");
+        return writeObject(context, place, PLACE_FILENAME, place.getID());
     }
 
     public static Place getActivePlace(Context context) {
@@ -158,7 +191,7 @@ public class SharedDataManager {
 
     public static boolean addBitmapToPlace(Context context, Place place, Bitmap photo) {
         writeObject(context, photo,
-                place.getID() + "/" + ((Long)(System.currentTimeMillis()/1000)).toString() + ".jpg");
+                place.getID(), ((Long)(System.currentTimeMillis()/1000)).toString() + ".jpg");
         return false;
     }
 

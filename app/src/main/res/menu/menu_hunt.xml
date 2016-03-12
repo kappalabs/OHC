@@ -2,6 +2,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".HuntActivity">
+
+    <item
+        android:id="@+id/action_offer"
+        android:icon="@drawable/ic_offer"
+        app:showAsAction="ifRoom"
+        android:title="@string/title_fragment_offer" />
+
+    <item
+        android:id="@+id/action_info"
+        android:icon="@drawable/ic_info"
+        app:showAsAction="ifRoom"
+        android:title="@string/title_fragment_info" />
+
+    <item
+        android:id="@+id/action_hunt"
+        android:icon="@drawable/ic_game"
+        app:showAsAction="ifRoom"
+        android:title="@string/title_fragment_hunt" />
+
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

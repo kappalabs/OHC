@@ -7,23 +7,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".HuntActivity">
+    tools:context=".HuntActivity" >
 
     <!--<android.support.design.widget.AppBarLayout-->
         <!--android:id="@+id/appbar"-->
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="wrap_content"-->
-        <!--android:paddingTop="@dimen/appbar_padding_top"-->
-        <!--android:theme="@style/AppTheme.AppBarOverlay">-->
+        <!--android:paddingTop="@dimen/appbar_padding_top" >-->
 
         <!--<android.support.v7.widget.Toolbar-->
             <!--android:id="@+id/toolbar"-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="?attr/actionBarSize"-->
             <!--android:background="?attr/colorPrimary"-->
-            <!--app:layout_scrollFlags="scroll|enterAlways"-->
-            <!--app:popupTheme="@style/AppTheme.PopupOverlay">-->
-
+            <!--app:layout_scrollFlags="scroll|enterAlways" >-->
         <!--</android.support.v7.widget.Toolbar>-->
 
     <!--</android.support.design.widget.AppBarLayout>-->
@@ -32,26 +29,76 @@
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <android.support.v4.view.PagerTabStrip
+            android:id="@+id/pager_title_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:background="@color/my_primary"
+            android:textColor="#fff" />
+
+    </android.support.v4.view.ViewPager>
+
+    <!--<android.support.design.widget.FloatingActionButton-->
+        <!--android:id="@+id/fab_menu"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_margin="@dimen/fab_margin"-->
+        <!--android:src="@drawable/ic_menu"-->
+        <!--app:layout_anchor="@id/container"-->
+        <!--app:layout_anchorGravity="right|bottom"-->
+        <!--app:backgroundTint="@color/state_chosen" />-->
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_rotate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_rotate"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="right|bottom"
+        app:backgroundTint="@color/state_orange" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_reject"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_reject"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="left|bottom"
+        app:backgroundTint="@color/state_red" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_accept"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_accept"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="left|bottom"
+        app:backgroundTint="@color/state_green" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_activate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_activate"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="center|bottom"
+        app:backgroundTint="@color/state_activated" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_menu_camera"
+        android:src="@drawable/ic_camera"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="right|bottom"
-        app:backgroundTint="@color/dark_pink" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_lock_idle_lock"
-        app:layout_anchor="@id/container"
-        app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/yellow" />
+        app:backgroundTint="@color/state_photogenic" />
 
 </android.support.design.widget.CoordinatorLayout>

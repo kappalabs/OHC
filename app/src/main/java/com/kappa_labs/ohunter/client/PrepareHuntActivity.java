@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -71,7 +72,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final int RADAR_SEARCH_KEY = 4200;
     private static final int FILL_PLACES_KEY = 4201;
 
-    private static final int DEFAULT_NUM_GREENS = 6;
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
@@ -243,44 +243,56 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         }
         if (code == RADAR_SEARCH_KEY) {
             Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
-            /* Divide the available places into two groups */
-            ArrayList<String> greenIDs = new ArrayList<>();
-            int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
-            Random random = new Random();
-            while (numGreens-- > 0) {
-                final int pos = random.nextInt(places.size());
-                greenIDs.add(places.get(pos).getID());
-                places.remove(pos);
-            }
-            SharedDataManager.greenIDs = greenIDs;
-            ArrayList<String> redIDs = new ArrayList<>();
+//            /* Divide the available places into two groups */
+//            ArrayList<String> greenIDs = new ArrayList<>();
+//            int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
+//            Random random = new Random();
+//            while (numGreens-- > 0) {
+//                final int pos = random.nextInt(places.size());
+//                greenIDs.add(places.get(pos).getID());
+//                places.remove(pos);
+//            }
+//            SharedDataManager.greenIDs = greenIDs;
+//            ArrayList<String> redIDs = new ArrayList<>();
+//            for (Place place : places) {
+//                redIDs.add(place.getID());
+//            }
+//            SharedDataManager.redIDs = redIDs;
+//            /* Start request for the green places */
+//            Request request = new FillPlacesRequest(
+//                    SharedDataManager.getPlayer(PrepareHuntActivity.this),
+//                    greenIDs.toArray(new String[greenIDs.size()]),
+//                    prefferedDaytime, prefferedWidth, prefferedHeight);
+//            Utils.RetrieveResponseTask responseTask =
+//                    Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
+//                            Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
+//                            FILL_PLACES_KEY);
+//            responseTask.execute(request);
+
+            ArrayList<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {
-                redIDs.add(place.getID());
+                radarPlaceIDs.add(place.getID());
             }
-            SharedDataManager.redIDs = redIDs;
-            /* Start request for the green places */
-            Request request = new FillPlacesRequest(
-                    SharedDataManager.getPlayer(PrepareHuntActivity.this),
-                    greenIDs.toArray(new String[greenIDs.size()]),
-                    prefferedDaytime, prefferedWidth, prefferedHeight);
-            Utils.RetrieveResponseTask responseTask =
-                    Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
-                            Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
-                            FILL_PLACES_KEY);
-            responseTask.execute(request);
-        } else if (code == FILL_PLACES_KEY) {
-            Log.d(TAG, "FillPlaces vratil " + places.size() + " mist");
-            for (Place place : response.places) {
-                Log.d(TAG, place.toString());
-            }
-            HuntActivity.green_places = new ArrayList<>(places);
-            HuntActivity.red_places = new ArrayList<>();
+            HuntActivity.radarPlaceIDs = radarPlaceIDs;
 
             /* Start the main game activity with these groups of places prepared */
             Intent i = new Intent();
             i.setClass(PrepareHuntActivity.this, HuntActivity.class);
             startActivity(i);
         }
+//        else if (code == FILL_PLACES_KEY) {
+//            Log.d(TAG, "FillPlaces vratil " + places.size() + " mist");
+//            for (Place place : response.places) {
+//                Log.d(TAG, place.toString());
+//            }
+//            HuntActivity.green_places = new ArrayList<>(places);
+//            HuntActivity.red_places = new ArrayList<>();
+//
+//            /* Start the main game activity with these groups of places prepared */
+//            Intent i = new Intent();
+//            i.setClass(PrepareHuntActivity.this, HuntActivity.class);
+//            startActivity(i);
+//        }
     }
 
     private double getLongitude() {
@@ -290,7 +302,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Longitude edit text contains non-double value!");
             lon = 0;
-            mLongitudeEditText.setText(String.valueOf(DEFAULT_LONGITUDE));
+            mLongitudeEditText.setText(String.valueOf(lon));
         }
         return lon;
     }
@@ -302,7 +314,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         } catch (NumberFormatException nex) {
             Log.e(TAG, "Latitude edit text contains non-double value!");
             lat = 0;
-            mLatitudeEditText.setText(String.valueOf(DEFAULT_LATITUDE));
+            mLatitudeEditText.setText(String.valueOf(lat));
         }
         return lat;
     }
@@ -353,6 +365,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             mLastLocation = new Location("dummyprovider");
             mLastLocation.setLatitude(getLatitude());
             mLastLocation.setLongitude(getLongitude());
+            //TODO ukladani pomoci LATITUDE_TEXTVIEW_KEY atd...
         } else if (mLastLocation != null) {
             /* Ziskanou pozici si ulozim */
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);

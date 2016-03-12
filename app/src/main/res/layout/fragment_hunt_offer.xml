@@ -1,7 +1,8 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="layout.HuntOfferFragment">
 
     <!--<LinearLayout-->
@@ -33,13 +34,21 @@
 
     <GridView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:id="@+id/gridView_offer"
+        android:animateLayoutChanges="true"
         android:layout_margin="7dp"
         android:numColumns="auto_fit"
-        android:horizontalSpacing="10dp"
-        android:verticalSpacing="10dp"
+        android:horizontalSpacing="5dp"
+        android:verticalSpacing="5dp"
         android:gravity="center"
-        android:stretchMode="columnWidth" />
+        android:stretchMode="columnWidth"
+        android:layout_weight="1" />
 
-</FrameLayout>
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/progressBar_fetching"
+        android:indeterminate="true" />
+
+</LinearLayout>

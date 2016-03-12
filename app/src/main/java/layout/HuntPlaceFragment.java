@@ -89,13 +89,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                     return;
                 }
                 mPhotoImageView.setImageBitmap(getSelectedPicture(pos));
-                if (mPlace.photos != null) {
-                    mPhotoInfoTextView.setText(
-                            Utils.daytimeToString(getContext(), mPlace.photos.get(pos).daytime));
-                    mPhotoCounterTextView.setText(String.format(
-                            getResources().getString(R.string.place_fragment_photo_counter),
-                            pos + 1, mPlace.photos.size()));
-                }
+                mPhotoInfoTextView.setText(Utils.daytimeToString(getContext(), mPlace.getPhoto(pos).daytime));
+                mPhotoCounterTextView.setText(String.format(
+                        getResources().getString(R.string.place_fragment_photo_counter),
+                        pos + 1, mPlace.getNumberOfPhotos()));
             }
 
             @Override
@@ -128,13 +125,13 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @return The position of selected photo for active place.
      */
     public int getSelectedPicturePosition() {
-        if (mPhotoSeekBar == null || mPlace == null || mPlace.photos == null) {
+        if (mPhotoSeekBar == null || mPlace == null) {
             return -1;
         }
         int wid = mPhotoSeekBar.getMax();
-        float step = wid / mPlace.photos.size();
+        float step = wid / mPlace.getNumberOfPhotos();
         int index = (int)Math.floor(mPhotoSeekBar.getProgress() / step);
-        return Math.min(Math.max(index, 0), mPlace.photos.size() - 1);
+        return Math.min(Math.max(index, 0), mPlace.getNumberOfPhotos() - 1);
     }
 
     /**
@@ -144,10 +141,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @return The selected photo for active place.
      */
     public Bitmap getSelectedPicture(int position) {
-        if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
+        if (mPlace == null || mPlace.getNumberOfPhotos() <= 0) {
             return null;
         }
-        Photo photo = mPlace.photos.get(position);
+        Photo photo = mPlace.getPhoto(position);
         return Utils.toBitmap(photo.sImage);
     }
 
@@ -157,10 +154,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @return The selected photo for active place.
      */
     public Bitmap getSelectedPicture() {
-        if (mPlace == null || mPlace.photos == null || mPlace.photos.size() <= 0) {
+        if (mPlace == null || mPlace.getNumberOfPhotos() <= 0) {
             return null;
         }
-        Photo photo = mPlace.photos.get(getSelectedPicturePosition());
+        Photo photo = mPlace.getPhoto(getSelectedPicturePosition());
         return Utils.toBitmap(photo.sImage);
     }
 
@@ -171,7 +168,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         /* Add text information */
         mInfoContainerView.removeAllViews();
         //TODO: na-cashovat!
-        Set<String> keySet = mPlace.gfields.keySet();
+        Set<String> keySet = mPlace.getGfields().keySet();
         for (String key : keySet) {
             LinearLayout row = new LinearLayout(getContext());
             row.setOrientation(LinearLayout.VERTICAL);
@@ -213,7 +210,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             row.addView(title);
 
             TextView content = new TextView(getContext());
-            content.setText(mPlace.gfields.get(key));
+            content.setText(mPlace.getGField(key));
             if (isUrl) {
                 Linkify.addLinks(content, Linkify.WEB_URLS);
             }
@@ -223,27 +220,27 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         }
 
         /* Show selected photo */
-        if (mPlace.photos == null || mPlace.photos.size() <= 0) {
+        if (mPlace.getNumberOfPhotos() <= 0) {
             return;
         }
         /* If no image is visible, add the first one and reset the progress bar position to 0 */
         if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
             mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
-            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.photos.get(0).sImage));
+            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.getPhoto(0).sImage));
             mPhotoSeekBar.setProgress(0);
             mPhotoInfoTextView.setText(
-                    Utils.daytimeToString(getContext(), mPlace.photos.get(0).daytime));
+                    Utils.daytimeToString(getContext(), mPlace.getPhoto(0).daytime));
             mPhotoCounterTextView.setText(String.format(
                     getResources().getString(R.string.place_fragment_photo_counter),
-                    1, mPlace.photos.size()));
+                    1, mPlace.getNumberOfPhotos()));
         }
     }
 
     public static void changePlace(Place newPlace) {
         mPlace = newPlace;
         maxHeightRatio = 0;
-        if (mPlace != null && mPlace.photos != null) {
-            for (Photo photo : mPlace.photos) {
+        if (mPlace != null) {
+            for (Photo photo : mPlace.getPhotos()) {
                 final double rat =  (double) photo.getHeight() / photo.getWidth();
                 if (rat > maxHeightRatio) {
                     maxHeightRatio = rat;

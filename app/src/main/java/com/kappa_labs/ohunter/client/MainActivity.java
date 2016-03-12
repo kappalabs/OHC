@@ -16,8 +16,6 @@ import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.util.ArrayList;
 
-import layout.HuntOfferFragment;
-
 
 /**
  * Holds main game menu and takes care of user login prompt.
@@ -76,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 ids.add("ChIJF9p_IeqUC0cREiNdJH5eISQ");
                 ids.add("ChIJF-GOjz6uEmsRgENqSlnL0qA");
                 ids.add("ChIJNe6UFBWuEmsRm-raxeK9RdI");
-                HuntOfferFragment.greenIDs = ids;
+                HuntActivity.radarPlaceIDs = ids;
                 /* Start the main game activity with these groups of places prepared */
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, HuntActivity.class);
