@@ -16,8 +16,8 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.View;
-import static com.kappa_labs.ohunter.client.Target.TARGET_STATE;
 
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 /**
@@ -336,11 +336,11 @@ public class TargetTileView extends View {
         mTarget.setPlaceID(placeID);
     }
 
-    public TARGET_STATE getState() {
+    public Target.TargetState getState() {
         return mTarget.getState();
     }
 
-//    public void setState(TARGET_STATE state) {
+//    public void setState(TargetState state) {
 //        mTarget.setState(state);
 //        invalidate();
 //    }

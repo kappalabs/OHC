@@ -11,7 +11,7 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import com.kappa_labs.ohunter.client.HuntActivity;
-import com.kappa_labs.ohunter.client.Target;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.TargetTileView;
 import com.kappa_labs.ohunter.client.PlacesManager;
 import com.kappa_labs.ohunter.client.TileAdapter;
@@ -37,6 +37,7 @@ import com.kappa_labs.ohunter.client.SharedDataManager;
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static final String TAG = "HuntOfferFragment";
+//    private static final String SELECTED_GREEN_INDX_KEY
 
     private OnFragmentInteractionListener mListener;
 
@@ -134,14 +135,14 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 ArrayList<Integer> range = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
                     range.add(i);
-                    targets.get(i).setState(Target.TARGET_STATE.REJECTED);
+                    targets.get(i).setState(Target.TargetState.REJECTED);
                 }
                 /* Randomly pick green places */
                 Random random = new Random();
                 int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
                 while (min > 0) {
                     int index = random.nextInt(range.size());
-                    targets.get(range.remove(index)).setState(Target.TARGET_STATE.ACCEPTED);
+                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
                     --min;
                 }
 
@@ -316,7 +317,21 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     @Override
     public void onPageSelected() {
+        if (mListener == null) {
+            return;
+        }
 
+//        if (SharedDataManager.getSelectedPlaceID(getContext()) != null) {
+//            mListener.onItemSelected();
+//        }
+        Target target = getSelectedTarget();
+        if (target != null) {
+            if (target.isAccepted()) {
+                mListener.onGreenSelected();
+            } else if (target.isRejected()) {
+                mListener.onRedSelected();
+            }
+        }
     }
 
 //    /**

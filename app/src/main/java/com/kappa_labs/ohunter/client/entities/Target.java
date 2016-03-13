@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.entities;
 
 /**
  * Class for storing basic, not memory intensive, information for TargetTileView.
@@ -10,7 +10,7 @@ public class Target {
     /**
      * Represents a state of target.
      */
-    public enum TARGET_STATE {
+    public enum TargetState {
         PHOTOGENIC(70),
         ACCEPTED(60),
         ACTIVATED(60),
@@ -23,7 +23,7 @@ public class Target {
 
         private int mWeight;
 
-        TARGET_STATE(int weight) {
+        TargetState(int weight) {
             this.mWeight = weight;
         }
 
@@ -34,7 +34,7 @@ public class Target {
          * @param second The second state this should be compared to.
          * @return Value suitable for Comparator for sorting target states by importance.
          */
-        public int compare(TARGET_STATE second) {
+        public int compare(TargetState second) {
             if (mWeight < second.mWeight) {
                 return 1;
             } else if (mWeight > second.mWeight) {
@@ -46,7 +46,7 @@ public class Target {
 
     private boolean rotated;
     private boolean highlighted;
-    private TARGET_STATE mState = TARGET_STATE.EMPTY;
+    private TargetState mState = TargetState.EMPTY;
     private String placeID;
 
 
@@ -66,8 +66,8 @@ public class Target {
      * @return True on success, false otherwise.
      */
     public boolean activate() {
-        if (mState == TARGET_STATE.ACCEPTED) {
-            mState = TARGET_STATE.ACTIVATED;
+        if (mState == TargetState.ACCEPTED) {
+            mState = TargetState.ACTIVATED;
             return true;
         }
         return false;
@@ -80,8 +80,8 @@ public class Target {
      * @return True on success, false otherwise.
      */
     public boolean deactivate() {
-        if (mState == TARGET_STATE.ACTIVATED) {
-            mState = TARGET_STATE.ACCEPTED;
+        if (mState == TargetState.ACTIVATED) {
+            mState = TargetState.ACCEPTED;
             return true;
         }
         return false;
@@ -92,7 +92,7 @@ public class Target {
      * @return True if this target is activated, false otherwise.
      */
     public boolean isActivated() {
-        return mState == TARGET_STATE.ACTIVATED;
+        return mState == TargetState.ACTIVATED;
     }
 
     /**
@@ -102,8 +102,8 @@ public class Target {
      * @return True on success, false otherwise.
      */
     public boolean accept() {
-        if (mState == TARGET_STATE.REJECTED) {
-            mState = TARGET_STATE.ACCEPTED;
+        if (mState == TargetState.REJECTED) {
+            mState = TargetState.ACCEPTED;
             return true;
         }
         return false;
@@ -115,7 +115,7 @@ public class Target {
      * @return True if the target is accepted, false otherwise.
      */
     public boolean isAccepted() {
-        return mState == TARGET_STATE.ACCEPTED;
+        return mState == TargetState.ACCEPTED;
     }
 
     /**
@@ -125,8 +125,8 @@ public class Target {
      * @return True on success, false otherwise.
      */
     public boolean reject() {
-        if (mState == TARGET_STATE.ACCEPTED) {
-            mState = TARGET_STATE.REJECTED;
+        if (mState == TargetState.ACCEPTED) {
+            mState = TargetState.REJECTED;
             return true;
         }
         return false;
@@ -138,7 +138,7 @@ public class Target {
      * @return True if the target is rejected, false otherwise.
      */
     public boolean isRejected() {
-        return mState == TARGET_STATE.REJECTED;
+        return mState == TargetState.REJECTED;
     }
 
     /**
@@ -194,7 +194,7 @@ public class Target {
      *
      * @return The current state of this target.
      */
-    public TARGET_STATE getState() {
+    public TargetState getState() {
         return mState;
     }
 
@@ -203,7 +203,7 @@ public class Target {
      *
      * @param state The state to be set.
      */
-    public void setState(TARGET_STATE state) {
+    public void setState(TargetState state) {
         this.mState = state;
     }
 

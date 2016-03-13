@@ -137,6 +137,8 @@ public class SharedDataManager {
 
     public static void initNewHunt(Context context, boolean ready) {
         //TODO: smazani predchozich nacachovanych souboru
+        saveActivatedPlaceID(context, null);
+        saveSelectedPlaceID(context, null);
         if (huntReady == null || huntReady != ready) {
             huntReady = ready;
             getSharedPreferences(context).edit().putBoolean(HUNT_READY_KEY, ready).commit();
@@ -159,7 +161,7 @@ public class SharedDataManager {
 
     public static String getSelectedPlaceID(Context context) {
         if (selectedPlaceID == null) {
-            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_INDEX_KEY, "");
+            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_INDEX_KEY, null);
         }
         return selectedPlaceID;
     }

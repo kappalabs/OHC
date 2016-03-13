@@ -283,12 +283,17 @@ public class Utils {
     }
 
     private Bitmap sobel(Bitmap referenceImage) {
-        /* Make the image bigger, so that it's blured */
-        Bitmap bigOrig = Bitmap.createScaledBitmap(referenceImage,
-                referenceImage.getWidth() * 2, referenceImage.getHeight() * 2, true);
-        int width = bigOrig.getWidth();
-        int height = bigOrig.getHeight();
-        Bitmap bigEdges = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int blurFactor = 2;
+        /* Blur the image by changing the size */
+        Bitmap smallerOrig = Bitmap.createScaledBitmap(referenceImage,
+                referenceImage.getWidth() / blurFactor, referenceImage.getHeight() / blurFactor, true);
+        Bitmap blurredOrig = Bitmap.createScaledBitmap(smallerOrig,
+                smallerOrig.getWidth() * blurFactor, smallerOrig.getHeight() * blurFactor, true);
+        smallerOrig.recycle();
+
+        int width = blurredOrig.getWidth();
+        int height = blurredOrig.getHeight();
+        Bitmap edges = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -300,7 +305,7 @@ public class Utils {
                         int xi = x + i, yj = y + j;
                         if (xi >= 0 && xi < width && yj >= 0 && yj < height) {
                             // NOTE: pozor, pokud neni v obrazku zelena slozka...!
-                            int gray = (bigOrig.getPixel(xi, yj) >> 8) & 0xFF;
+                            int gray = (blurredOrig.getPixel(xi, yj) >> 8) & 0xFF;
                             souc1 += gray * SOBEL_ROW[i + 1][j + 1];
                             souc2 += gray * SOBEL_DIAG[i + 1][j + 1];
                             souc3 += gray * SOBEL_ROW[1 - i][1 - j];
@@ -317,13 +322,10 @@ public class Utils {
                         Math.max(souc5, Math.max(souc6, Math.max(souc7, souc8))))))) / poc;
                 // NOTE: alfa slozka je vynasobena 4 pro zvyrazneni
                 int newPixel = ((0xff - myGray) << 26) | (myGray << 16) | (myGray << 8) | myGray;
-                bigEdges.setPixel(x, y, newPixel);
+                edges.setPixel(x, y, newPixel);
             }
         }
-        /* Original size is different from this one -> resize back */
-        Bitmap edges = Bitmap.createScaledBitmap(bigEdges, referenceImage.getWidth(), referenceImage.getHeight(), true);
-        bigOrig.recycle();
-        bigEdges.recycle();
+        blurredOrig.recycle();
 
         return edges;
     }

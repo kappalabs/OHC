@@ -42,7 +42,7 @@ import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = "HuntActivity";
     public static final String REQUESTING_LOCATION_UPDATES_KEY = "requesting_location_updates_key";
@@ -97,27 +97,27 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Fragment fragment = null;
                 switch (position) {
                     case 0: // HuntOfferFragment
-                        //TODO: stavy spis bude lepsi nekam ukladat
-                        if (SharedDataManager.getSelectedPlaceID(HuntActivity.this) != null) {
-                            activateFab.show();
-                        } else {
-                            activateFab.hide();
-                        }
+//                        //TODO: stavy spis bude lepsi nekam ukladat
+//                        if (SharedDataManager.getSelectedPlaceID(HuntActivity.this) != null) {
+//                            activateFab.show();
+//                        } else {
+//                            activateFab.hide();
+//                        }
 //                        if (item_selected) {
 //                            activateFab.show();
 //                        } else {
 //                            activateFab.hide();
 //                        }
-                        cameraFab.hide();
-                        rotateFab.hide();
+//                        cameraFab.hide();
+//                        rotateFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
-                        rejectFab.hide();
-                        acceptFab.hide();
-                        rotateFab.hide();
-                        activateFab.hide();
-                        cameraFab.hide();
+//                        rejectFab.hide();
+//                        acceptFab.hide();
+//                        rotateFab.hide();
+//                        activateFab.hide();
+//                        cameraFab.hide();
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
@@ -214,21 +214,24 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     Log.e(TAG, "Can't access the place fragment yet!");
                     return;
                 }
-                Bitmap bitmap = mHuntPlaceFragment.getSelectedPicture();
-                if (bitmap == null) {
+                Bitmap selBitmap = mHuntPlaceFragment.getSelectedBitmap();
+                if (selBitmap == null) {
                     Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
                     return;
                 }
+                Bitmap templateBitmap;
                 /* Change the orientation of the picture if necessary */
-                if (bitmap.getWidth() < bitmap.getHeight()) {
+                if (selBitmap.getWidth() < selBitmap.getHeight()) {
                     Matrix matrix = new Matrix();
                     matrix.postRotate(-90);
 
-                    Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                    bitmap.recycle();
-                    bitmap = rotatedBitmap;
+                    templateBitmap = Bitmap.createBitmap(selBitmap, 0, 0, selBitmap.getWidth(),
+                            selBitmap.getHeight(), matrix, true);
+                } else {
+                    templateBitmap = Bitmap.createBitmap(selBitmap);
                 }
-                CameraActivity.setTemplateImage(bitmap);
+                /* Start camera activity with the template bitmap on background */
+                CameraActivity.setTemplateImage(templateBitmap);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivity(intent);
@@ -427,8 +430,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public void onItemSelected(Place place) {
 //        item_selected = true;
         SharedDataManager.saveSelectedPlaceID(this, place.getID());
-        HuntPlaceFragment.changePlace(place);
-        HuntActionFragment.changePlace(place);
+        if (mHuntPlaceFragment != null) {
+            mHuntPlaceFragment.changePlace(place);
+        }
+//        HuntPlaceFragment.changePlace(place);
+//        HuntActionFragment.changePlace(place);
 
         /* Hide all buttons, offer will fire method to show the right ones.
          * NOTE: cannot use hide(), causes strange button behavior */

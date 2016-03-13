@@ -1,6 +1,5 @@
 package layout;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -14,33 +13,32 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
-
-import java.util.Set;
-
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.Utils;
+import com.kappa_labs.ohunter.client.entities.PlaceInfo;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link HuntPlaceFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
  * Use the {@link HuntPlaceFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
-    private static final String TAG = "HuntPlaceFragment";
-    private static final String HEIGHT_RATIO_KEY = "HEIGHT_RATIO_KEY";
-
-    private static Place mPlace;
-    private static double maxHeightRatio;
-    private static boolean placeInvalidated = true;
-
-    private OnFragmentInteractionListener mListener;
+    private int numberOfPhotos;
+    private int selectedPhotoIndex;
+    private String[] daytimeTexts;
+    private Bitmap[] photoBitmaps;
+    private List<PlaceInfo> infoList;
+    private double maxHeightRatio;
+    private boolean dataInvalidated = true;
 
     private LinearLayout mInfoContainerView;
     private SeekBar mPhotoSeekBar;
@@ -49,7 +47,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     private TextView mPhotoCounterTextView;
 
 
-    public HuntPlaceFragment() { }
+    public HuntPlaceFragment() {
+        /* Required empty public constructor */
+    }
 
     /**
      * Create a new instance of this fragment.
@@ -61,14 +61,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        /* Inflate the layout for this fragment */
         final View view = inflater.inflate(R.layout.fragment_hunt_place, container, false);
+
         mPhotoImageView = (ImageView) view.findViewById(R.id.imageView_photo);
         mPhotoSeekBar = (SeekBar) view.findViewById(R.id.seekBar_photo);
         mInfoContainerView = (LinearLayout) view.findViewById(R.id.linearLayout_place_info);
@@ -78,21 +74,17 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         mPhotoSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                /* Set size of image view */
-                if (mPhotoImageView != null) {
-                    mPhotoImageView.getLayoutParams().height = (int) (maxHeightRatio * mPhotoImageView.getWidth());
-                    mPhotoImageView.requestLayout();
-                }
                 /* Add currently selected picture */
                 int pos = getSelectedPicturePosition();
                 if (pos < 0) {
                     return;
                 }
-                mPhotoImageView.setImageBitmap(getSelectedPicture(pos));
-                mPhotoInfoTextView.setText(Utils.daytimeToString(getContext(), mPlace.getPhoto(pos).daytime));
+                selectedPhotoIndex = pos;
+                mPhotoImageView.setImageBitmap(getBitmapAt(pos));
+                mPhotoInfoTextView.setText(daytimeTexts[pos]);
                 mPhotoCounterTextView.setText(String.format(
                         getResources().getString(R.string.place_fragment_photo_counter),
-                        pos + 1, mPlace.getNumberOfPhotos()));
+                        pos + 1, numberOfPhotos));
             }
 
             @Override
@@ -105,178 +97,166 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         });
 
         mPhotoImageView.setImageDrawable(null);
-        updatePlace();
+        update();
 
         return view;
     }
 
     @Override
     public void onPageSelected() {
-        if (placeInvalidated && mPhotoImageView != null) {
+        if (dataInvalidated && mPhotoImageView != null) {
             mPhotoImageView.setImageDrawable(null);
-            updatePlace();
-            placeInvalidated = false;
+            update();
         }
     }
 
     /**
-     * Get the position of selected photo for active place.
+     * Get the position of selected photo for active target.
      *
-     * @return The position of selected photo for active place.
+     * @return The position of selected photo for active target.
      */
-    public int getSelectedPicturePosition() {
-        if (mPhotoSeekBar == null || mPlace == null) {
+    private int getSelectedPicturePosition() {
+        if (mPhotoSeekBar == null || numberOfPhotos <= 0) {
             return -1;
         }
         int wid = mPhotoSeekBar.getMax();
-        float step = wid / mPlace.getNumberOfPhotos();
+        float step = wid / numberOfPhotos;
         int index = (int)Math.floor(mPhotoSeekBar.getProgress() / step);
-        return Math.min(Math.max(index, 0), mPlace.getNumberOfPhotos() - 1);
+        return Math.min(Math.max(index, 0), numberOfPhotos - 1);
     }
 
     /**
-     * Get the photo for active place at given selected position.
+     * Gets the reference to the bitmap for active target at given selected position.
      *
-     * @param position Position of the selected picture.
-     * @return The selected photo for active place.
+     * @param position Position of the requested bitmap.
+     * @return The reference to requested bitmap for active place.
      */
-    public Bitmap getSelectedPicture(int position) {
-        if (mPlace == null || mPlace.getNumberOfPhotos() <= 0) {
-            return null;
+    public Bitmap getBitmapAt(int position) {
+        if (position >= 0 && position < numberOfPhotos && photoBitmaps != null) {
+            return photoBitmaps[position];
         }
-        Photo photo = mPlace.getPhoto(position);
-        return Utils.toBitmap(photo.sImage);
+        return null;
     }
 
     /**
-     * Get the selected photo for active place.
+     * Gets the reference to selected bitmap for active target.
      *
-     * @return The selected photo for active place.
+     * @return The reference to selected bitmap for active target.
      */
-    public Bitmap getSelectedPicture() {
-        if (mPlace == null || mPlace.getNumberOfPhotos() <= 0) {
-            return null;
-        }
-        Photo photo = mPlace.getPhoto(getSelectedPicturePosition());
-        return Utils.toBitmap(photo.sImage);
+    public Bitmap getSelectedBitmap() {
+        return getBitmapAt(selectedPhotoIndex);
     }
 
-    public void updatePlace() {
-        if (mPlace == null) {
+    /**
+     * Update information on this fragment if it's invalidated (i.e. after calling changePlace()).
+     */
+    public void update() {
+        if (!dataInvalidated) {
             return;
         }
-        /* Add text information */
+
+        /* Set size of the image view */
+        if (mPhotoImageView != null) {
+            mPhotoImageView.getLayoutParams().height = (int) (maxHeightRatio * mPhotoImageView.getWidth());
+            mPhotoImageView.requestLayout();
+        }
+
+        /* Add text information about the target */
         mInfoContainerView.removeAllViews();
-        //TODO: na-cashovat!
-        Set<String> keySet = mPlace.getGfields().keySet();
-        for (String key : keySet) {
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(0, 6, 0, 0);
-            row.setLayoutParams(params);
+        if (infoList != null) {
+            for (PlaceInfo info : infoList) {
+                /* Do not show empty paragraphs */
+                if (info.isEmpty()) {
+                    continue;
+                }
 
-            TextView title = new TextView(this.getContext());
-            boolean isUrl = false;
-            switch (key) {
-                case "icon":
-                    title.setText(getString(R.string.gfields_icon));
-                    isUrl = true;
-                    break;
-                case "formatted_address":
-                    title.setText(getString(R.string.gfields_formatted_address));
-                    break;
-                case "name":
-                    title.setText(getString(R.string.gfields_name));
-                    break;
-                case "place_id":
-                    title.setText(getString(R.string.gfields_place_id));
-                    break;
-                case "url":
-                    title.setText(getString(R.string.gfields_url));
-                    isUrl = true;
-                    break;
-                case "website":
-                    title.setText(getString(R.string.gfields_website));
-                    isUrl = true;
-                    break;
-                default:
-                    title.setText(key);
+                /* Add information as view */
+                LinearLayout row = new LinearLayout(getContext());
+                row.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                params.setMargins(0, 6, 0, 0);
+                row.setLayoutParams(params);
+
+                /* Title of the paragraph */
+                TextView title = new TextView(getContext());
+                title.setText(info.getTitle());
+                title.setTypeface(null, Typeface.BOLD);
+                row.addView(title);
+
+                /* Content of the paragraph */
+                TextView content = new TextView(getContext());
+                content.setText(info.getContent());
+                /* Changes style according to type of information */
+                if (info.getType() == PlaceInfo.InfoType.URL) {
+                    Linkify.addLinks(content, Linkify.WEB_URLS);
+                }
+                row.addView(content);
+
+                mInfoContainerView.addView(row);
             }
-            title.setTypeface(null, Typeface.BOLD);
-            row.addView(title);
-
-            TextView content = new TextView(getContext());
-            content.setText(mPlace.getGField(key));
-            if (isUrl) {
-                Linkify.addLinks(content, Linkify.WEB_URLS);
-            }
-            row.addView(content);
-
-            mInfoContainerView.addView(row);
         }
 
         /* Show selected photo */
-        if (mPlace.getNumberOfPhotos() <= 0) {
-            return;
+        if (numberOfPhotos > 0) {
+            /* If no image is visible, add the first one and reset the progress bar position to 0 */
+            if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
+                mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
+                mPhotoImageView.setImageBitmap(photoBitmaps[0]);
+                mPhotoSeekBar.setProgress(0);
+                mPhotoInfoTextView.setText(daytimeTexts[0]);
+                mPhotoCounterTextView.setText(String.format(
+                        getResources().getString(R.string.place_fragment_photo_counter),
+                        1, numberOfPhotos));
+            }
         }
-        /* If no image is visible, add the first one and reset the progress bar position to 0 */
-        if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
-            mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
-            mPhotoImageView.setImageBitmap(Utils.toBitmap(mPlace.getPhoto(0).sImage));
-            mPhotoSeekBar.setProgress(0);
-            mPhotoInfoTextView.setText(
-                    Utils.daytimeToString(getContext(), mPlace.getPhoto(0).daytime));
-            mPhotoCounterTextView.setText(String.format(
-                    getResources().getString(R.string.place_fragment_photo_counter),
-                    1, mPlace.getNumberOfPhotos()));
-        }
+
+        dataInvalidated = false;
     }
 
-    public static void changePlace(Place newPlace) {
-        mPlace = newPlace;
+    /**
+     * Sets information on this fragment to match given place. Passing null will clear the page.
+     * Invalidates the fragment data, to draw changes, call update().
+     *
+     * @param place Information from this place object will be used.
+     */
+    public void changePlace(Place place) {
         maxHeightRatio = 0;
-        if (mPlace != null) {
-            for (Photo photo : mPlace.getPhotos()) {
+        numberOfPhotos = 0;
+        photoBitmaps = null;
+        daytimeTexts = null;
+
+        if (place != null) {
+            numberOfPhotos = place.getNumberOfPhotos();
+            photoBitmaps = new Bitmap[numberOfPhotos];
+            daytimeTexts = new String[numberOfPhotos];
+
+            /* Initialize data for photos */
+            for (int i = 0; i < numberOfPhotos; i++) {
+                Photo photo = place.getPhoto(i);
+                photoBitmaps[i] = Utils.toBitmap(photo.sImage);
+                daytimeTexts[i] = Utils.daytimeToString(getContext(), place.getPhoto(i).daytime);
+
+                /* Find maximum height ratio */
                 final double rat =  (double) photo.getHeight() / photo.getWidth();
                 if (rat > maxHeightRatio) {
                     maxHeightRatio = rat;
                 }
             }
+
+            /* Initialize data for place */
+            infoList = new ArrayList<>();
+            Set<String> keySet = place.getGfields().keySet();
+            for (String key : keySet) {
+                PlaceInfo info = PlaceInfo.buildPlaceInfo(getContext(), key, place.getGField(key));
+                infoList.add(info);
+            }
+            Collections.sort(infoList);
         }
-        placeInvalidated = true;
+
+        dataInvalidated = true;
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-
-    }
 }
