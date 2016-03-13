@@ -47,6 +47,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     GridView offerGridView;
 
     private int selectedIndex;
+    private int activatedIndex;
 
 
     public HuntOfferFragment() {
@@ -65,7 +66,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //TOOD: ulozit do sharedmanageru selected
+        //TODO: ulozit do sharedmanageru selected
 //        if (savedInstanceState != null) {
 //            if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
 //                selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
@@ -79,14 +80,19 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 //        }
     }
 
-//    @Override
-//    public void onSaveInstanceState(Bundle outState) {
+    private void updateValuesFromPreferences() {
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
 //        outState.putInt(SELECTED_GREEN_INDX_KEY, selectedGreenIndex);
 //        outState.putInt(SELECTED_RED_INDX_KEY, selectedRedIndex);
 //        outState.putInt(ACTIVATED_INDX_KEY, activatedIndex);
-//
-//        super.onSaveInstanceState(outState);
-//    }
+
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -111,6 +117,17 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             @Override
             public void onPreparationEnded() {
                 fetchingProgressBar.setVisibility(View.GONE);
+
+                /* No place is available */
+                if (targets.isEmpty()) {
+                    //TODO: zobrazit nejakou zpravu pro uzivatele
+                    return;
+                }
+
+                /* If game already started, no division is needed */
+                if (SharedDataManager.isHuntReady(getContext())) {
+                    return;
+                }
 
                 //TODO: provadet jinde - ne po kazdem navstiveni tohoto fragmentu!
                 /* Divide given places into two groups (green and red) */
@@ -138,6 +155,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 });
 
                 mAdapter.notifyDataSetChanged();
+
+                SharedDataManager.initNewHunt(getContext(), true);
+                SharedDataManager.setStartTime(getContext(), System.currentTimeMillis());
             }
 
             @Override
@@ -146,7 +166,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 mAdapter.notifyDataSetChanged();
             }
         }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
-        manager.preparePlaces();
+        /* Do not download data again if the game is already running */
+        if (!SharedDataManager.isHuntReady(getContext())) {
+            manager.preparePlaces();
+        } else {
+            //TODO: nacti z lokalu
+        }
 
         /* Short click selects the tile */
         offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -208,7 +233,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return The selected target if available, null otherwise.
      */
-    public Target getSelectedPlaceTile() {
+    private Target getSelectedTarget() {
         if (targets != null && selectedIndex >= 0 && selectedIndex < targets.size()) {
             return targets.get(selectedIndex);
         }
@@ -216,10 +241,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Rotates currently selected place if possible, i.e. some place is selected.
+     * Try to get the currently activated target. Return selected target if available, null otherwise.
+     *
+     * @return The activated target if available, null otherwise.
+     */
+    private Target getActivatedTarget() {
+        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
+            return targets.get(activatedIndex);
+        }
+        return null;
+    }
+
+    /**
+     * Rotates currently selected target if possible, i.e. some target is selected.
      */
     public void rotateSelectedTile() {
-        Target tile = getSelectedPlaceTile();
+        Target tile = getSelectedTarget();
         if (tile != null && mAdapter != null) {
             tile.changeRotation();
             mAdapter.notifyDataSetChanged();
@@ -227,49 +264,51 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Activates currently selected place if possible, i.e. place state is sufficient
-     * and some place is selected. Deactivates every other activated tile.
+     * Activates currently selected target if possible, i.e. target state is sufficient
+     * and some target is selected. Deactivates every other activated tile.
      *
      * @return True on success, false otherwise.
      */
-    public boolean activateSelectedPlace() {
+    public boolean activateSelectedTarget() {
         boolean isOk = false;
-        Target tile = getSelectedPlaceTile();
+        Target tile = getSelectedTarget();
         if (tile != null) {
             for (Target iTile : targets) {
                 iTile.deactivate();
             }
             isOk = tile.activate();
+            activatedIndex = selectedIndex;
+            SharedDataManager.saveActivatedPlaceID(getContext(), tile.getPlaceID());
+            mAdapter.notifyDataSetChanged();
         }
-        mAdapter.notifyDataSetChanged();
         return isOk;
     }
 
     /**
-     * Rejects currently selected place if possible, i.e. place state is sufficient
-     * and some place is selected.
+     * Rejects currently selected target if possible, i.e. target state is sufficient
+     * and some target is selected.
      *
      * @return True on success, false otherwise.
      */
-    public boolean rejectSelectedTile() {
+    public boolean rejectSelectedTarget() {
         boolean isOk;
-        Target tile = getSelectedPlaceTile();
-        isOk = tile != null && tile.rejectPlace();
+        Target target = getSelectedTarget();
+        isOk = target != null && target.reject();
         mAdapter.notifyDataSetChanged();
 
         return isOk;
     }
 
     /**
-     * Accepts currently selected place if possible, i.e. place state is sufficient
-     * and some place is selected.
+     * Accepts currently selected target if possible, i.e. target state is sufficient
+     * and some target is selected.
      *
      * @return True on success, false otherwise.
      */
-    public boolean acceptSelectedTile() {
+    public boolean acceptSelectedTarget() {
         boolean isOk;
-        Target tile = getSelectedPlaceTile();
-        isOk = tile != null && tile.acceptPlace();
+        Target target = getSelectedTarget();
+        isOk = target != null && target.accept();
         mAdapter.notifyDataSetChanged();
 
         return isOk;
@@ -280,30 +319,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     }
 
-    /**
-     * Check if activated/hunted Place object exists.
-     *
-     * @return True if activated/hunted Place object exists, false otherwise.
-     */
-    public boolean hasActivatedPlace() {
-        if (targets == null) {
-            return false;
-        }
-        for (Target tile : targets) {
-            if (tile.isActivated()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 //    /**
-//     * Get currently activated/hunted Place object.
+//     * Check if activated/hunted target exists.
 //     *
-//     * @return The currently activated/hunted Place object.
+//     * @return True if activated/hunted target exists, false otherwise.
 //     */
-//    public Place getActivePlace() {
-//        return hasActivatedPlace() ? mParamGreen.get(activatedIndex) : null;
+//    public boolean hasActivatedTarget() {
+//        return getActivatedTarget() != null;
 //    }
 
     @Override

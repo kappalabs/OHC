@@ -50,6 +50,12 @@ public class PlacesManager {
         mCounter = placeIDs.size();
         Log.d(TAG, "mam "+mCounter+" mist k tasknuti");
 
+        /* No Places are available */
+        if (mCounter == 0) {
+            mListener.onPreparationEnded();
+            return;
+        }
+
         Place place;
         for (String placeID : placeIDs) {
             /* Check if place can be loaded from local file */
@@ -88,6 +94,11 @@ public class PlacesManager {
                             -1);
             responseTask.execute(request);
         }
+    }
+
+    public static Place getPlace(Context context, String placeID) {
+        //TODO: cachovani do LRU!
+        return SharedDataManager.getPlace(context, placeID);
     }
 
     public interface PlacesManagerListener {

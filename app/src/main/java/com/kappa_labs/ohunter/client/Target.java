@@ -101,7 +101,7 @@ public class Target {
      *
      * @return True on success, false otherwise.
      */
-    public boolean acceptPlace() {
+    public boolean accept() {
         if (mState == TARGET_STATE.REJECTED) {
             mState = TARGET_STATE.ACCEPTED;
             return true;
@@ -124,7 +124,7 @@ public class Target {
      *
      * @return True on success, false otherwise.
      */
-    public boolean rejectPlace() {
+    public boolean reject() {
         if (mState == TARGET_STATE.ACCEPTED) {
             mState = TARGET_STATE.REJECTED;
             return true;

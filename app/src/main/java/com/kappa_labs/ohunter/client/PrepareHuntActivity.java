@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -46,14 +45,12 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import com.kappa_labs.ohunter.lib.requests.RadarSearchRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Random;
 
 public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
@@ -152,6 +149,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                     return;
                 }
 
+                /* Reset the states for new hunt */
+                SharedDataManager.initNewHunt(PrepareHuntActivity.this, false);
+
+                /* Start radar search to receive list of available places */
                 Request request = new RadarSearchRequest(
                         player, getLatitude(), getLongitude(), (int)(getRadius() * 1000));
 

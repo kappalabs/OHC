@@ -75,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
                 ids.add("ChIJF-GOjz6uEmsRgENqSlnL0qA");
                 ids.add("ChIJNe6UFBWuEmsRm-raxeK9RdI");
                 HuntActivity.radarPlaceIDs = ids;
+                /* Reset the states for new hunt */
+                SharedDataManager.initNewHunt(MainActivity.this, false);
                 /* Start the main game activity with these groups of places prepared */
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, HuntActivity.class);

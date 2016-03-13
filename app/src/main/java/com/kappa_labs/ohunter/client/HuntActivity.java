@@ -49,6 +49,12 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public static final String LOCATION_KEY = "location_key";
     public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
 
+    public static final String REJECT_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+    public static final String ACCEPT_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+    public static final String ROTATE_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+    public static final String ACTIVATE_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+    public static final String CAMERA_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
 
     private GoogleApiClient mGoogleApiClient;
@@ -58,7 +64,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private boolean mRequestingLocationUpdates = false;
 
     FloatingActionButton rejectFab, acceptFab, rotateFab, activateFab, cameraFab;
-    private boolean item_selected = false;
+//    private boolean item_selected = false;
 //    public static ArrayList<Place> green_places, red_places;
     public static ArrayList<String> radarPlaceIDs;
     private HuntOfferFragment mHuntOfferFragment;
@@ -92,17 +98,25 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 switch (position) {
                     case 0: // HuntOfferFragment
                         //TODO: stavy spis bude lepsi nekam ukladat
-                        if (item_selected) {
+                        if (SharedDataManager.getSelectedPlaceID(HuntActivity.this) != null) {
                             activateFab.show();
                         } else {
                             activateFab.hide();
                         }
+//                        if (item_selected) {
+//                            activateFab.show();
+//                        } else {
+//                            activateFab.hide();
+//                        }
                         cameraFab.hide();
                         rotateFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
+                        rejectFab.hide();
+                        acceptFab.hide();
                         rotateFab.hide();
+                        activateFab.hide();
                         cameraFab.hide();
                         fragment = mHuntPlaceFragment;
                         break;
@@ -111,19 +125,19 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         acceptFab.hide();
                         rotateFab.hide();
                         activateFab.hide();
-                        rotateFab.hide();
                         // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
                         //TODO: ziskat data z manageru
-                        if (mHuntOfferFragment != null && mHuntOfferFragment.hasActivatedPlace()) {
+                        if (SharedDataManager.getActivatedPlaceID(HuntActivity.this) != null) {
                             cameraFab.show();
                         } else {
                             cameraFab.hide();
                         }
+//                        if (mHuntOfferFragment != null && mHuntOfferFragment.hasActivatedTarget()) {
+//                            cameraFab.show();
+//                        } else {
+//                            cameraFab.hide();
+//                        }
                         fragment = mHuntActionFragment;
-                        break;
-                    default:
-                        activateFab.hide();
-                        cameraFab.hide();
                         break;
                 }
                 if (fragment != null) {
@@ -142,7 +156,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.rejectSelectedTile()) {
+                if (mHuntOfferFragment != null && mHuntOfferFragment.rejectSelectedTarget()) {
                     rejectFab.hide();
                     acceptFab.show();
                     activateFab.hide();
@@ -156,7 +170,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.acceptSelectedTile()) {
+                if (mHuntOfferFragment != null && mHuntOfferFragment.acceptSelectedTarget()) {
                     rejectFab.show();
                     acceptFab.hide();
                     activateFab.show();
@@ -182,7 +196,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         activateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.activateSelectedPlace()) {
+                if (mHuntOfferFragment != null && mHuntOfferFragment.activateSelectedTarget()) {
                     rejectFab.hide();
                     acceptFab.hide();
                     activateFab.hide();
@@ -396,8 +410,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //
 //    @Override
 //    public boolean onOptionsItemSelected(MenuItem item) {
-//        //TODO: pridat akce tlacitkam
-//
 //        // Handle action bar item clicks here. The action bar will
 //        // automatically handle clicks on the Home/Up button, so long
 //        // as you specify a parent activity in AndroidManifest.xml.
@@ -413,7 +425,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onItemSelected(Place place) {
-        item_selected = true;
+//        item_selected = true;
+        SharedDataManager.saveSelectedPlaceID(this, place.getID());
         HuntPlaceFragment.changePlace(place);
         HuntActionFragment.changePlace(place);
 

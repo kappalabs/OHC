@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Class managing access to shared values from SharedPreferences and private files
@@ -27,16 +28,15 @@ public class SharedDataManager {
      * Default number of green places in the initial offer.
      */
     public static final int DEFAULT_NUM_GREENS = 6;
-    private static final String PARAM_GREENS_KEY = "param_green_key";
-    private static final String PARAM_RED_KEY = "param_red_key";
-    private static final String SELECTED_GREEN_INDX_KEY = "selected_green_indx_key";
-    private static final String SELECTED_RED_INDX_KEY = "selected_red_indx_key";
-    private static final String ACTIVATED_INDX_KEY = "activated_indx_key";
+    private static final String SELECTED_INDEX_KEY = "SELECTED_INDEX_KEY";
+    private static final String ACTIVATED_INDEX_KEY = "ACTIVATED_INDEX_KEY";
+    private static final String HUNT_READY_KEY = "HUNT_READY_KEY";
+    private static final String START_TIME_KEY = "START_TIME_KEY";
 
     private static final String TAG = "PreferencesManager";
     private static final String SHARED_DATA_FILENAME = "SHARED_DATA_FILENAME";
     private static final String PLAYER_FILENAME = "PLAYER_FILENAME";
-    private static final String ACTIVE_PLACE_FILENAME = "ACTIVE_PLACE_FILENAME";
+//    private static final String ACTIVE_PLACE_FILENAME = "ACTIVE_PLACE_FILENAME";
     private static final String PLACE_FILENAME = "PLACE_FILENAME";
 
     private static SharedPreferences mPreferences;
@@ -44,6 +44,9 @@ public class SharedDataManager {
 //    private static Place mActivePlace;
     private static ArrayList<String> mPlacesIDs = new ArrayList<>();
     public static ArrayList<String> greenIDs, redIDs;
+    private static String selectedPlaceID, activatedPlaceID;
+    private static Boolean huntReady;
+    private static Long startTime;
 
 
     private SharedDataManager() { /* Non-instantiable class */ }
@@ -116,6 +119,63 @@ public class SharedDataManager {
                 }
             }
         }
+    }
+
+    public static void setStartTime(Context context, long time) {
+        if (startTime == null || startTime != time) {
+            startTime = time;
+            getSharedPreferences(context).edit().putLong(START_TIME_KEY, time).commit();
+        }
+    }
+
+    public static Long getStartTime(Context context) {
+        if (startTime == null) {
+            startTime = getSharedPreferences(context).getLong(START_TIME_KEY, 0);
+        }
+        return startTime;
+    }
+
+    public static void initNewHunt(Context context, boolean ready) {
+        //TODO: smazani predchozich nacachovanych souboru
+        if (huntReady == null || huntReady != ready) {
+            huntReady = ready;
+            getSharedPreferences(context).edit().putBoolean(HUNT_READY_KEY, ready).commit();
+        }
+    }
+
+    public static boolean isHuntReady(Context context) {
+        if (huntReady == null) {
+            huntReady = getSharedPreferences(context).getBoolean(HUNT_READY_KEY, false);
+        }
+        return huntReady;
+    }
+
+    public static void saveSelectedPlaceID(Context context, String placeID) {
+        if (!Objects.equals(selectedPlaceID, placeID)) {
+            selectedPlaceID = placeID;
+            getSharedPreferences(context).edit().putString(SELECTED_INDEX_KEY, placeID).commit();
+        }
+    }
+
+    public static String getSelectedPlaceID(Context context) {
+        if (selectedPlaceID == null) {
+            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_INDEX_KEY, "");
+        }
+        return selectedPlaceID;
+    }
+
+    public static void saveActivatedPlaceID(Context context, String placeID) {
+        if (!Objects.equals(activatedPlaceID, placeID)) {
+            activatedPlaceID = placeID;
+            getSharedPreferences(context).edit().putString(ACTIVATED_INDEX_KEY, placeID).commit();
+        }
+    }
+
+    public static String getActivatedPlaceID(Context context) {
+        if (activatedPlaceID != null) {
+            activatedPlaceID = getSharedPreferences(context).getString(ACTIVATED_INDEX_KEY, "");
+        }
+        return activatedPlaceID;
     }
 
     /**
@@ -200,6 +260,14 @@ public class SharedDataManager {
 //        writeObject(context, photo,
 //                place.getID() + "/" + ((Long) (System.currentTimeMillis() / 1000)).toString() + ".jpg");
         return photos;
+    }
+
+    public void remove(Context context, String key) {
+        getSharedPreferences(context).edit().remove(key).commit();
+    }
+
+    public boolean clear(Context context) {
+        return getSharedPreferences(context).edit().clear().commit();
     }
 
 }
