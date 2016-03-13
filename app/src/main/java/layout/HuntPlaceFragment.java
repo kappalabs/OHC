@@ -1,5 +1,6 @@
 package layout;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -26,19 +28,20 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A simple {@link Fragment} subclass.
+ * {@link Fragment} subclass to show information about selected target.
  * Use the {@link HuntPlaceFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
-    private int numberOfPhotos;
+    private static int numberOfPhotos;
+    private static String[] daytimeTexts;
+    private static Bitmap[] photoBitmaps;
+    private static List<PlaceInfo> infoList;
+    private static double maxHeightRatio;
+    private static boolean dataInvalidated = true;
+
     private int selectedPhotoIndex;
-    private String[] daytimeTexts;
-    private Bitmap[] photoBitmaps;
-    private List<PlaceInfo> infoList;
-    private double maxHeightRatio;
-    private boolean dataInvalidated = true;
 
     private LinearLayout mInfoContainerView;
     private SeekBar mPhotoSeekBar;
@@ -96,8 +99,16 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             }
         });
 
-        mPhotoImageView.setImageDrawable(null);
-        update();
+        /* Wait for the view to draw, then use its size to update the information and display photo */
+        ViewTreeObserver observer = view.getViewTreeObserver();
+        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                dataInvalidated = true;
+                update();
+                view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
 
         return view;
     }
@@ -220,9 +231,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * Sets information on this fragment to match given place. Passing null will clear the page.
      * Invalidates the fragment data, to draw changes, call update().
      *
+     * @param context Context of the caller.
      * @param place Information from this place object will be used.
      */
-    public void changePlace(Place place) {
+    public static void changePlace(Context context, Place place) {
         maxHeightRatio = 0;
         numberOfPhotos = 0;
         photoBitmaps = null;
@@ -237,7 +249,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             for (int i = 0; i < numberOfPhotos; i++) {
                 Photo photo = place.getPhoto(i);
                 photoBitmaps[i] = Utils.toBitmap(photo.sImage);
-                daytimeTexts[i] = Utils.daytimeToString(getContext(), place.getPhoto(i).daytime);
+                daytimeTexts[i] = Utils.daytimeToString(context, place.getPhoto(i).daytime);
 
                 /* Find maximum height ratio */
                 final double rat =  (double) photo.getHeight() / photo.getWidth();
@@ -250,7 +262,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             infoList = new ArrayList<>();
             Set<String> keySet = place.getGfields().keySet();
             for (String key : keySet) {
-                PlaceInfo info = PlaceInfo.buildPlaceInfo(getContext(), key, place.getGField(key));
+                PlaceInfo info = PlaceInfo.buildPlaceInfo(context, key, place.getGField(key));
                 infoList.add(info);
             }
             Collections.sort(infoList);

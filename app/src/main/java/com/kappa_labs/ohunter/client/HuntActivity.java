@@ -3,10 +3,12 @@ package com.kappa_labs.ohunter.client;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +20,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -42,7 +45,7 @@ import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntActionFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = "HuntActivity";
     public static final String REQUESTING_LOCATION_UPDATES_KEY = "requesting_location_updates_key";
@@ -50,12 +53,19 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
 
     public static final String REJECT_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
-    public static final String ACCEPT_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
-    public static final String ROTATE_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
-    public static final String ACTIVATE_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
-    public static final String CAMERA_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
+    public static final String ACCEPT_BUTTON_VISIBLE_KEY = "ACCEPT_BUTTON_VISIBLE_KEY";
+    public static final String ROTATE_BUTTON_VISIBLE_KEY = "ROTATE_BUTTON_VISIBLE_KEY";
+    public static final String ACTIVATE_BUTTON_VISIBLE_KEY = "ACTIVATE_BUTTON_VISIBLE_KEY";
+    public static final String CAMERA_BUTTON_VISIBLE_KEY = "CAMERA_BUTTON_VISIBLE_KEY";
 
-    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    /**
+     * Radius around the target when the camera can activate.
+     */
+    public static final int RADIUS = 150;
+    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
+    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
+
+    public static ArrayList<String> radarPlaceIDs;
 
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
@@ -63,14 +73,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private String mLastUpdateTime;
     private boolean mRequestingLocationUpdates = false;
 
-    FloatingActionButton rejectFab, acceptFab, rotateFab, activateFab, cameraFab;
-//    private boolean item_selected = false;
-//    public static ArrayList<Place> green_places, red_places;
-    public static ArrayList<String> radarPlaceIDs;
+    private FloatingActionButton rejectFab, acceptFab, rotateFab, activateFab, cameraFab;
     private HuntOfferFragment mHuntOfferFragment;
     private HuntPlaceFragment mHuntPlaceFragment;
     private HuntActionFragment mHuntActionFragment;
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
 
 
     @Override
@@ -108,16 +115,16 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //                        } else {
 //                            activateFab.hide();
 //                        }
-//                        cameraFab.hide();
-//                        rotateFab.hide();
+                        cameraFab.hide();
+                        rotateFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
-//                        rejectFab.hide();
-//                        acceptFab.hide();
-//                        rotateFab.hide();
-//                        activateFab.hide();
-//                        cameraFab.hide();
+                        rejectFab.hide();
+                        acceptFab.hide();
+                        rotateFab.hide();
+                        activateFab.hide();
+                        cameraFab.hide();
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
@@ -132,11 +139,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         } else {
                             cameraFab.hide();
                         }
-//                        if (mHuntOfferFragment != null && mHuntOfferFragment.hasActivatedTarget()) {
-//                            cameraFab.show();
-//                        } else {
-//                            cameraFab.hide();
-//                        }
                         fragment = mHuntActionFragment;
                         break;
                 }
@@ -152,7 +154,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to reject a place */
         rejectFab = (FloatingActionButton) findViewById(R.id.fab_reject);
-        rejectFab.hide();
+        rejectFab.setVisibility(View.GONE);
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -166,7 +168,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button for accept of a place */
         acceptFab = (FloatingActionButton) findViewById(R.id.fab_accept);
-        acceptFab.hide();
+        acceptFab.setVisibility(View.GONE);
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,7 +182,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to rotate the tile */
         rotateFab = (FloatingActionButton) findViewById(R.id.fab_rotate);
-        rotateFab.hide();
+        rotateFab.setVisibility(View.GONE);
         rotateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -192,7 +194,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to activate a place for hunt */
         activateFab = (FloatingActionButton) findViewById(R.id.fab_activate);
-        activateFab.hide();
+        activateFab.setVisibility(View.GONE);
         activateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -206,7 +208,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button for starting the camera activity - taking similar photo */
         cameraFab = (FloatingActionButton) findViewById(R.id.fab_camera);
-        cameraFab.hide();
+        cameraFab.setVisibility(View.GONE);
         cameraFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -227,8 +229,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
                     templateBitmap = Bitmap.createBitmap(selBitmap, 0, 0, selBitmap.getWidth(),
                             selBitmap.getHeight(), matrix, true);
+                    /* We need to make a copy of the image before sending it to camera */
+                    templateBitmap = Bitmap.createScaledBitmap(templateBitmap,
+                            templateBitmap.getWidth(), templateBitmap.getHeight(), false);
                 } else {
-                    templateBitmap = Bitmap.createBitmap(selBitmap);
+                    /* We need to make a copy of the image before sending it to camera */
+                    templateBitmap = Bitmap.createScaledBitmap(selBitmap,
+                            selBitmap.getWidth(), selBitmap.getHeight(), false);
                 }
                 /* Start camera activity with the template bitmap on background */
                 CameraActivity.setTemplateImage(templateBitmap);
@@ -282,11 +289,27 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         super.onStop();
     }
 
-    public void onSaveInstanceState(Bundle outState) {
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY, mRequestingLocationUpdates);
         outState.putParcelable(LOCATION_KEY, mCurrentLocation);
         outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
-        //TODO: stav tlacitka - viditelnost po rotaci!
+        /* Save buttons state */
+        if (rejectFab != null) {
+            outState.putBoolean(REJECT_BUTTON_VISIBLE_KEY, rejectFab.isShown());
+        }
+        if (acceptFab != null) {
+            outState.putBoolean(ACCEPT_BUTTON_VISIBLE_KEY, acceptFab.isShown());
+        }
+        if (rotateFab != null) {
+            outState.putBoolean(ROTATE_BUTTON_VISIBLE_KEY, rotateFab.isShown());
+        }
+        if (activateFab != null) {
+            outState.putBoolean(ACTIVATE_BUTTON_VISIBLE_KEY, activateFab.isShown());
+        }
+        if (cameraFab != null) {
+            outState.putBoolean(CAMERA_BUTTON_VISIBLE_KEY, cameraFab.isShown());
+        }
 
         super.onSaveInstanceState(outState);
     }
@@ -306,19 +329,45 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             if (mHuntActionFragment != null) {
                 mHuntActionFragment.changeLocation(mCurrentLocation);
             }
+
+            /* Load buttons state and show them if possible */
+            if (savedInstanceState.getBoolean(REJECT_BUTTON_VISIBLE_KEY, false)) {
+                rejectFab.show();
+            }
+            if (savedInstanceState.getBoolean(ACCEPT_BUTTON_VISIBLE_KEY, false)) {
+                acceptFab.show();
+            }
+            if (savedInstanceState.getBoolean(ROTATE_BUTTON_VISIBLE_KEY, false)) {
+                rotateFab.show();
+            }
+            if (savedInstanceState.getBoolean(ACTIVATE_BUTTON_VISIBLE_KEY, false)) {
+                activateFab.show();
+            }
+            if (savedInstanceState.getBoolean(CAMERA_BUTTON_VISIBLE_KEY, false)) {
+                cameraFab.show();
+            }
+        }
+
+        /* Send the selected place to children pages */
+        String selectedID = SharedDataManager.getSelectedPlaceID(this);
+        Place selected = SharedDataManager.getPlace(this, selectedID);
+        if (selected != null) {
+            HuntPlaceFragment.changePlace(this, selected);
+            HuntActionFragment.changePlace(selected);
         }
     }
 
     @Override
     public void onConnected(Bundle bundle) {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+//                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+//                //TODO: vytvorit dialog s vysvetlenim duvodu pozadavku
+//            } else {
+//                ActivityCompat.requestPermissions(getActivity(),
+//                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+//                        PERMISSIONS_REQUEST_LOCATION);
+//            }
             return;
         }
         Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -357,7 +406,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(HuntActivity.this, REQUEST_CHECK_SETTINGS);
+                            status.startResolutionForResult(HuntActivity.this, PERMISSIONS_REQUEST_CHECK_SETTINGS);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
@@ -430,11 +479,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public void onItemSelected(Place place) {
 //        item_selected = true;
         SharedDataManager.saveSelectedPlaceID(this, place.getID());
-        if (mHuntPlaceFragment != null) {
-            mHuntPlaceFragment.changePlace(place);
-        }
-//        HuntPlaceFragment.changePlace(place);
-//        HuntActionFragment.changePlace(place);
+        HuntPlaceFragment.changePlace(this, place);
+        HuntActionFragment.changePlace(place);
 
         /* Hide all buttons, offer will fire method to show the right ones.
          * NOTE: cannot use hide(), causes strange button behavior */

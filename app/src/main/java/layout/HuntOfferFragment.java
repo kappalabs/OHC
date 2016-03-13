@@ -20,6 +20,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
@@ -27,7 +28,7 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.SharedDataManager;
 
 /**
- * A simple {@link Fragment} subclass.
+ * A {@link Fragment} subclass to provide offer menu of possible targets to user.
  * Activities that contain this fragment must implement the
  * {@link HuntOfferFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
@@ -37,15 +38,14 @@ import com.kappa_labs.ohunter.client.SharedDataManager;
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static final String TAG = "HuntOfferFragment";
-//    private static final String SELECTED_GREEN_INDX_KEY
 
     private OnFragmentInteractionListener mListener;
 
-    private ArrayList<Target> targets = new ArrayList<>();
+    private List<Target> targets = new ArrayList<>();
     private TileAdapter mAdapter;
 
     private ProgressBar fetchingProgressBar;
-    GridView offerGridView;
+    private GridView offerGridView;
 
     private int selectedIndex;
     private int activatedIndex;
@@ -79,10 +79,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 //                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDX_KEY);
 //            }
 //        }
-    }
-
-    private void updateValuesFromPreferences() {
-
     }
 
     @Override

@@ -1,7 +1,6 @@
 package layout;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -25,45 +24,43 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.kappa_labs.ohunter.client.HuntActivity;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
 
 /**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link HuntActionFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
+ * {@link Fragment} subclass to show map, information about targets and player position.
+ * Camera activity is connected to this fragment, the photographic part of the game starts here.
  * Use the {@link HuntActionFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class HuntActionFragment extends Fragment implements OnMapReadyCallback, PageChangeAdapter {
 
-    private static final String TAG = "HuntActionFragment";
-    private static final String ARG_PARAM_PLACE = "place_param";
+//    private static final int PERMISSIONS_REQUEST_LOCATION = 0x01;
 
-    /* TODO: presunout jinam, radius v metrech */
-    private static final int RADIUS = 150;
+    private static boolean targetReady;
+    private static double targetLatitude, targetLongitude;
+    private static boolean zoomInvalidated = true;
+    private static boolean infoInvalidated = true;
 
     private Location mLastLocation;
     private Circle mCircle;
     private SupportMapFragment fragment;
     private GoogleMap map;
+    private Marker playerMarker;
+    private boolean viewsReady;
 
-    private static Place mPlace;
-    private static boolean zoomInvalidated = true;
-    private static boolean infoInvalidated = true;
-
-    private TextView targetLatitudeTextView, playerLatitudeTextView,
-            targetLongitudeTextView, playerLongitudeTextView;
+    private TextView targetLatitudeTextView;
+    private TextView playerLatitudeTextView;
+    private TextView targetLongitudeTextView;
+    private TextView playerLongitudeTextView;
     private TextView distanceTextView;
-
-    private OnFragmentInteractionListener mListener;
 
 
     public HuntActionFragment() {
-        // Required empty public constructor
+        /* Required empty public constructor */
     }
 
     /**
@@ -92,6 +89,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
 
         infoInvalidated = true;
+        viewsReady = true;
         update();
 
         return view;
@@ -111,6 +109,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     @Override
     public void onPageSelected() {
         infoInvalidated = true;
+        zoomInvalidated = true;
         update();
     }
 
@@ -124,35 +123,13 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
-    @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.getUiSettings().setZoomControlsEnabled(true);
         zoomInvalidated = true;
         zoomToPlace();
+        /* The fine location should be granted by HuntActivity, which needs the same permission */
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         map.setMyLocationEnabled(true);
@@ -164,11 +141,12 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
         if (infoInvalidated) {
             updateInformation();
+            updatePlayerPin();
         }
     }
 
     private void zoomToPlace() {
-        if (mPlace == null || map == null) {
+        if (!targetReady || map == null) {
             return;
         }
 
@@ -178,21 +156,21 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
 
         /* Add new area around the Place */
-        LatLng ll = new LatLng(mPlace.latitude, mPlace.longitude);
+        LatLng ll = new LatLng(targetLatitude, targetLongitude);
         CircleOptions co = new CircleOptions()
                 .center(ll)
 //                .radius(mPlace.radius * 1000)
-                .radius(RADIUS)
+                .radius(HuntActivity.RADIUS)
                 .strokeColor(Color.argb(230, 230, 0, 0))
                 .fillColor(Color.argb(80, 0, 0, 255));
         mCircle = map.addCircle(co);
 
         map.addMarker(new MarkerOptions()
-                .position(new LatLng(mPlace.latitude, mPlace.longitude))
+                .position(new LatLng(targetLatitude, targetLongitude))
                 .title("Target"));
 
         /* Move camera to the Place's position */
-        float zoom = (float) (10f - Math.log(RADIUS / 10000f) / Math.log(2f));
+        float zoom = (float) (10f - Math.log(HuntActivity.RADIUS / 10000f) / Math.log(2f));
         zoom = Math.min(20, Math.max(zoom, 1));
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .zoom(zoom)
@@ -204,11 +182,11 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     private String getTargetLatitude() {
-        return mPlace == null ? "??N" : String.format("%.6f", mPlace.latitude) + "N";
+        return targetReady ? String.format("%.6f", targetLatitude) + "N" : "??N";
     }
 
     private String getTargetLongitude() {
-        return mPlace == null ? "??N" : String.format("%.6f", mPlace.longitude) + "N";
+        return targetReady ? String.format("%.6f", targetLongitude) + "N" : "??N";
     }
 
     private String getPlayerLatitude() {
@@ -220,31 +198,33 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     private String getTargetDistance() {
-        if (mLastLocation == null || mPlace == null) {
+        if (mLastLocation == null || !targetReady) {
             return "??m";
         }
         Location placeLoc = new Location("unknown");
-        placeLoc.setLatitude(mPlace.latitude);
-        placeLoc.setLongitude(mPlace.longitude);
+        placeLoc.setLatitude(targetLatitude);
+        placeLoc.setLongitude(targetLongitude);
         return mLastLocation.distanceTo(placeLoc) + "m";
     }
 
+    /**
+     * Updates information in the textViews.
+     */
     private void updateInformation() {
-        if (targetLatitudeTextView == null) {
-            return;
+        if (viewsReady) {
+            targetLatitudeTextView.setText(getTargetLatitude());
+            targetLongitudeTextView.setText(getTargetLongitude());
+            playerLatitudeTextView.setText(getPlayerLatitude());
+            playerLongitudeTextView.setText(getPlayerLongitude());
+            distanceTextView.setText(getTargetDistance());
+
+            infoInvalidated = false;
         }
-        targetLatitudeTextView.setText(getTargetLatitude());
-        targetLongitudeTextView.setText(getTargetLongitude());
-        playerLatitudeTextView.setText(getPlayerLatitude());
-        playerLongitudeTextView.setText(getPlayerLongitude());
-        distanceTextView.setText(getTargetDistance());
-
-        updatePlayerPin();
-
-        infoInvalidated = false;
     }
 
-    Marker playerMarker;
+    /**
+     * Updates position of the player's pin on the map.
+     */
     private void updatePlayerPin() {
         if (map != null && mLastLocation != null) {
             if (playerMarker != null) {
@@ -274,22 +254,11 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
      * @param place The new Place, which this fragment should activate on the map.
      */
     public static void changePlace(Place place) {
-        mPlace = place;
+        targetReady = true;
+        targetLatitude = place.latitude;
+        targetLongitude = place.longitude;
         infoInvalidated = true;
         zoomInvalidated = true;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-
-    }
 }

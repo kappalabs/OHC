@@ -19,7 +19,7 @@
     <color name="state_chosen">#4F00FF</color>
     <color name="state_orange">#FF7519</color>
 
-    <color name="window_background">#FFAA00</color>
+    <!--<color name="window_background">#FFAA00</color>-->
     <color name="my_primary">#6EAEE1</color>
     <color name="my_primary_dark">@color/kappa_blue</color>
     <color name="my_primary_light">#B3E5FC</color>

@@ -1,11 +1,9 @@
 package com.kappa_labs.ohunter.client.entities;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.lib.entities.Place;
-
-import java.util.Comparator;
 
 /**
  * Class to store one piece of information about place, that can be then simply shown in textView.
@@ -49,7 +47,6 @@ public class PlaceInfo implements Comparable<PlaceInfo> {
      */
     public static PlaceInfo buildPlaceInfo(Context context, String key, String value) {
         String title;
-        String content = value;
         boolean isUrl = false;
         int weight = 0;
         switch (key) {
@@ -84,7 +81,7 @@ public class PlaceInfo implements Comparable<PlaceInfo> {
                 title = "";
                 break;
         }
-        PlaceInfo info = new PlaceInfo(title, content);
+        PlaceInfo info = new PlaceInfo(title, value);
         info.setWeight(weight);
         if (isUrl) {
             info.setType(InfoType.URL);
@@ -94,7 +91,7 @@ public class PlaceInfo implements Comparable<PlaceInfo> {
     }
 
     @Override
-    public int compareTo(PlaceInfo another) {
+    public int compareTo(@NonNull PlaceInfo another) {
         if (weight > another.weight) {
             return -1;
         }
@@ -147,15 +144,6 @@ public class PlaceInfo implements Comparable<PlaceInfo> {
      */
     public InfoType getType() {
         return type;
-    }
-
-    /**
-     * Gets the weight of this information. Bigger means more important.
-     *
-     * @return The weight of this information.
-     */
-    public int getWeight() {
-        return weight;
     }
 
     /**
