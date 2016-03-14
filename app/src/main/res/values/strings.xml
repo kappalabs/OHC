@@ -1,10 +1,15 @@
 <resources>
-    <string name="app_name">OHunter</string>
-    <string name="google_app_id">387976669809</string>
-
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name">O-Hunter</string>
+    <string name="google_app_id" translatable="false">387976669809</string>
     <string name="title_activity_login">Sign in</string>
+    <string name="title_activity_camera">Camera</string>
+    <string name="title_activity_prepare_hunt">Prepare Hunt</string>
+    <string name="title_activity_hunt">O-Hunt</string>
+    <string name="title_fragment_offer">Offer</string>
+    <string name="title_fragment_info">Target details</string>
+    <string name="title_fragment_hunt">O-Hunt</string>
+
+    <string name="action_settings">Settings</string>
 
     <!-- Strings related to login/register -->
     <string name="prompt_nickname">Nickname</string>
@@ -12,7 +17,6 @@
     <string name="prompt_server">Server Address</string>
     <string name="action_login">Log in</string>
     <string name="action_register">Register</string>
-    <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_nickname">This nickname is invalid</string>
     <string name="error_duplicate_nickname">This nickname already exists</string>
     <string name="error_invalid_password">This password is too short</string>
@@ -23,76 +27,58 @@
     <string name="error_database_problem">Database error, try it again</string>
     <string name="error_camera_player_null">You must either log in, or enter offline mode!</string>
     <string name="error_camera_no_photo">You have to take a picture!</string>
-    <string name="server_address_template">192.168.0.1:4242</string>
-    <string name="permission_rationale">Contacts permissions are needed for providing email
-        completions.
-    </string>
-    <string name="title_activity_prepare_hunt">PrepareHuntActivity</string>
-    <string name="similarity_is">Podobnost je</string>
-    <string name="recieved_ohex">Server poslal OHException:</string>
-    <string name="server_communication">Spojení se serverem</string>
-    <string name="waiting_for_data">Čekám na data…</string>
-    <string name="executing_task">Probíhá výpočet</string>
-    <string name="waiting_for_result">Čekám na výsledek…</string>
+    <string name="server_address_template" translatable="false">192.168.0.1:4242</string>
+    <string name="similarity_is">Similarity is</string>
+    <string name="recieved_ohex">Server sent OHExeption:</string>
+    <string name="server_communication">Server communication</string>
+    <string name="waiting_for_data">Waiting for data…</string>
+    <string name="waiting_for_result">Waiting for result…</string>
 
     <string name="main_activity_player_title">Hello %1$s, your score is %2$d!</string>
-    <string name="main_activity_server_address">%1$s:%2$d</string>
+    <string name="main_activity_server_address" translatable="false">%1$s:%2$d</string>
 
-    <string name="title_activity_camera">CameraActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="north_shortcut">N</string>
     <string name="east_shortcut">E</string>
 
-    <string name="daytime_day">Photo in light</string>
-    <string name="daytime_night">Photo in dark</string>
+    <string name="daytime_label">Preferred photo:</string>
+    <string name="daytime_day">Bright</string>
+    <string name="daytime_night">Dark</string>
     <string name="daytime_unknown">Photo probably OK</string>
 
-    <string name="gfields_icon"><b>Ikona:</b></string>
-    <string name="gfields_formatted_address"><b>Adresa:</b></string>
-    <string name="gfields_name"><b>Název:</b></string>
+    <string name="gfields_name"><b>Name:</b></string>
     <string name="gfields_place_id"><b>ID:</b></string>
     <string name="gfields_url"><b>URL:</b></string>
-    <string name="gfields_website"><b>Webové stránky:</b></string>
-
-    <string name="saved_last_longitude">saved_last_longitude</string>
-    <string name="saved_last_latitude">saved_last_latitude</string>
+    <string name="gfields_website"><b>Website:</b></string>
+    <string name="gfields_formatted_address"><b>Address:</b></string>
+    <string name="gfields_icon"><b>Icon:</b></string>
 
     <string name="last_pos_not_known">Last position is not known yet</string>
-    <string name="radius_units_hint">(km)</string>
-    <string name="radius_label">Poloměr:</string>
-    <string name="number_of_targets_label">Počet cílů:</string>
+    <string name="radius_units_hint" translatable="false">(km)</string>
+    <string name="radius_label">Radius:</string>
+    <string name="number_of_targets_label">Number of targets:</string>
     <string name="unknown">unknown</string>
-    <string name="daytime_label">Denní doba:</string>
-    <string name="coordinates_label">Souřadnice:</string>
+    <string name="coordinates_label">Coordinates:</string>
     <string name="start_hunt_button_label">Start The Hunt!</string>
-    <string name="title_activity_hunt">O-Hunt</string>
-    <string name="section_format">Hello World from section: %1$d</string>
 
-    <string name="empty_number">__</string>
+    <string name="target_position">Target position:</string>
+    <string name="distance_to_target">Distance to target:</string>
+    <string name="image_gallery">Photo gallery:</string>
+    <string name="place_information">Information:</string>
+    <string name="my_position">My position:</string>
+    <string name="place_fragment_photo_counter" translatable="false">%1$d/%2$d</string>
 
-    <string name="target_position">Pozice cíle:</string>
-    <string name="distance_to_target">Vzdálenost od cíle:</string>
-    <string name="image_gallery">Galerie fotografií:</string>
-    <string name="place_information">Informace:</string>
-    <string name="my_position">Moje pozice:</string>
-    <string name="place_fragment_photo_counter">%1$d/%2$d</string>
-
-    <string name="question_marks">\?\?</string>
-    <string name="number_sign">#</string>
-
-    <string name="select_photo_error">You must select a photo on place detail page!</string>
-    <string name="server_unreachable_error">Server je nedostupný! Zkus to znovu.</string>
+    <string name="select_photo_error">You must select a photo on target detail page!</string>
     <string name="your_nickname">Your nickname</string>
     <string name="start_new_hunt_button">Start new hunt</string>
+    <string name="continue_hunt_button">Continue hunt</string>
     <string name="statistics_button">Statistics</string>
     <string name="help_button">Help</string>
     <string name="about_button">About</string>
     <string name="log_out_button">Log out</string>
     <string name="selected_photo_description">Selected picture</string>
-    <string name="name_label">Název:</string>
-    <string name="address_label">Adresa:</string>
-    <string name="num_photos_label">Fotografií:</string>
+    <string name="name_label">Name:</string>
+    <string name="address_label">Address:</string>
+    <string name="num_photos_label">Number of photos:</string>
     <string name="place_icon_description">place_icon</string>
     <string name="login_prompt">You need to log in!</string>
     <string name="template_image_description">template_image</string>
@@ -103,7 +89,10 @@
     <string name="dialog_store_offline_yes">Store</string>
     <string name="dialog_store_offline_no">Back</string>
 
-    <string name="title_fragment_offer">Offer</string>
-    <string name="title_fragment_info">Place details</string>
-    <string name="title_fragment_hunt">O-Hunt</string>
+    <string name="executing_task">Counting</string>
+    <string name="server_unreachable_error">Server unavailable! Try it again.</string>
+
+    <string name="empty_number" translatable="false">__</string>
+    <string name="question_marks" translatable="false">\?\?</string>
+    <string name="number_sign" translatable="false">#</string>
 </resources>

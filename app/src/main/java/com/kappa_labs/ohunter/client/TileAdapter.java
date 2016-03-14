@@ -70,7 +70,8 @@ public class TileAdapter extends BaseAdapter {
         /* Tile does not have place or the place it has is not what it should be */
         if (place == null || !Objects.equals(place.getID(), targetTileView.getPlaceID())) {
             /* Can we load the file from local file? */
-            if ((place = SharedDataManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
+//            if ((place = SharedDataManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
+            if ((place = PlacesManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
                 /* Load the place from local file */
                 targetTileView.setPlace(place);
             }

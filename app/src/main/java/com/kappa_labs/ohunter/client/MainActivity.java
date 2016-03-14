@@ -43,6 +43,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+        Button mContinueHuntButton = (Button) findViewById(R.id.button_continue_hunt);
+        mContinueHuntButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent();
+                i.setClass(MainActivity.this, HuntActivity.class);
+                startActivity(i);
+            }
+        });
         Button mStatisticsButton = (Button) findViewById(R.id.button_statistics);
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,6 +107,11 @@ public class MainActivity extends AppCompatActivity {
                 startLoginActivity();
             }
         });
+
+        /* Continue button is visible only when the game can really continue... */
+        if (!SharedDataManager.isHuntReady(this)) {
+            mContinueHuntButton.setVisibility(View.GONE);
+        }
 
         /* Set the last used server address */
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFS_FILE, MODE_PRIVATE);

@@ -60,6 +60,8 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private Circle mCircle;
     private static final String TAG = "PrepareHunt";
 
+    private static final String SAVED_LAST_LONGITUDE = "saved_last_longitude";
+    private static final String SAVED_LAST_LATITUDE = "saved_last_latitude";
     private static final String NUM_TARGETS_TEXTVIEW_KEY = "num_targets_textview_key";
     private static final String LATITUDE_TEXTVIEW_KEY = "latitude_textview_key";
     private static final String LONGITUDE_TEXTVIEW_KEY = "longitude_textview_key";
@@ -81,7 +83,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private boolean mResolvingError = false;
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
-    private TextView mNumTargetsTextView;
     private EditText mLongitudeEditText;
     private EditText mLatitudeEditText;
     private EditText mRadiusEditText;
@@ -102,8 +103,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
 //        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        mNumTargetsTextView = (TextView) findViewById(R.id.textView_numtargets);
 
         mDaytimeSpinner = (Spinner) findViewById(R.id.spinner_daytime);
         mDaytimeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -188,7 +187,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
-        outState.putString(NUM_TARGETS_TEXTVIEW_KEY, mNumTargetsTextView.getText().toString());
         outState.putString(LATITUDE_TEXTVIEW_KEY, mLatitudeEditText.getText().toString());
         outState.putString(LONGITUDE_TEXTVIEW_KEY, mLongitudeEditText.getText().toString());
         outState.putString(RADIUS_TEXTVIEW_KEY, mRadiusEditText.getText().toString());
@@ -200,9 +198,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             mResolvingError = savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-            if (savedInstanceState.keySet().contains(NUM_TARGETS_TEXTVIEW_KEY)) {
-                mNumTargetsTextView.setText(savedInstanceState.getString(NUM_TARGETS_TEXTVIEW_KEY));
-            }
             if (savedInstanceState.keySet().contains(LATITUDE_TEXTVIEW_KEY)) {
                 mLatitudeEditText.setText(savedInstanceState.getString(LATITUDE_TEXTVIEW_KEY));
             }
@@ -368,17 +363,19 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             mLastLocation.setLongitude(getLongitude());
             //TODO ukladani pomoci LATITUDE_TEXTVIEW_KEY atd...
         } else if (mLastLocation != null) {
-            /* Ziskanou pozici si ulozim */
+            /* Save the retrieved location */
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putLong(getString(R.string.saved_last_longitude), Double.doubleToRawLongBits(mLastLocation.getLongitude()));
-            editor.putLong(getString(R.string.saved_last_latitude), Double.doubleToRawLongBits(mLastLocation.getLatitude()));
+            editor.putLong(SAVED_LAST_LATITUDE, Double.doubleToRawLongBits(mLastLocation.getLatitude()));
+            editor.putLong(SAVED_LAST_LONGITUDE, Double.doubleToRawLongBits(mLastLocation.getLongitude()));
             editor.apply();
         } else {
-            /* Prectu si pozici z dat aplikace */
+            /* Load location from saved application information */
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            double latitude = Double.longBitsToDouble(sharedPref.getLong(getString(R.string.saved_last_latitude), Double.doubleToLongBits(DEFAULT_LATITUDE)));
-            double longitude = Double.longBitsToDouble(sharedPref.getLong(getString(R.string.saved_last_longitude), Double.doubleToLongBits(DEFAULT_LONGITUDE)));
+            double latitude = Double.longBitsToDouble(
+                    sharedPref.getLong(SAVED_LAST_LATITUDE, Double.doubleToLongBits(DEFAULT_LATITUDE)));
+            double longitude = Double.longBitsToDouble(
+                    sharedPref.getLong(SAVED_LAST_LONGITUDE, Double.doubleToLongBits(DEFAULT_LONGITUDE)));
 
             mLastLocation = new Location("dummyprovider");
             mLastLocation.setLatitude(latitude);

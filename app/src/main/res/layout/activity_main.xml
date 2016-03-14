@@ -49,6 +49,12 @@
 
             <Button
                 android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/continue_hunt_button"
+                android:id="@+id/button_continue_hunt" />
+
+            <Button
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/statistics_button"
                 android:id="@+id/button_statistics" />

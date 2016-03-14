@@ -33,38 +33,6 @@
             android:layout_margin="5dp">
 
             <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="2dp">
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="@string/number_of_targets_label"
-                        android:id="@+id/textView6"
-                        android:gravity="center_vertical" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="@string/unknown"
-                        android:id="@+id/textView_numtargets"
-                        android:gravity="right"
-                        android:layout_gravity="right"
-                        android:layout_weight="1"
-                        android:layout_marginLeft="20dp" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="2dp">

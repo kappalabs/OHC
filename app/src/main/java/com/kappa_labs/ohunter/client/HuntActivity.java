@@ -64,7 +64,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
 
-    public static ArrayList<String> radarPlaceIDs;
+    public static ArrayList<String> radarPlaceIDs = new ArrayList<>(0);
 
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
