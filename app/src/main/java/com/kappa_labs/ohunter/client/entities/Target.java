@@ -1,11 +1,13 @@
 package com.kappa_labs.ohunter.client.entities;
 
+import java.io.Serializable;
+
 /**
  * Class for storing basic, not memory intensive, information for TargetTileView.
  * Each Target is associated with one Place and TargetTileView. This class also provides logic
  * for different states of a target throughout the game.
  */
-public class Target {
+public class Target implements Serializable, Comparable<Target> {
 
     /**
      * Represents a state of target.
@@ -57,6 +59,11 @@ public class Target {
      */
     public Target(String placeID) {
         this.placeID = placeID;
+    }
+
+    @Override
+    public int compareTo(Target another) {
+        return mState.compare(another.mState);
     }
 
     /**

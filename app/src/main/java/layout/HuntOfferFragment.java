@@ -3,6 +3,7 @@ package layout;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +20,6 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -37,7 +37,9 @@ import com.kappa_labs.ohunter.client.SharedDataManager;
  */
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
-    private static final String TAG = "HuntOfferFragment";
+//    private static final String TAG = "HuntOfferFragment";
+    private static final String SELECTED_INDEX_KEY = "SELECTED_INDEX_KEY";
+    private static final String ACTIVATED_INDEX_KEY = "ACTIVATED_INDEX_KEY";
 
     private OnFragmentInteractionListener mListener;
 
@@ -45,10 +47,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private TileAdapter mAdapter;
 
     private ProgressBar fetchingProgressBar;
-    private GridView offerGridView;
 
-    private int selectedIndex;
-    private int activatedIndex;
+    private int selectedIndex = -1;
+    private int activatedIndex = -1;
 
 
     public HuntOfferFragment() {
@@ -67,26 +68,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //TODO: ulozit do sharedmanageru selected
-//        if (savedInstanceState != null) {
-//            if (savedInstanceState.keySet().contains(SELECTED_GREEN_INDX_KEY)) {
-//                selectedGreenIndex = savedInstanceState.getInt(SELECTED_GREEN_INDX_KEY);
-//            }
-//            if (savedInstanceState.keySet().contains(SELECTED_RED_INDX_KEY)) {
-//                selectedRedIndex = savedInstanceState.getInt(SELECTED_RED_INDX_KEY);
-//            }
-//            if (savedInstanceState.keySet().contains(ACTIVATED_INDX_KEY)) {
-//                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDX_KEY);
-//            }
-//        }
+
+        if (savedInstanceState != null) {
+            if (savedInstanceState.keySet().contains(SELECTED_INDEX_KEY)) {
+                selectedIndex = savedInstanceState.getInt(SELECTED_INDEX_KEY);
+            }
+            if (savedInstanceState.keySet().contains(ACTIVATED_INDEX_KEY)) {
+                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDEX_KEY);
+            }
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-
-//        outState.putInt(SELECTED_GREEN_INDX_KEY, selectedGreenIndex);
-//        outState.putInt(SELECTED_RED_INDX_KEY, selectedRedIndex);
-//        outState.putInt(ACTIVATED_INDX_KEY, activatedIndex);
+        outState.putInt(SELECTED_INDEX_KEY, selectedIndex);
+        outState.putInt(ACTIVATED_INDEX_KEY, activatedIndex);
+        SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
 
         super.onSaveInstanceState(outState);
     }
@@ -98,13 +95,14 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
         fetchingProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_fetching);
         fetchingProgressBar.setVisibility(View.GONE);
-        offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
+        GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
 
         // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke (ale v teto metode to nejde)
         mAdapter = new TileAdapter(getContext(), targets);
         offerGridView.setAdapter(mAdapter);
 
         /* This class will prepare the places - load from local files or retrieve them from Internet */
+        final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
         PlacesManager manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
             @Override
             public void onPreparationStarted() {
@@ -128,7 +126,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                 //TODO: provadet jinde - ne po kazdem navstiveni tohoto fragmentu!
                 /* Divide given places into two groups (green and red) */
-                ArrayList<Integer> range = new ArrayList<>();
+                List<Integer> range = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
                     range.add(i);
                     targets.get(i).setState(Target.TargetState.REJECTED);
@@ -144,12 +142,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                 //TODO: provadet pravidelne?
                 /* Sort places  */
-                Collections.sort(targets, new Comparator<Target>() {
-                    @Override
-                    public int compare(Target lhs, Target rhs) {
-                        return lhs.getState().compare(rhs.getState());
-                    }
-                });
+                Collections.sort(targets);
 
                 mAdapter.notifyDataSetChanged();
 
@@ -160,6 +153,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             @Override
             public void onPlaceReady(Place place) {
                 targets.add(new Target(place.getID()));
+                SharedDataManager.saveTargets(getContext(), targets.toArray(_targets));
+//                SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
                 mAdapter.notifyDataSetChanged();
             }
         }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
@@ -167,7 +162,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (!SharedDataManager.isHuntReady(getContext())) {
             manager.preparePlaces();
         } else {
-            //TODO: nacti z lokalu
+            Target[] loaded = SharedDataManager.loadTargets(getContext());
+            if (loaded != null) {
+                for (Target target : loaded) {
+                    if (target != null) {
+                        targets.add(target);
+                    }
+                }
+            }
+            mAdapter.notifyDataSetChanged();
         }
 
         /* Short click selects the tile */
@@ -237,17 +240,17 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         return null;
     }
 
-    /**
-     * Try to get the currently activated target. Return selected target if available, null otherwise.
-     *
-     * @return The activated target if available, null otherwise.
-     */
-    private Target getActivatedTarget() {
-        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
-            return targets.get(activatedIndex);
-        }
-        return null;
-    }
+//    /**
+//     * Try to get the currently activated target. Return selected target if available, null otherwise.
+//     *
+//     * @return The activated target if available, null otherwise.
+//     */
+//    private Target getActivatedTarget() {
+//        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
+//            return targets.get(activatedIndex);
+//        }
+//        return null;
+//    }
 
     /**
      * Rotates currently selected target if possible, i.e. some target is selected.
@@ -322,6 +325,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 //        }
         Target target = getSelectedTarget();
         if (target != null) {
+            mListener.onItemSelected();
             if (target.isAccepted()) {
                 mListener.onGreenSelected();
             } else if (target.isRejected()) {
@@ -367,6 +371,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public interface OnFragmentInteractionListener {
         void onItemSelected(Place place);
+        void onItemSelected();
         void onGreenSelected();
         void onRedSelected();
         void onRequestNextPage();

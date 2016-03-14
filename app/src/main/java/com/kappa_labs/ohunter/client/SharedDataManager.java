@@ -5,12 +5,12 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -28,8 +28,8 @@ public class SharedDataManager {
      * Default number of green places in the initial offer.
      */
     public static final int DEFAULT_NUM_GREENS = 6;
-    private static final String SELECTED_INDEX_KEY = "SELECTED_INDEX_KEY";
-    private static final String ACTIVATED_INDEX_KEY = "ACTIVATED_INDEX_KEY";
+    private static final String SELECTED_PLACE_ID_KEY = "SELECTED_PLACE_ID_KEY";
+    private static final String ACTIVATED_PLACE_ID_KEY = "ACTIVATED_PLACE_ID_KEY";
     private static final String HUNT_READY_KEY = "HUNT_READY_KEY";
     private static final String START_TIME_KEY = "START_TIME_KEY";
 
@@ -38,6 +38,7 @@ public class SharedDataManager {
     private static final String PLAYER_FILENAME = "PLAYER_FILENAME";
 //    private static final String ACTIVE_PLACE_FILENAME = "ACTIVE_PLACE_FILENAME";
     private static final String PLACE_FILENAME = "PLACE_FILENAME";
+    private static final String TARGETS_FILENAME = "TARGETS_FILENAME";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
@@ -155,13 +156,13 @@ public class SharedDataManager {
     public static void saveSelectedPlaceID(Context context, String placeID) {
         if (!Objects.equals(selectedPlaceID, placeID)) {
             selectedPlaceID = placeID;
-            getSharedPreferences(context).edit().putString(SELECTED_INDEX_KEY, placeID).commit();
+            getSharedPreferences(context).edit().putString(SELECTED_PLACE_ID_KEY, placeID).commit();
         }
     }
 
     public static String getSelectedPlaceID(Context context) {
         if (selectedPlaceID == null) {
-            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_INDEX_KEY, null);
+            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_PLACE_ID_KEY, null);
         }
         return selectedPlaceID;
     }
@@ -169,15 +170,27 @@ public class SharedDataManager {
     public static void saveActivatedPlaceID(Context context, String placeID) {
         if (!Objects.equals(activatedPlaceID, placeID)) {
             activatedPlaceID = placeID;
-            getSharedPreferences(context).edit().putString(ACTIVATED_INDEX_KEY, placeID).commit();
+            getSharedPreferences(context).edit().putString(ACTIVATED_PLACE_ID_KEY, placeID).commit();
         }
     }
 
     public static String getActivatedPlaceID(Context context) {
         if (activatedPlaceID != null) {
-            activatedPlaceID = getSharedPreferences(context).getString(ACTIVATED_INDEX_KEY, "");
+            activatedPlaceID = getSharedPreferences(context).getString(ACTIVATED_PLACE_ID_KEY, "");
         }
         return activatedPlaceID;
+    }
+
+    public static Target[] loadTargets(Context context) {
+        Object object = readObject(context, TARGETS_FILENAME, null);
+        if (object != null && object instanceof Target[]) {
+            return (Target[]) object;
+        }
+        return null;
+    }
+
+    public static boolean saveTargets(Context context, Target[] targets) {
+        return writeObject(context, targets, TARGETS_FILENAME, null);
     }
 
     /**

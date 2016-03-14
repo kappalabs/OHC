@@ -3,12 +3,10 @@ package com.kappa_labs.ohunter.client;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -20,7 +18,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -63,7 +60,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
      */
     public static final int RADIUS = 150;
     private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
-    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
+//    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
 
     public static ArrayList<String> radarPlaceIDs;
 
@@ -104,19 +101,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Fragment fragment = null;
                 switch (position) {
                     case 0: // HuntOfferFragment
-//                        //TODO: stavy spis bude lepsi nekam ukladat
-//                        if (SharedDataManager.getSelectedPlaceID(HuntActivity.this) != null) {
-//                            activateFab.show();
-//                        } else {
-//                            activateFab.hide();
-//                        }
-//                        if (item_selected) {
-//                            activateFab.show();
-//                        } else {
-//                            activateFab.hide();
-//                        }
                         cameraFab.hide();
-                        rotateFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
@@ -133,7 +118,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         rotateFab.hide();
                         activateFab.hide();
                         // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
-                        //TODO: ziskat data z manageru
                         if (SharedDataManager.getActivatedPlaceID(HuntActivity.this) != null) {
                             cameraFab.show();
                         } else {
@@ -477,11 +461,20 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onItemSelected(Place place) {
-//        item_selected = true;
         SharedDataManager.saveSelectedPlaceID(this, place.getID());
         HuntPlaceFragment.changePlace(this, place);
         HuntActionFragment.changePlace(place);
 
+        /* Hide all buttons, offer will fire method to show the right ones.
+         * NOTE: cannot use hide(), causes strange button behavior */
+        acceptFab.setVisibility(View.INVISIBLE);
+        rejectFab.setVisibility(View.INVISIBLE);
+        activateFab.setVisibility(View.INVISIBLE);
+        rotateFab.show();
+    }
+
+    @Override
+    public void onItemSelected() {
         /* Hide all buttons, offer will fire method to show the right ones.
          * NOTE: cannot use hide(), causes strange button behavior */
         acceptFab.setVisibility(View.INVISIBLE);
