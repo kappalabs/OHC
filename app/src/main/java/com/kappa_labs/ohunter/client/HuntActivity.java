@@ -31,11 +31,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Objects;
 
 import layout.HuntActionFragment;
 import layout.HuntOfferFragment;
@@ -142,10 +144,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.rejectSelectedTarget()) {
-                    rejectFab.hide();
-                    acceptFab.show();
-                    activateFab.hide();
+                if (mHuntOfferFragment != null) {
+                    mHuntOfferFragment.rejectSelectedTarget();
                 }
             }
         });
@@ -156,10 +156,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.acceptSelectedTarget()) {
-                    rejectFab.show();
-                    acceptFab.hide();
-                    activateFab.show();
+                if (mHuntOfferFragment != null) {
+                    mHuntOfferFragment.acceptSelectedTarget();
                 }
             }
         });
@@ -182,10 +180,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         activateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null && mHuntOfferFragment.activateSelectedTarget()) {
-                    rejectFab.hide();
-                    acceptFab.hide();
-                    activateFab.hide();
+                if (mHuntOfferFragment != null) {
+                    if (!mHuntOfferFragment.activateSelectedTarget()) {
+                        mHuntOfferFragment.deactivateSelectedTarget();
+                    }
                 }
             }
         });
@@ -460,45 +458,48 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //    }
 
     @Override
-    public void onItemSelected(Place place) {
-        SharedDataManager.saveSelectedPlaceID(this, place.getID());
-        HuntPlaceFragment.changePlace(this, place);
-        HuntActionFragment.changePlace(place);
+    public void onPlaceSelected(Place place) {
+        String savedID = SharedDataManager.getSelectedPlaceID(this);
+        if (!Objects.equals(place.getID(), savedID)) {
+            SharedDataManager.saveSelectedPlaceID(this, place.getID());
+            HuntPlaceFragment.changePlace(this, place);
+            HuntActionFragment.changePlace(place);
+        }
+    }
 
-        /* Hide all buttons, offer will fire method to show the right ones.
-         * NOTE: cannot use hide(), causes strange button behavior */
-        acceptFab.setVisibility(View.INVISIBLE);
-        rejectFab.setVisibility(View.INVISIBLE);
-        activateFab.setVisibility(View.INVISIBLE);
+    @Override
+    public void onItemSelected(Target.TargetState state) {
+        switch (state) {
+            case ACCEPTED:
+                acceptFab.hide();
+                rejectFab.show();
+                activateFab.show();
+                break;
+            case ACTIVATED:
+                acceptFab.hide();
+                rejectFab.hide();
+                activateFab.show();
+                break;
+            case REJECTED:
+                acceptFab.show();
+                rejectFab.hide();
+                activateFab.hide();
+                break;
+            default:
+                acceptFab.setVisibility(View.GONE);
+                rejectFab.setVisibility(View.GONE);
+                activateFab.setVisibility(View.GONE);
+                break;
+        }
         rotateFab.show();
-    }
-
-    @Override
-    public void onItemSelected() {
-        /* Hide all buttons, offer will fire method to show the right ones.
-         * NOTE: cannot use hide(), causes strange button behavior */
-        acceptFab.setVisibility(View.INVISIBLE);
-        rejectFab.setVisibility(View.INVISIBLE);
-        activateFab.setVisibility(View.INVISIBLE);
-        rotateFab.show();
-    }
-
-    @Override
-    public void onGreenSelected() {
-        acceptFab.hide();
-        rejectFab.show();
-        activateFab.show();
-    }
-
-    @Override
-    public void onRedSelected() {
-        acceptFab.show();
-        rejectFab.hide();
-        activateFab.hide();
     }
 
     @Override
     public void onRequestNextPage() {
+        acceptFab.setVisibility(View.GONE);
+        rejectFab.setVisibility(View.GONE);
+        activateFab.setVisibility(View.GONE);
+        rotateFab.setVisibility(View.GONE);
         /* Go to the page with place information */
         mViewPager.setCurrentItem(1, true);
     }

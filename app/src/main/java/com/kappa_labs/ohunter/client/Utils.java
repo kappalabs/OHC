@@ -120,6 +120,10 @@ public class Utils {
      */
     public static Bitmap toBitmap(SImage sImage) {
         byte[] imgBytes = sImage.getBytes();
+        if (imgBytes == null) {
+            Log.e(TAG, "mam null simage, interesting...");
+            return null;
+        }
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
     }
 

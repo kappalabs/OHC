@@ -13,9 +13,9 @@ public class Target implements Serializable, Comparable<Target> {
      * Represents a state of target.
      */
     public enum TargetState {
-        PHOTOGENIC(70),
+        PHOTOGENIC(80),
+        ACTIVATED(70),
         ACCEPTED(60),
-        ACTIVATED(60),
         REJECTED(50),
         LOCKED(40),
         COMPLETED(30),

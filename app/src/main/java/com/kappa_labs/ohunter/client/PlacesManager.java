@@ -2,6 +2,7 @@ package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
@@ -41,9 +42,9 @@ public class PlacesManager {
     public void preparePlaces() {
         mListener.onPreparationStarted();
 
-        //TODO: nejak vyresit
+        //TODO: nejak vyresit, asynctask ma pouze frontu pouze 128 pozadavku
         // redukce poctu mist
-        while (placeIDs.size() > 20) {
+        while (placeIDs.size() > 30) {
             placeIDs.remove(0);
         }
 
@@ -92,7 +93,7 @@ public class PlacesManager {
                     },
                             null,
                             -1);
-            responseTask.execute(request);
+            responseTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, request);
         }
     }
 

@@ -248,6 +248,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             /* Initialize data for photos */
             for (int i = 0; i < numberOfPhotos; i++) {
                 Photo photo = place.getPhoto(i);
+                //TODO: proc je tady nekdy photo.simage null?
                 photoBitmaps[i] = Utils.toBitmap(photo.sImage);
                 daytimeTexts[i] = Utils.daytimeToString(context, place.getPhoto(i).daytime);
 

@@ -3,7 +3,6 @@ package layout;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -184,18 +183,20 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         iTile.setHighlighted(false);
                     }
                     mAdapter.notifyDataSetChanged();
-//                    tile.changeRotation();
                     tile.setHighlighted(true);
                     tile.update();
 
                     /* Notify the listener */
                     if (mListener != null) {
-                        mListener.onItemSelected(tile.getPlace());
-                        if (tile.isAccepted()) {
-                            mListener.onGreenSelected();
-                        } else if (tile.isRejected()) {
-                            mListener.onRedSelected();
-                        }
+                        mListener.onPlaceSelected(tile.getPlace());
+                        mListener.onItemSelected(tile.getState());
+//                        if (tile.isAccepted()) {
+//                            mListener.onGreenSelected();
+//                        } else if (tile.isRejected()) {
+//                            mListener.onRedSelected();
+//                        } else if (tile.isActivated()) {
+//                            mListener.onActivatedSelected();
+//                        }
                     }
                 }
             }
@@ -208,15 +209,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 if (view instanceof TargetTileView) {
                     TargetTileView tile = (TargetTileView) view;
                     selectedIndex = position;
+                    /* Change highlighted items */
+                    for (Target iTile : targets) {
+                        iTile.setHighlighted(false);
+                    }
+                    mAdapter.notifyDataSetChanged();
+                    tile.setHighlighted(true);
+                    tile.update();
 
                     /* Notify the listener and request to show the next page (with place information) */
                     if (mListener != null) {
-                        mListener.onItemSelected(tile.getPlace());
-                        if (tile.isAccepted()) {
-                            mListener.onGreenSelected();
-                        } else if (tile.isRejected()) {
-                            mListener.onRedSelected();
-                        }
+                        mListener.onPlaceSelected(tile.getPlace());
+//                        if (tile.isAccepted()) {
+//                            mListener.onGreenSelected();
+//                        } else if (tile.isRejected()) {
+//                            mListener.onRedSelected();
+//                        }
                         mListener.onRequestNextPage();
                     }
                 }
@@ -264,6 +272,31 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Updates the activated and selected place index from current targets order.
+     */
+    private void updateSelection() {
+        selectedIndex = -1;
+        activatedIndex = -1;
+        boolean gotFirst = false;
+        for (int i = 0; i < targets.size(); i++) {
+            if (targets.get(i).isHighlighted()) {
+                selectedIndex = i;
+                if (gotFirst) {
+                    return;
+                }
+                gotFirst = true;
+            }
+            if (targets.get(i).isActivated()) {
+                activatedIndex = i;
+                if (gotFirst) {
+                    return;
+                }
+                gotFirst = true;
+            }
+        }
+    }
+
+    /**
      * Activates currently selected target if possible, i.e. target state is sufficient
      * and some target is selected. Deactivates every other activated tile.
      *
@@ -274,12 +307,46 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         Target tile = getSelectedTarget();
         if (tile != null) {
             for (Target iTile : targets) {
-                iTile.deactivate();
+                if (iTile != tile) {
+                    iTile.deactivate();
+                }
             }
             isOk = tile.activate();
-            activatedIndex = selectedIndex;
-            SharedDataManager.saveActivatedPlaceID(getContext(), tile.getPlaceID());
+            if (isOk) {
+                SharedDataManager.saveActivatedPlaceID(getContext(), tile.getPlaceID());
+            }
+
+            /* Rearrange the tiles */
+            Collections.sort(targets);
+            updateSelection();
             mAdapter.notifyDataSetChanged();
+
+            /* Inform the listener about the change of state */
+            if (mListener != null) {
+                mListener.onItemSelected(tile.getState());
+            }
+        }
+        return isOk;
+    }
+
+    public boolean deactivateSelectedTarget() {
+        boolean isOk = false;
+        Target tile = getSelectedTarget();
+        if (tile != null) {
+            isOk = tile.deactivate();
+            if (isOk) {
+                SharedDataManager.saveActivatedPlaceID(getContext(), null);
+            }
+
+            /* Rearrange the tiles */
+            Collections.sort(targets);
+            updateSelection();
+            mAdapter.notifyDataSetChanged();
+
+            /* Inform the listener about the change of state */
+            if (mListener != null) {
+                mListener.onItemSelected(tile.getState());
+            }
         }
         return isOk;
     }
@@ -294,7 +361,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         boolean isOk;
         Target target = getSelectedTarget();
         isOk = target != null && target.reject();
+        /* Rearrange the tiles */
+        Collections.sort(targets);
+        updateSelection();
         mAdapter.notifyDataSetChanged();
+
+        /* Inform the listener about the change of state */
+        if (mListener != null && isOk) {
+            mListener.onItemSelected(target.getState());
+        }
 
         return isOk;
     }
@@ -309,7 +384,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         boolean isOk;
         Target target = getSelectedTarget();
         isOk = target != null && target.accept();
+        /* Rearrange the tiles */
+        Collections.sort(targets);
+        updateSelection();
         mAdapter.notifyDataSetChanged();
+
+        /* Inform the listener about the change of state */
+        if (mListener != null && isOk) {
+            mListener.onItemSelected(target.getState());
+        }
 
         return isOk;
     }
@@ -320,17 +403,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             return;
         }
 
-//        if (SharedDataManager.getSelectedPlaceID(getContext()) != null) {
-//            mListener.onItemSelected();
-//        }
         Target target = getSelectedTarget();
         if (target != null) {
-            mListener.onItemSelected();
-            if (target.isAccepted()) {
-                mListener.onGreenSelected();
-            } else if (target.isRejected()) {
-                mListener.onRedSelected();
-            }
+            mListener.onItemSelected(target.getState());
         }
     }
 
@@ -370,10 +445,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onItemSelected(Place place);
-        void onItemSelected();
-        void onGreenSelected();
-        void onRedSelected();
+        void onPlaceSelected(Place place);
+        void onItemSelected(Target.TargetState targetState);
         void onRequestNextPage();
     }
 
