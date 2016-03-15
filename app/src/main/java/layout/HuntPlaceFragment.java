@@ -25,6 +25,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -34,6 +35,7 @@ import java.util.Set;
  */
 public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
+    private static String placeID;
     private static int numberOfPhotos;
     private static String[] daytimeTexts;
     private static Bitmap[] photoBitmaps;
@@ -235,12 +237,18 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @param place Information from this place object will be used.
      */
     public static void changePlace(Context context, Place place) {
-        maxHeightRatio = 0;
-        numberOfPhotos = 0;
-        photoBitmaps = null;
-        daytimeTexts = null;
+        /* Update information only when the place changes */
+        if (place == null && placeID != null) {
+            placeID = null;
+            maxHeightRatio = 0;
+            numberOfPhotos = 0;
+            photoBitmaps = null;
+            daytimeTexts = null;
 
-        if (place != null) {
+            dataInvalidated = true;
+        } else if (place != null && !Objects.equals(place.getID(), placeID)) {
+            placeID = place.getID();
+            maxHeightRatio = 0;
             numberOfPhotos = place.getNumberOfPhotos();
             photoBitmaps = new Bitmap[numberOfPhotos];
             daytimeTexts = new String[numberOfPhotos];
@@ -248,9 +256,16 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             /* Initialize data for photos */
             for (int i = 0; i < numberOfPhotos; i++) {
                 Photo photo = place.getPhoto(i);
+                final int finalI = i;
+                Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
+                    @Override
+                    public void onBitmapReady(Bitmap bitmap) {
+                        photoBitmaps[finalI] = bitmap;
+                    }
+                });
                 //TODO: proc je tady nekdy photo.simage null?
-                photoBitmaps[i] = Utils.toBitmap(photo.sImage);
-                daytimeTexts[i] = Utils.daytimeToString(context, place.getPhoto(i).daytime);
+                bitmapTask.execute(photo.sImage);
+                daytimeTexts[i] = Utils.daytimeToString(context, photo.daytime);
 
                 /* Find maximum height ratio */
                 final double rat =  (double) photo.getHeight() / photo.getWidth();
@@ -267,9 +282,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 infoList.add(info);
             }
             Collections.sort(infoList);
-        }
 
-        dataInvalidated = true;
+            dataInvalidated = true;
+        }
     }
 
 }

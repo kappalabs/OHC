@@ -143,6 +143,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/imageView_lastPhoto"
+                    android:scaleType="fitStart"
                     android:contentDescription="@string/last_photo_description" />
 
             </LinearLayout>

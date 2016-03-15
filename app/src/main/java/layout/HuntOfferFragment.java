@@ -118,12 +118,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     return;
                 }
 
-                /* If game already started, no division is needed */
-                if (SharedDataManager.isHuntReady(getContext())) {
-                    return;
-                }
-
-                //TODO: provadet jinde - ne po kazdem navstiveni tohoto fragmentu!
                 /* Divide given places into two groups (green and red) */
                 List<Integer> range = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
@@ -139,10 +133,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     --min;
                 }
 
-                //TODO: provadet pravidelne?
                 /* Sort places  */
                 Collections.sort(targets);
-
                 mAdapter.notifyDataSetChanged();
 
                 SharedDataManager.initNewHunt(getContext(), true);
@@ -190,13 +182,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     if (mListener != null) {
                         mListener.onPlaceSelected(tile.getPlace());
                         mListener.onItemSelected(tile.getState());
-//                        if (tile.isAccepted()) {
-//                            mListener.onGreenSelected();
-//                        } else if (tile.isRejected()) {
-//                            mListener.onRedSelected();
-//                        } else if (tile.isActivated()) {
-//                            mListener.onActivatedSelected();
-//                        }
                     }
                 }
             }
@@ -220,11 +205,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     /* Notify the listener and request to show the next page (with place information) */
                     if (mListener != null) {
                         mListener.onPlaceSelected(tile.getPlace());
-//                        if (tile.isAccepted()) {
-//                            mListener.onGreenSelected();
-//                        } else if (tile.isRejected()) {
-//                            mListener.onRedSelected();
-//                        }
                         mListener.onRequestNextPage();
                     }
                 }

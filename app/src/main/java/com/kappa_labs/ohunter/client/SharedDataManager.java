@@ -11,6 +11,7 @@ import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -106,9 +107,9 @@ public class SharedDataManager {
             ObjectInputStream ois = new ObjectInputStream(inputStream);
             return ois.readObject();
         } catch (Exception e) {
-//            if (!(e instanceof FileNotFoundException)) {
+            if (!(e instanceof FileNotFoundException)) {
                 Log.e(TAG, "Cannot read object: " + e);
-//            }
+            }
             /* File is unavailable */
             return null;
         } finally {
@@ -231,7 +232,7 @@ public class SharedDataManager {
 //        if (mPlayer != null) {
 //            return mPlayer;
 //        }
-        Log.d(TAG, "ctu place "+placeID+" z adresare \""+(placeID + "/" + PLACE_FILENAME)+"\"");
+//        Log.d(TAG, "ctu place "+placeID+" z adresare \""+(placeID + "/" + PLACE_FILENAME)+"\"");
         /* Otherwise try to read the object from file */
         Object object = readObject(context, PLACE_FILENAME, placeID);
         if (object != null && object instanceof Place) {
@@ -242,7 +243,7 @@ public class SharedDataManager {
 
     public static boolean addPlace(Context context, Place place) {
         mPlacesIDs.add(place.getID());
-        Log.d(TAG, "ukladam place " + place.getID() + " do adresare \"" + (place.getID() + "/" + PLACE_FILENAME) + "\"");
+//        Log.d(TAG, "ukladam place " + place.getID() + " do adresare \"" + (place.getID() + "/" + PLACE_FILENAME) + "\"");
         return writeObject(context, place, PLACE_FILENAME, place.getID());
     }
 

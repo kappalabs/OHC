@@ -1,5 +1,7 @@
 package com.kappa_labs.ohunter.client.entities;
 
+import android.support.annotation.NonNull;
+
 import java.io.Serializable;
 
 /**
@@ -47,6 +49,7 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     private boolean rotated;
+    private boolean isRotationDrawn;
     private boolean highlighted;
     private TargetState mState = TargetState.EMPTY;
     private String placeID;
@@ -62,7 +65,7 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     @Override
-    public int compareTo(Target another) {
+    public int compareTo(@NonNull Target another) {
         return mState.compare(another.mState);
     }
 
@@ -212,6 +215,24 @@ public class Target implements Serializable, Comparable<Target> {
      */
     public void setState(TargetState state) {
         this.mState = state;
+    }
+
+    /**
+     * Gets the current state of rotation for connected target tile.
+     *
+     * @return The current state of rotation for connected target tile.
+     */
+    public boolean isRotationDrawn() {
+        return isRotationDrawn;
+    }
+
+    /**
+     * Sets the state of rotation for connected target tile.
+     *
+     * @param isRotationDrawn The state of rotation for connected target tile to be set.
+     */
+    public void setIsRotationDrawn(boolean isRotationDrawn) {
+        this.isRotationDrawn = isRotationDrawn;
     }
 
 }

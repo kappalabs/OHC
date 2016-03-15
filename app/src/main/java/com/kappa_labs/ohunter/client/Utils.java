@@ -127,6 +127,37 @@ public class Utils {
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
     }
 
+    public class BitmapWorkerTask extends AsyncTask<SImage, Void, Bitmap> {
+
+        private OnBitmapReady mListener;
+
+
+        public BitmapWorkerTask(OnBitmapReady caller) {
+            this.mListener = caller;
+        }
+
+        @Override
+        protected Bitmap doInBackground(SImage... params) {
+            byte[] imgBytes = params[0].getBytes();
+            if (imgBytes == null) {
+                Log.e(TAG, "mam null simage, interesting...");
+                return null;
+            }
+            return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (mListener != null) {
+                mListener.onBitmapReady(bitmap);
+            }
+        }
+    }
+
+    public interface OnBitmapReady {
+        void onBitmapReady(Bitmap bitmap);
+    }
+
     class RetrieveResponseTask extends AsyncTask<Request, Void, Response> {
 
         private OHException ohException;
@@ -179,7 +210,7 @@ public class Utils {
         }
     }
 
-    public interface OnResponseTaskCompleted{
+    public interface OnResponseTaskCompleted {
         void onResponseTaskCompleted(Response response, OHException ohex, int code);
     }
 
@@ -251,7 +282,6 @@ public class Utils {
 
         return response;
     }
-
 
     class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
 

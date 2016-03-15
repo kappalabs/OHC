@@ -5,6 +5,7 @@ import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -19,6 +20,8 @@ import android.view.View;
 
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
+
+import java.util.Objects;
 
 /**
  * TODO: document your custom view class.
@@ -52,16 +55,14 @@ public class TargetTileView extends View {
     private Place mPlace;
     private Target mTarget;
 
-    private boolean isRotated;
-
 
     public TargetTileView(Context context) {
         super(context);
 
-        init(null, 0);
+        init();
     }
 
-    private void init(AttributeSet attrs, int defStyle) {
+    private void init() {
         nameString = "name";
         addressString = "address";
         photosString = "#";
@@ -116,7 +117,7 @@ public class TargetTileView extends View {
         }
 
         /* Draw text on the opposite side of tile */
-        if (isRotated) {
+        if (mTarget.isRotationDrawn()) {
             /* Add mask on the background, so that the text is readable */
             canvas.drawColor(ContextCompat.getColor(getContext(), R.color.white_shadow));
 
@@ -259,7 +260,7 @@ public class TargetTileView extends View {
      * Start pending animations, invalidate content.
      */
     public void update() {
-        if (mTarget.isRotated() != isRotated) {
+        if (mTarget.isRotated() != mTarget.isRotationDrawn()) {
             final ObjectAnimator anim2 = (ObjectAnimator) AnimatorInflater.loadAnimator(getContext(), R.animator.half_flip2);
             anim2.setTarget(this);
             anim2.setDuration(100);
@@ -276,7 +277,7 @@ public class TargetTileView extends View {
             anim.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    isRotated = mTarget.isRotated();
+                    mTarget.setIsRotationDrawn(mTarget.isRotated());
                     invalidate();
                     anim2.start();
                 }
@@ -286,28 +287,36 @@ public class TargetTileView extends View {
         invalidate();
     }
 
-//    public Target getPlaceTile() {
-//        return mTarget;
-//    }
-
-    public void setPlaceTile(Target target) {
+    public void setTarget(Target target) {
         this.mTarget = target;
     }
-
-//    public void changeRotation() {
-//        mTarget.changeRotation();
-//
-//        update();
-//    }
 
     public Place getPlace() {
         return mPlace;
     }
 
     public void setPlace(Place place) {
+        /* Change the place only when it's necessary */
+        if (place == null || this.mPlace != null && Objects.equals(this.mPlace.getID(), mTarget.getPlaceID())) {
+            return;
+        }
+        setPlaceID(place.getID());
         this.mPlace = place;
         if (place.getNumberOfPhotos() > 0) {
-            this.backgroundDrawable = new BitmapDrawable(getResources(), Utils.toBitmap(place.getPhoto(0).sImage));
+//            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
+//            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
+//                @Override
+//                public void onBitmapReady(Bitmap bitmap) {
+//                    backgroundDrawable = cropBitmap(bitmap);
+//                    invalidate();
+//                }
+//            });
+//            bitmapTask.execute(place.getPhoto(0).sImage);
+//            this.backgroundDrawable = getResources().getDrawable(R.color.my_primary_light, null);
+//
+////            PlacesManager.getPreview(getContext(), this);
+
+            this.backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(0).sImage));
         }
         this.nameString = place.getGField("name");
         this.addressString = place.getGField("formatted_address");
@@ -316,6 +325,33 @@ public class TargetTileView extends View {
         invalidateTextPaintAndMeasurements();
         invalidate();
     }
+
+    /**
+     * Crop the image so that the center is aligned to the tile center and no background is visible.
+     * Preserve size ratio.
+     *
+     * @param bitmap The bitmap to crop.
+     * @return Drawable witch preserved size ratio that is cropped and fills rectangle.
+     */
+    private Drawable cropBitmap(Bitmap bitmap) {
+        Bitmap cropped;
+        if (bitmap.getWidth() >= bitmap.getHeight()){
+            cropped = Bitmap.createBitmap(bitmap, bitmap.getWidth() / 2 - bitmap.getHeight() / 2, 0,
+                    bitmap.getHeight(), bitmap.getHeight()
+            );
+        } else{
+            cropped = Bitmap.createBitmap(bitmap, 0, bitmap.getHeight() / 2 - bitmap.getWidth() / 2,
+                    bitmap.getWidth(), bitmap.getWidth()
+            );
+        }
+//        bitmap.recycle();
+        return new BitmapDrawable(getResources(), cropped);
+    }
+
+//    public void setPreview(Drawable preview) {
+//        this.backgroundDrawable = preview;
+//        invalidate();
+//    }
 
     /**
      * Gets the unique place ID string value.
@@ -339,15 +375,6 @@ public class TargetTileView extends View {
     public Target.TargetState getState() {
         return mTarget.getState();
     }
-
-//    public void setState(TargetState state) {
-//        mTarget.setState(state);
-//        invalidate();
-//    }
-
-//    public boolean isHighlighted() {
-//        return mTarget.isHighlighted();
-//    }
 
     public void setHighlighted(boolean highlighted) {
         if (mTarget.isHighlighted() != highlighted) {

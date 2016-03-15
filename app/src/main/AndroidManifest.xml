@@ -61,6 +61,7 @@
         <activity
             android:name=".HuntActivity"
             android:label="@string/title_activity_hunt"
+            android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme" />
 
         <meta-data

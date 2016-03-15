@@ -53,10 +53,10 @@ public class TileAdapter extends BaseAdapter {
 
         if (convertView == null) {
             targetTileView = new TargetTileView(mContext);
-            targetTileView.setPlaceTile(mTargets.get(position));
+            targetTileView.setTarget(mTargets.get(position));
         } else {
             targetTileView = (TargetTileView) convertView;
-            targetTileView.setPlaceTile(mTargets.get(position));
+            targetTileView.setTarget(mTargets.get(position));
         }
 
         loadPlace(targetTileView);
