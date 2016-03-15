@@ -106,6 +106,48 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     /**
+     * Makes a target photogenic if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean photogenify() {
+        if (mState == TargetState.ACTIVATED) {
+            mState = TargetState.PHOTOGENIC;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Locks a target if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean lock() {
+        if (mState == TargetState.PHOTOGENIC) {
+            mState = TargetState.LOCKED;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Completes a target if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean complete() {
+        if (mState == TargetState.ACCEPTED || mState == TargetState.LOCKED) {
+            mState = TargetState.COMPLETED;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Accepts a target if automaton rules are satisfied. Returns true on success,
      * false otherwise.
      *

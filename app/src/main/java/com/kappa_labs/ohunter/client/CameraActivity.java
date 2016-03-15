@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.client;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -49,6 +50,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public static final int DEFAULT_NUM_ATTEMPTS = 3;
     public static final int DEFAULT_MIN_ATTEMPTS = 1;
 
+    public static final String PHOTOS_TAKEN_KEY = "PHOTOS_TAKEN_KEY";
+    public static final String PHOTOS_EVALUATED_KEY = "PHOTOS_EVALUATED_KEY";
+
     private ImageView templateImageView;
     private SeekBar opacitySeekBar;
     private SeekBar colorSeekBar;
@@ -65,6 +69,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private int numberOfAttempts = 0;
     private int vLimit, hLimit;
+    private boolean photosTaken, photosEvaluated;
 
     private Camera mCamera;
     private CameraOverlay mPreview;
@@ -282,13 +287,12 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             return;
         }
         /* Success */
-        // TODO: jak nalozit s vysledkem?
         Toast.makeText(CameraActivity.this,
                 getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
         Log.d(TAG, "response similarity: " + response.similarity);
         scoreTextview.setText(String.format("%.1f%%", response.similarity * 100));
         scoreTextview.setVisibility(View.VISIBLE);
-        //TODO: uzamceni mista
+        photosEvaluated = true;
     }
 
     @Override
@@ -357,14 +361,15 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public void onImageReady() {
         /* Store the photo */
         //TODO
-//        Place activePlace = SharedDataManager.getActivePlace(this);
-//        SharedDataManager.addBitmapToPlace(this, activePlace, CameraOverlay.mBitmap);
+        String activatedID = SharedDataManager.getActivatedPlaceID(this);
+        SharedDataManager.addBitmapToPlace(this, activatedID, CameraOverlay.mBitmap);
         /* Update UI information */
         lastPhotoImageview.setImageBitmap(CameraOverlay.mBitmap);
         ++numberOfAttempts;
         numberOfPhotosTextview.setText((DEFAULT_NUM_ATTEMPTS - numberOfAttempts) + getString(R.string.number_sign));
         if (numberOfAttempts >= DEFAULT_MIN_ATTEMPTS) {
             // TODO: zobrazovat fab uz tady?
+            photosTaken = true;
             uploadFab.show();
         }
         if (numberOfAttempts >= DEFAULT_NUM_ATTEMPTS) {
@@ -390,6 +395,16 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 Log.e(TAG, "Error starting camera preview: " + e.getMessage());
             }
         }
+    }
+
+    @Override
+    public void finish() {
+        Intent data = new Intent();
+        data.putExtra(PHOTOS_TAKEN_KEY, photosTaken);
+        data.putExtra(PHOTOS_EVALUATED_KEY, photosEvaluated);
+        setResult(RESULT_OK, data);
+
+        super.finish();
     }
 
     @Override

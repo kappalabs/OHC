@@ -76,4 +76,7 @@
     <string name="waiting_for_result">Čekám na výsledek…</string>
     <string name="your_nickname">Tvoje přezdívka</string>
     <string name="main_activity_timer">Lov končí za %1$02d:%2$02d:%3$02d</string>
+    <string name="photo_bright">Světlá fotografie</string>
+    <string name="photo_dark">Tmavá fotografie</string>
+    <string name="photo_probably_ok">Nejspíš v pořádku</string>
 </resources>

@@ -269,13 +269,12 @@ public class SharedDataManager {
         return false;
     }
 
-    public static boolean addBitmapToPlace(Context context, Place place, Bitmap photo) {
-        writeObject(context, photo,
-                place.getID(), ((Long)(System.currentTimeMillis()/1000)).toString() + ".jpg");
+    public static boolean addBitmapToPlace(Context context, String placeID, Bitmap photo) {
+        writeObject(context, photo, ((Long)(System.currentTimeMillis()/1000)).toString() + ".jpg", placeID);
         return false;
     }
 
-    public static ArrayList<Bitmap> getBitmapsForPlace(Context context, Place place) {
+    public static ArrayList<Bitmap> getBitmapsForPlace(Context context, String placeID) {
         ArrayList<Bitmap> photos = new ArrayList<>();
 //        writeObject(context, photo,
 //                place.getID() + "/" + ((Long) (System.currentTimeMillis() / 1000)).toString() + ".jpg");

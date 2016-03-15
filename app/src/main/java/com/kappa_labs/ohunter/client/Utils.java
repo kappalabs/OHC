@@ -374,11 +374,11 @@ public class Utils {
     public static String daytimeToString(Context context, Photo.DAYTIME daytime) {
         switch (daytime) {
             case DAY:
-                return context.getString(R.string.daytime_day);
+                return context.getString(R.string.photo_bright);
             case NIGHT:
-                return context.getString(R.string.daytime_night);
+                return context.getString(R.string.photo_bright);
             default:
-                return context.getString(R.string.daytime_unknown);
+                return context.getString(R.string.photo_probably_ok);
         }
     }
 

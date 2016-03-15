@@ -41,15 +41,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static final String SELECTED_INDEX_KEY = "SELECTED_INDEX_KEY";
     private static final String ACTIVATED_INDEX_KEY = "ACTIVATED_INDEX_KEY";
 
-    private OnFragmentInteractionListener mListener;
+    private static OnFragmentInteractionListener mListener;
 
-    private List<Target> targets = new ArrayList<>();
-    private TileAdapter mAdapter;
+    private static List<Target> targets = new ArrayList<>();
+    private static TileAdapter mAdapter;
 
     private ProgressBar fetchingProgressBar;
 
-    private int selectedIndex = -1;
-    private int activatedIndex = -1;
+    private static int selectedIndex = -1;
+    private static int activatedIndex = -1;
 
 
     public HuntOfferFragment() {
@@ -98,9 +98,68 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
 
         // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke (ale v teto metode to nejde)
-        mAdapter = new TileAdapter(getContext(), targets);
+        if (mAdapter == null) {
+            mAdapter = new TileAdapter(getContext(), targets);
+        }
         offerGridView.setAdapter(mAdapter);
 
+        if (targets.isEmpty()) {
+            initTargets();
+        }
+
+        /* Short click selects the tile */
+        offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (view instanceof TargetTileView) {
+                    TargetTileView tile = (TargetTileView) view;
+                    selectedIndex = position;
+                    for (Target iTile : targets) {
+                        iTile.setHighlighted(false);
+                    }
+                    mAdapter.notifyDataSetChanged();
+                    tile.setHighlighted(true);
+                    tile.update();
+
+                    /* Notify the listener */
+                    if (mListener != null) {
+                        mListener.onPlaceSelected(tile.getPlace());
+                        mListener.onItemSelected(tile.getState());
+                    }
+                }
+            }
+        });
+
+        /* On long click, go to the information page about selected place */
+        offerGridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (view instanceof TargetTileView) {
+                    TargetTileView tile = (TargetTileView) view;
+                    selectedIndex = position;
+                    /* Change highlighted items */
+                    for (Target iTile : targets) {
+                        iTile.setHighlighted(false);
+                    }
+                    mAdapter.notifyDataSetChanged();
+                    tile.setHighlighted(true);
+                    tile.update();
+
+                    /* Notify the listener and request to show the next page (with place information) */
+                    if (mListener != null) {
+                        mListener.onPlaceSelected(tile.getPlace());
+                        mListener.onRequestNextPage();
+                    }
+                }
+
+                return true;
+            }
+        });
+
+        return view;
+    }
+
+    private void initTargets() {
         /* This class will prepare the places - load from local files or retrieve them from Internet */
         final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
         PlacesManager manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
@@ -163,64 +222,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
             mAdapter.notifyDataSetChanged();
         }
-
-        /* Short click selects the tile */
-        offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (view instanceof TargetTileView) {
-                    TargetTileView tile = (TargetTileView) view;
-                    selectedIndex = position;
-                    for (Target iTile : targets) {
-                        iTile.setHighlighted(false);
-                    }
-                    mAdapter.notifyDataSetChanged();
-                    tile.setHighlighted(true);
-                    tile.update();
-
-                    /* Notify the listener */
-                    if (mListener != null) {
-                        mListener.onPlaceSelected(tile.getPlace());
-                        mListener.onItemSelected(tile.getState());
-                    }
-                }
-            }
-        });
-
-        /* On long click, go to the information page about selected place */
-        offerGridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (view instanceof TargetTileView) {
-                    TargetTileView tile = (TargetTileView) view;
-                    selectedIndex = position;
-                    /* Change highlighted items */
-                    for (Target iTile : targets) {
-                        iTile.setHighlighted(false);
-                    }
-                    mAdapter.notifyDataSetChanged();
-                    tile.setHighlighted(true);
-                    tile.update();
-
-                    /* Notify the listener and request to show the next page (with place information) */
-                    if (mListener != null) {
-                        mListener.onPlaceSelected(tile.getPlace());
-                        mListener.onRequestNextPage();
-                    }
-                }
-
-                return true;
-            }
-        });
-
-        return view;
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
+    /**
+     * Save targets list to local file.
+     *
+     * @param context Context of the caller.
+     */
+    public static void saveTargets(Context context) {
+        SharedDataManager.saveTargets(context, targets.toArray(new Target[targets.size()]));
     }
 
     /**
@@ -228,7 +238,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return The selected target if available, null otherwise.
      */
-    private Target getSelectedTarget() {
+    private static Target getSelectedTarget() {
         if (targets != null && selectedIndex >= 0 && selectedIndex < targets.size()) {
             return targets.get(selectedIndex);
         }
@@ -261,7 +271,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     /**
      * Updates the activated and selected place index from current targets order.
      */
-    private void updateSelection() {
+    private static void updateSelection() {
         selectedIndex = -1;
         activatedIndex = -1;
         boolean gotFirst = false;
@@ -344,7 +354,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return True on success, false otherwise.
      */
-    public boolean rejectSelectedTarget() {
+    public static boolean rejectSelectedTarget() {
         boolean isOk;
         Target target = getSelectedTarget();
         isOk = target != null && target.reject();
@@ -367,10 +377,69 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return True on success, false otherwise.
      */
-    public boolean acceptSelectedTarget() {
+    public static boolean acceptSelectedTarget() {
         boolean isOk;
         Target target = getSelectedTarget();
         isOk = target != null && target.accept();
+        /* Rearrange the tiles */
+        Collections.sort(targets);
+        updateSelection();
+        mAdapter.notifyDataSetChanged();
+
+        /* Inform the listener about the change of state */
+        if (mListener != null && isOk) {
+            mListener.onItemSelected(target.getState());
+        }
+
+        return isOk;
+    }
+
+    /**
+     * Makes currently selected target photogenic if possible, i.e. target state is sufficient
+     * and some target is selected.
+     *
+     * @return True on success, false otherwise.
+     */
+    public static boolean photogenifySelectedTarget() {
+        boolean isOk;
+        Target target = getSelectedTarget();
+        isOk = target != null && target.photogenify();
+        /* Rearrange the tiles */
+        Collections.sort(targets);
+        updateSelection();
+        mAdapter.notifyDataSetChanged();
+
+        /* Inform the listener about the change of state */
+        if (mListener != null && isOk) {
+            mListener.onItemSelected(target.getState());
+        }
+
+        return isOk;
+    }
+
+    //TODO: generalizace vsech techto metod...
+    public static boolean lockSelectedTarget() {
+        boolean isOk;
+        Target target = getSelectedTarget();
+        isOk = target != null && target.lock();
+        /* Rearrange the tiles */
+        Collections.sort(targets);
+        updateSelection();
+        mAdapter.notifyDataSetChanged();
+
+        /* Inform the listener about the change of state */
+        if (mListener != null && isOk) {
+            mListener.onItemSelected(target.getState());
+        }
+
+        return isOk;
+    }
+
+    //TODO: generalizace vsech techto metod...
+    public static boolean completeSelectedTarget() {
+        boolean isOk;
+        Target target = getSelectedTarget();
+        isOk = target != null && target.complete();
         /* Rearrange the tiles */
         Collections.sort(targets);
         updateSelection();

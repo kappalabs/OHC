@@ -57,6 +57,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
      * Radius around the target when the camera can activate.
      */
     public static final int RADIUS = 150;
+    private static final int MAKE_PHOTO_REQUEST = 0x01;
 //    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
 
@@ -142,9 +143,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null) {
-                    mHuntOfferFragment.rejectSelectedTarget();
-                }
+                HuntOfferFragment.rejectSelectedTarget();
             }
         });
 
@@ -154,9 +153,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntOfferFragment != null) {
-                    mHuntOfferFragment.acceptSelectedTarget();
-                }
+                HuntOfferFragment.acceptSelectedTarget();
             }
         });
 
@@ -196,6 +193,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     Log.e(TAG, "Can't access the place fragment yet!");
                     return;
                 }
+                /* Change state of this target */
+                HuntOfferFragment.photogenifySelectedTarget();
+                /* Retrieve reference to selected bitmap */
                 Bitmap selBitmap = mHuntPlaceFragment.getSelectedBitmap();
                 if (selBitmap == null) {
                     Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
@@ -214,14 +214,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                             templateBitmap.getWidth(), templateBitmap.getHeight(), false);
                 } else {
                     /* We need to make a copy of the image before sending it to camera */
-                    templateBitmap = Bitmap.createScaledBitmap(selBitmap,
-                            selBitmap.getWidth(), selBitmap.getHeight(), false);
+                    templateBitmap = selBitmap.copy(selBitmap.getConfig(), true);
                 }
                 /* Start camera activity with the template bitmap on background */
                 CameraActivity.setTemplateImage(templateBitmap);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, MAKE_PHOTO_REQUEST);
             }
         });
 
@@ -250,6 +249,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
         }
+        HuntOfferFragment.saveTargets(this);
     }
 
     @Override
@@ -331,6 +331,25 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (selected != null) {
             HuntPlaceFragment.changePlace(this, selected);
             HuntActionFragment.changePlace(selected);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == MAKE_PHOTO_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                Log.d(TAG, "camera result ok...");
+                if (data != null) {
+                    if (data.getBooleanExtra(CameraActivity.PHOTOS_TAKEN_KEY, false)) {
+                        HuntOfferFragment.lockSelectedTarget();
+                        Log.d(TAG, "camera result: bylo vyfoceno misto");
+                    }
+                    if (data.getBooleanExtra(CameraActivity.PHOTOS_EVALUATED_KEY, false)) {
+                        HuntOfferFragment.completeSelectedTarget();
+                        Log.d(TAG, "camera result: bylo vyfoceno a vyhodnoceno misto");
+                    }
+                }
+            }
         }
     }
 

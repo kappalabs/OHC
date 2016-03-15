@@ -45,6 +45,9 @@
     <string name="daytime_day">Bright</string>
     <string name="daytime_night">Dark</string>
     <string name="daytime_unknown">Photo probably OK</string>
+    <string name="photo_probably_ok">Photo probably OK</string>
+    <string name="photo_bright">Bright photo</string>
+    <string name="photo_dark">Dark photo</string>
 
     <string name="gfields_name"><b>Name:</b></string>
     <string name="gfields_place_id"><b>ID:</b></string>
