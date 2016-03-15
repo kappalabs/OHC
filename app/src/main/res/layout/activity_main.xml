@@ -9,7 +9,8 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true" >
 
         <TextView
             android:layout_width="match_parent"
@@ -28,6 +29,14 @@
             android:id="@+id/textView_server"
             android:layout_gravity="right"
             android:gravity="center_vertical|center_horizontal" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/textView_time"
+            android:gravity="center" />
     </LinearLayout>
 
     <ScrollView
@@ -39,7 +48,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:animateLayoutChanges="true" >
 
             <Button
                 android:layout_width="fill_parent"

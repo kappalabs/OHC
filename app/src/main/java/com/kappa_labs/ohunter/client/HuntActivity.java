@@ -1,5 +1,6 @@
 package com.kappa_labs.ohunter.client;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -65,6 +66,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
 
     public static ArrayList<String> radarPlaceIDs = new ArrayList<>(0);
+    public static Activity hunt;
 
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
@@ -78,7 +80,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private HuntActionFragment mHuntActionFragment;
     private ViewPager mViewPager;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +87,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
+
+        hunt = this;
+
         /* Create the adapter that will return a fragment for each of the three
            primary sections of the activity */
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());

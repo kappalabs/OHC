@@ -133,14 +133,18 @@ public class SharedDataManager {
     public static Long getStartTime(Context context) {
         if (startTime == null) {
             startTime = getSharedPreferences(context).getLong(START_TIME_KEY, 0);
+            if (startTime == 0) {
+                startTime = null;
+            }
         }
         return startTime;
     }
 
-    public static void initNewHunt(Context context, boolean ready) {
+    public static void initNewHunt(Context context, boolean ready, long time) {
         //TODO: smazani predchozich nacachovanych souboru
         saveActivatedPlaceID(context, null);
         saveSelectedPlaceID(context, null);
+        setStartTime(context, time);
         if (huntReady == null || huntReady != ready) {
             huntReady = ready;
             getSharedPreferences(context).edit().putBoolean(HUNT_READY_KEY, ready).commit();

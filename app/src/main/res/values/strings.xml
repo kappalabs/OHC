@@ -36,6 +36,7 @@
 
     <string name="main_activity_player_title">Hello %1$s, your score is %2$d!</string>
     <string name="main_activity_server_address" translatable="false">%1$s:%2$d</string>
+    <string name="main_activity_timer" translatable="true">Hunt ends in %1$02d:%2$02d:%3$02d</string>
 
     <string name="north_shortcut">N</string>
     <string name="east_shortcut">E</string>

@@ -23,7 +23,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -62,14 +61,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
     private static final String SAVED_LAST_LONGITUDE = "saved_last_longitude";
     private static final String SAVED_LAST_LATITUDE = "saved_last_latitude";
-    private static final String NUM_TARGETS_TEXTVIEW_KEY = "num_targets_textview_key";
     private static final String LATITUDE_TEXTVIEW_KEY = "latitude_textview_key";
     private static final String LONGITUDE_TEXTVIEW_KEY = "longitude_textview_key";
     private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
 
     private static final int RADAR_SEARCH_KEY = 4200;
-    private static final int FILL_PLACES_KEY = 4201;
 
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
@@ -88,12 +85,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private EditText mRadiusEditText;
     private Spinner mDaytimeSpinner;
 
-//    private int numberOfTargets = -1;
-    private Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
-    // NOTE: - moc velka oblast zpusobovala crash kvuli velkemu objemu dat -> co nejmensi
-    //       - mala fotka bude na zarizeni rozmazana -> co nejvetsi
-    private int prefferedWidth = 800;
-    private int prefferedHeight = 480;
+    public static Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
 
 
     @Override
@@ -149,7 +141,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 }
 
                 /* Reset the states for new hunt */
-                SharedDataManager.initNewHunt(PrepareHuntActivity.this, false);
+                SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, 0);
 
                 /* Start radar search to receive list of available places */
                 Request request = new RadarSearchRequest(
@@ -239,32 +231,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         }
         if (code == RADAR_SEARCH_KEY) {
             Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
-//            /* Divide the available places into two groups */
-//            ArrayList<String> greenIDs = new ArrayList<>();
-//            int numGreens = Math.min(DEFAULT_NUM_GREENS, places.size());
-//            Random random = new Random();
-//            while (numGreens-- > 0) {
-//                final int pos = random.nextInt(places.size());
-//                greenIDs.add(places.get(pos).getID());
-//                places.remove(pos);
-//            }
-//            SharedDataManager.greenIDs = greenIDs;
-//            ArrayList<String> redIDs = new ArrayList<>();
-//            for (Place place : places) {
-//                redIDs.add(place.getID());
-//            }
-//            SharedDataManager.redIDs = redIDs;
-//            /* Start request for the green places */
-//            Request request = new FillPlacesRequest(
-//                    SharedDataManager.getPlayer(PrepareHuntActivity.this),
-//                    greenIDs.toArray(new String[greenIDs.size()]),
-//                    prefferedDaytime, prefferedWidth, prefferedHeight);
-//            Utils.RetrieveResponseTask responseTask =
-//                    Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
-//                            Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
-//                            FILL_PLACES_KEY);
-//            responseTask.execute(request);
-
             ArrayList<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {
                 radarPlaceIDs.add(place.getID());
@@ -276,19 +242,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             i.setClass(PrepareHuntActivity.this, HuntActivity.class);
             startActivity(i);
         }
-//        else if (code == FILL_PLACES_KEY) {
-//            Log.d(TAG, "FillPlaces vratil " + places.size() + " mist");
-//            for (Place place : response.places) {
-//                Log.d(TAG, place.toString());
-//            }
-//            HuntActivity.green_places = new ArrayList<>(places);
-//            HuntActivity.red_places = new ArrayList<>();
-//
-//            /* Start the main game activity with these groups of places prepared */
-//            Intent i = new Intent();
-//            i.setClass(PrepareHuntActivity.this, HuntActivity.class);
-//            startActivity(i);
-//        }
     }
 
     private double getLongitude() {
@@ -558,4 +511,5 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             ((PrepareHuntActivity) getActivity()).onDialogDismissed();
         }
     }
+
 }

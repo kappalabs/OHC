@@ -5,7 +5,9 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,8 +24,17 @@ import java.util.ArrayList;
  */
 public class MainActivity extends AppCompatActivity {
 
+    public static final String TAG = "MainActivity";
+
+    public static final long MAX_HUNT_TIME = 24 * 60 * 60 * 1000;
+    private static final int TIMER_INTERVAL = 1000;
+
     private TextView playerTextView;
     private TextView serverTextView;
+    private TextView timeTextView;
+    private Button mContinueHuntButton;
+
+    private Handler mHandler;
 
 
     @Override
@@ -33,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         playerTextView = (TextView) findViewById(R.id.textView_player);
         serverTextView = (TextView) findViewById(R.id.textView_server);
+        timeTextView = (TextView) findViewById(R.id.textView_time);
 
         Button mNewHuntButton = (Button) findViewById(R.id.button_new_hunt);
         mNewHuntButton.setOnClickListener(new View.OnClickListener() {
@@ -40,10 +52,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, PrepareHuntActivity.class);
+                i.setFlags(i.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
                 startActivity(i);
             }
         });
-        Button mContinueHuntButton = (Button) findViewById(R.id.button_continue_hunt);
+        mContinueHuntButton = (Button) findViewById(R.id.button_continue_hunt);
         mContinueHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 ids.add("ChIJNe6UFBWuEmsRm-raxeK9RdI");
                 HuntActivity.radarPlaceIDs = ids;
                 /* Reset the states for new hunt */
-                SharedDataManager.initNewHunt(MainActivity.this, false);
+                SharedDataManager.initNewHunt(MainActivity.this, false, System.currentTimeMillis());
                 /* Start the main game activity with these groups of places prepared */
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, HuntActivity.class);
@@ -108,14 +121,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /* Continue button is visible only when the game can really continue... */
-        if (!SharedDataManager.isHuntReady(this)) {
-            mContinueHuntButton.setVisibility(View.GONE);
-        }
-
         /* Set the last used server address */
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFS_FILE, MODE_PRIVATE);
-        Utils.getInstance();
         if (!Utils.initServer(preferences.getString(LoginActivity.PREFS_LAST_SERVER,
                 getString(R.string.prompt_server)))) {
             /* Wrong server address */
@@ -128,16 +135,50 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        /* Request login if necessary */
         if (SharedDataManager.getPlayer(this) == null) {
             startLoginActivity();
         }
+
+        /* Continue button is visible only when the game can really continue... */
+        if (SharedDataManager.isHuntReady(this)) {
+            mContinueHuntButton.setVisibility(View.VISIBLE);
+            timeTextView.setVisibility(View.VISIBLE);
+        } else {
+            mContinueHuntButton.setVisibility(View.GONE);
+            timeTextView.setVisibility(View.GONE);
+        }
+        if (mHandler == null) {
+            mHandler = new Handler();
+            startTimer();
+        }
+
         updateInfo();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        stopTimer();
     }
 
     private void startLoginActivity() {
         Intent i = new Intent();
         i.setClass(MainActivity.this, LoginActivity.class);
         startActivity(i);
+    }
+
+    private void onTimeIsUp() {
+        /* Reset the states for new hunt */
+        SharedDataManager.initNewHunt(this, false, 0);
+        mContinueHuntButton.setVisibility(View.GONE);
+        timeTextView.setVisibility(View.GONE);
+        if (HuntActivity.hunt != null) {
+            HuntActivity.hunt.finish();
+        }
+        //TODO: zobrazit nejake vysledky
+        Log.d(TAG, "time's up");
     }
 
     /**
@@ -162,10 +203,53 @@ public class MainActivity extends AppCompatActivity {
         playerTextView.setText(text);
     }
 
+    private void updateTimeInfo() {
+        Long startTime = SharedDataManager.getStartTime(this);
+        if (startTime == null) {
+            return;
+        }
+        long diff = (MAX_HUNT_TIME - System.currentTimeMillis() + startTime) / 1000;
+        if (diff < 0 && SharedDataManager.isHuntReady(this)) {
+            onTimeIsUp();
+            return;
+        }
+        long seconds = diff % 60;
+        long minutes = diff / 60 % 60;
+        long hours = diff / 3600;
+        String text = String.format(getResources().getString(R.string.main_activity_timer),
+                hours, minutes, seconds);
+        timeTextView.setText(text);
+    }
+
     private void logout() {
         updateInfo();
         SharedDataManager.setPlayer(this, null);
     }
+
+    /**
+     * Starts the timer showing remaining time on the main screen.
+     */
+    public void startTimer() {
+        mStatusChecker.run();
+    }
+
+    /**
+     * Stops the timer showing remaining time on the main screen.
+     */
+    public void stopTimer() {
+        mHandler.removeCallbacks(mStatusChecker);
+    }
+
+    private Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                updateTimeInfo();
+            } finally {
+                mHandler.postDelayed(mStatusChecker, TIMER_INTERVAL);
+            }
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -188,4 +272,5 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

@@ -11,6 +11,7 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import com.kappa_labs.ohunter.client.HuntActivity;
+import com.kappa_labs.ohunter.client.MainActivity;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.TargetTileView;
 import com.kappa_labs.ohunter.client.PlacesManager;
@@ -137,8 +138,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 Collections.sort(targets);
                 mAdapter.notifyDataSetChanged();
 
-                SharedDataManager.initNewHunt(getContext(), true);
-                SharedDataManager.setStartTime(getContext(), System.currentTimeMillis());
+                SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
             }
 
             @Override
@@ -214,6 +214,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         });
 
         return view;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
     }
 
     /**
