@@ -50,7 +50,6 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     private SupportMapFragment fragment;
     private GoogleMap map;
     private Marker playerMarker;
-    private boolean viewsReady;
 
     private TextView targetLatitudeTextView;
     private TextView playerLatitudeTextView;
@@ -89,7 +88,6 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
 
         infoInvalidated = true;
-        viewsReady = true;
         update();
 
         return view;
@@ -211,15 +209,13 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
      * Updates information in the textViews.
      */
     private void updateInformation() {
-        if (viewsReady) {
-            targetLatitudeTextView.setText(getTargetLatitude());
-            targetLongitudeTextView.setText(getTargetLongitude());
-            playerLatitudeTextView.setText(getPlayerLatitude());
-            playerLongitudeTextView.setText(getPlayerLongitude());
-            distanceTextView.setText(getTargetDistance());
+        targetLatitudeTextView.setText(getTargetLatitude());
+        targetLongitudeTextView.setText(getTargetLongitude());
+        playerLatitudeTextView.setText(getPlayerLatitude());
+        playerLongitudeTextView.setText(getPlayerLongitude());
+        distanceTextView.setText(getTargetDistance());
 
-            infoInvalidated = false;
-        }
+        infoInvalidated = false;
     }
 
     /**
