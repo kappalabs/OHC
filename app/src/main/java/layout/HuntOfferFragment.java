@@ -11,7 +11,6 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import com.kappa_labs.ohunter.client.HuntActivity;
-import com.kappa_labs.ohunter.client.MainActivity;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.TargetTileView;
 import com.kappa_labs.ohunter.client.PlacesManager;
@@ -97,12 +96,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         fetchingProgressBar.setVisibility(View.GONE);
         GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
 
-        // TODO: nastavit pocet sloupcu GridView tak, aby velikosti dlazdic byly vhodne velke (ale v teto metode to nejde)
         if (mAdapter == null) {
             mAdapter = new TileAdapter(getContext(), targets);
         }
         offerGridView.setAdapter(mAdapter);
 
+        /* Targets are initiated only when no target is available */
         if (targets.isEmpty()) {
             initTargets();
         }
@@ -231,6 +230,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public static void saveTargets(Context context) {
         SharedDataManager.saveTargets(context, targets.toArray(new Target[targets.size()]));
+    }
+
+    /**
+     * Clear the list containing targets.
+     */
+    public static void clearTargets() {
+        targets.clear();
     }
 
     /**

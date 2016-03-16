@@ -110,6 +110,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //TODO
+                Long start = SharedDataManager.getStartTime(MainActivity.this);
+                if (start != null) {
+                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - MAX_HUNT_TIME + 10000);
+                    SharedDataManager.setStartTime(MainActivity.this, uprTime);
+                }
             }
         });
         Button mLogOutButton = (Button) findViewById(R.id.button_logout);

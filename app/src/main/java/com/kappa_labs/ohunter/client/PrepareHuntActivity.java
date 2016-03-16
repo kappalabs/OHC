@@ -51,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Locale;
 
+import layout.HuntOfferFragment;
+
 public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private GoogleMap map;
@@ -141,7 +143,8 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 }
 
                 /* Reset the states for new hunt */
-                SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, 0);
+                SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, System.currentTimeMillis());
+                HuntOfferFragment.clearTargets();
 
                 /* Start radar search to receive list of available places */
                 Request request = new RadarSearchRequest(

@@ -45,7 +45,6 @@ public class SharedDataManager {
     private static Player mPlayer;
 //    private static Place mActivePlace;
     private static ArrayList<String> mPlacesIDs = new ArrayList<>();
-    public static ArrayList<String> greenIDs, redIDs;
     private static String selectedPlaceID, activatedPlaceID;
     private static Boolean huntReady;
     private static Long startTime;
@@ -133,14 +132,14 @@ public class SharedDataManager {
     public static Long getStartTime(Context context) {
         if (startTime == null) {
             startTime = getSharedPreferences(context).getLong(START_TIME_KEY, 0);
-            if (startTime == 0) {
+            if (startTime <= 0) {
                 startTime = null;
             }
         }
         return startTime;
     }
 
-    public static void initNewHunt(Context context, boolean ready, long time) {
+    public static synchronized void initNewHunt(Context context, boolean ready, long time) {
         //TODO: smazani predchozich nacachovanych souboru
         saveActivatedPlaceID(context, null);
         saveSelectedPlaceID(context, null);
