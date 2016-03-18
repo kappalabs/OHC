@@ -376,7 +376,7 @@ public class Utils {
             case DAY:
                 return context.getString(R.string.photo_bright);
             case NIGHT:
-                return context.getString(R.string.photo_bright);
+                return context.getString(R.string.photo_dark);
             default:
                 return context.getString(R.string.photo_probably_ok);
         }

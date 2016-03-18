@@ -284,6 +284,14 @@ public class TargetTileView extends View {
             });
             anim.start();
         }
+        if (!mTarget.isPhotoDrawn()) {
+            Place place = PlacesManager.getPlace(getContext(), getPlaceID());
+            if (place != null) {
+                this.backgroundDrawable =
+                        cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
+            }
+            mTarget.setIsPhotoDrawn(true);
+        }
         invalidate();
     }
 
@@ -302,7 +310,7 @@ public class TargetTileView extends View {
         }
         setPlaceID(place.getID());
         this.mPlace = place;
-        if (place.getNumberOfPhotos() > 0) {
+        if (place.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
 //            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
 //            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
 //                @Override
@@ -316,7 +324,8 @@ public class TargetTileView extends View {
 //
 ////            PlacesManager.getPreview(getContext(), this);
 
-            this.backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(0).sImage));
+            this.backgroundDrawable =
+                    cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
         }
         this.nameString = place.getGField("name");
         this.addressString = place.getGField("formatted_address");

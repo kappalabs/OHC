@@ -53,6 +53,8 @@ public class Target implements Serializable, Comparable<Target> {
     private boolean highlighted;
     private TargetState mState = TargetState.EMPTY;
     private String placeID;
+    private int photoIndex;
+    private boolean isPhotoDrawn;
 
 
     /**
@@ -202,10 +204,6 @@ public class Target implements Serializable, Comparable<Target> {
         return rotated;
     }
 
-//    public void setRotated(boolean rotated) {
-//        this.rotated = rotated;
-//    }
-
     /**
      * Returns true if associated target tile is highlighted.
      *
@@ -215,10 +213,18 @@ public class Target implements Serializable, Comparable<Target> {
         return highlighted;
     }
 
+    /**
+     * Sets if target tile for this target should be highlighted.
+     *
+     * @param highlighted Specifies if target tile for this target should be highlighted.
+     */
     public void setHighlighted(boolean highlighted) {
         this.highlighted = highlighted;
     }
 
+    /**
+     * Changes the rotation of the target tile for this target.
+     */
     public void changeRotation() {
         rotated = !rotated;
     }
@@ -239,6 +245,46 @@ public class Target implements Serializable, Comparable<Target> {
      */
     public void setPlaceID(String placeID) {
         this.placeID = placeID;
+    }
+
+    /**
+     * Gets the index of background image for place tile specified by current placeID.
+     *
+     * @return The index of background image for place tile specified by current placeID.
+     */
+    public int getPhotoIndex() {
+        return photoIndex;
+    }
+
+    /**
+     * Sets the index of image to be set onto background. Index is from range for place specified
+     * by current placeID.
+     *
+     * @param photoIndex The index of image to be set onto background.
+     */
+    public void setPhotoIndex(int photoIndex) {
+        if (this.photoIndex != photoIndex) {
+            this.photoIndex = photoIndex;
+            isPhotoDrawn = false;
+        }
+    }
+
+    /**
+     * Returns true if the background photo was already drawn on tile.
+     *
+     * @return True if the background photo was already drawn on tile. False otherwise.
+     */
+    public boolean isPhotoDrawn() {
+        return isPhotoDrawn;
+    }
+
+    /**
+     * Sets if the photo on the background was already drawn on tile.
+     *
+     * @param isPhotoDrawn Specifies if the photo on the background was already drawn on tile.
+     */
+    public void setIsPhotoDrawn(boolean isPhotoDrawn) {
+        this.isPhotoDrawn = isPhotoDrawn;
     }
 
     /**

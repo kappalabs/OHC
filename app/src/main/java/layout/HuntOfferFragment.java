@@ -459,8 +459,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         return isOk;
     }
 
+    /**
+     * Changes the background image of selected target tile to photo represented by given index.
+     *
+     * @param index Index of the photo to be set onto background.
+     */
+    public static void changeSelectedTargetPhoto(int index) {
+        Target target = getSelectedTarget();
+        if (target == null) {
+            return;
+        }
+        target.setPhotoIndex(index);
+    }
+
     @Override
     public void onPageSelected() {
+        mAdapter.notifyDataSetChanged();
         if (mListener == null) {
             return;
         }

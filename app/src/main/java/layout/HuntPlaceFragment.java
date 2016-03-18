@@ -19,6 +19,7 @@ import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.Utils;
 import com.kappa_labs.ohunter.client.entities.PlaceInfo;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -34,6 +35,8 @@ import java.util.Set;
  * create an instance of this fragment.
  */
 public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
+
+    private static OnFragmentInteractionListener mListener;
 
     private static String placeID;
     private static int numberOfPhotos;
@@ -90,6 +93,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 mPhotoCounterTextView.setText(String.format(
                         getResources().getString(R.string.place_fragment_photo_counter),
                         pos + 1, numberOfPhotos));
+                if (mListener != null) {
+                    mListener.onSelectionChanged(pos);
+                }
             }
 
             @Override
@@ -285,6 +291,36 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
             dataInvalidated = true;
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        void onSelectionChanged(int photoIndex);
     }
 
 }

@@ -38,7 +38,7 @@ import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = "HuntActivity";
     public static final String LOCATION_KEY = "location_key";
@@ -487,6 +487,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rotateFab.setVisibility(View.GONE);
         /* Go to the page with place information */
         mViewPager.setCurrentItem(1, true);
+    }
+
+    @Override
+    public void onSelectionChanged(int photoIndex) {
+        HuntOfferFragment.changeSelectedTargetPhoto(photoIndex);
     }
 
     /**
