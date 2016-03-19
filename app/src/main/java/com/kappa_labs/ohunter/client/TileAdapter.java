@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -53,12 +54,11 @@ public class TileAdapter extends BaseAdapter {
 
         if (convertView == null) {
             targetTileView = new TargetTileView(mContext);
-            targetTileView.setTarget(mTargets.get(position));
         } else {
             targetTileView = (TargetTileView) convertView;
-            targetTileView.setTarget(mTargets.get(position));
         }
 
+        targetTileView.setTarget(mTargets.get(position));
         loadPlace(targetTileView);
         targetTileView.update();
 

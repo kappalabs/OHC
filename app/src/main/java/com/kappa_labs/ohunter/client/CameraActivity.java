@@ -38,6 +38,8 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.io.ByteArrayOutputStream;
 
+import layout.HuntOfferFragment;
+
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
@@ -361,7 +363,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public void onImageReady() {
         /* Store the photo */
         //TODO
-        String activatedID = SharedDataManager.getActivatedPlaceID(this);
+        String activatedID = HuntOfferFragment.getActivatedTargetPlaceID();
         SharedDataManager.addBitmapToPlace(this, activatedID, CameraOverlay.mBitmap);
         /* Update UI information */
         lastPhotoImageview.setImageBitmap(CameraOverlay.mBitmap);

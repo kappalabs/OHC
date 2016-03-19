@@ -139,7 +139,18 @@ public class PlacesManager {
         }
     }
 
+    /**
+     * Gets the place object for given placeID. Places are cached, if possible.
+     * If placeID is null, return null, otherwise get the Place from cache or local file.
+     *
+     * @param context Context of the caller.
+     * @param placeID Place ID of the place to retrieve.
+     * @return The place for given Place ID or null if not available or ID is null.
+     */
     public static Place getPlace(Context context, String placeID) {
+        if (placeID == null) {
+            return null;
+        }
         if (mPlacesCache == null) {
             initMemoryCache();
         }

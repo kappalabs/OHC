@@ -141,8 +141,8 @@ public class SharedDataManager {
 
     public static synchronized void initNewHunt(Context context, boolean ready, long time) {
         //TODO: smazani predchozich nacachovanych souboru
-        saveActivatedPlaceID(context, null);
-        saveSelectedPlaceID(context, null);
+//        saveActivatedPlaceID(context, null);
+//        saveSelectedPlaceID(context, null);
         setStartTime(context, time);
         if (huntReady == null || huntReady != ready) {
             huntReady = ready;
@@ -157,33 +157,33 @@ public class SharedDataManager {
         return huntReady;
     }
 
-    public static void saveSelectedPlaceID(Context context, String placeID) {
-        if (!Objects.equals(selectedPlaceID, placeID)) {
-            selectedPlaceID = placeID;
-            getSharedPreferences(context).edit().putString(SELECTED_PLACE_ID_KEY, placeID).commit();
-        }
-    }
-
-    public static String getSelectedPlaceID(Context context) {
-        if (selectedPlaceID == null) {
-            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_PLACE_ID_KEY, null);
-        }
-        return selectedPlaceID;
-    }
-
-    public static void saveActivatedPlaceID(Context context, String placeID) {
-        if (!Objects.equals(activatedPlaceID, placeID)) {
-            activatedPlaceID = placeID;
-            getSharedPreferences(context).edit().putString(ACTIVATED_PLACE_ID_KEY, placeID).commit();
-        }
-    }
-
-    public static String getActivatedPlaceID(Context context) {
-        if (activatedPlaceID != null) {
-            activatedPlaceID = getSharedPreferences(context).getString(ACTIVATED_PLACE_ID_KEY, "");
-        }
-        return activatedPlaceID;
-    }
+//    public static void saveSelectedPlaceID(Context context, String placeID) {
+//        if (!Objects.equals(selectedPlaceID, placeID)) {
+//            selectedPlaceID = placeID;
+//            getSharedPreferences(context).edit().putString(SELECTED_PLACE_ID_KEY, placeID).commit();
+//        }
+//    }
+//
+//    public static String getSelectedPlaceID(Context context) {
+//        if (selectedPlaceID == null) {
+//            selectedPlaceID = getSharedPreferences(context).getString(SELECTED_PLACE_ID_KEY, null);
+//        }
+//        return selectedPlaceID;
+//    }
+//
+//    public static void saveActivatedPlaceID(Context context, String placeID) {
+//        if (!Objects.equals(activatedPlaceID, placeID)) {
+//            activatedPlaceID = placeID;
+//            getSharedPreferences(context).edit().putString(ACTIVATED_PLACE_ID_KEY, placeID).commit();
+//        }
+//    }
+//
+//    public static String getActivatedPlaceID(Context context) {
+//        if (activatedPlaceID != null) {
+//            activatedPlaceID = getSharedPreferences(context).getString(ACTIVATED_PLACE_ID_KEY, "");
+//        }
+//        return activatedPlaceID;
+//    }
 
     public static Target[] loadTargets(Context context) {
         Object object = readObject(context, TARGETS_FILENAME, null);
@@ -236,6 +236,9 @@ public class SharedDataManager {
 //            return mPlayer;
 //        }
 //        Log.d(TAG, "ctu place "+placeID+" z adresare \""+(placeID + "/" + PLACE_FILENAME)+"\"");
+        if (placeID == null) {
+            return null;
+        }
         /* Otherwise try to read the object from file */
         Object object = readObject(context, PLACE_FILENAME, placeID);
         if (object != null && object instanceof Place) {

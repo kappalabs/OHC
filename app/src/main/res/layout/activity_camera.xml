@@ -156,9 +156,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_dialog_email"
+        android:src="@drawable/ic_evaluate"
         app:layout_anchor="@id/relativeLayout_cam"
         app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/kappa_blue" />
+        app:backgroundTint="@color/state_locked" />
 
 </android.support.design.widget.CoordinatorLayout>

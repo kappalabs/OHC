@@ -44,12 +44,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public static final String LOCATION_KEY = "location_key";
     public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
 
-    public static final String REJECT_BUTTON_VISIBLE_KEY = "REJECT_BUTTON_VISIBLE_KEY";
-    public static final String ACCEPT_BUTTON_VISIBLE_KEY = "ACCEPT_BUTTON_VISIBLE_KEY";
-    public static final String ROTATE_BUTTON_VISIBLE_KEY = "ROTATE_BUTTON_VISIBLE_KEY";
-    public static final String ACTIVATE_BUTTON_VISIBLE_KEY = "ACTIVATE_BUTTON_VISIBLE_KEY";
-    public static final String CAMERA_BUTTON_VISIBLE_KEY = "CAMERA_BUTTON_VISIBLE_KEY";
-
     private static final int UPDATE_INTERVAL_IN_MILLISECONDS = 8000;
     private static final int FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
 
@@ -69,11 +63,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private LocationRequest mLocationRequest;
     private String mLastUpdateTime;
 
-    private FloatingActionButton rejectFab, acceptFab, rotateFab, activateFab, cameraFab;
+    private FloatingActionButton acceptFab, activateFab, deferFab, rejectFab;
+    private FloatingActionButton cameraFab, evaluateFab, rotateFab, sortFab;
     private HuntOfferFragment mHuntOfferFragment;
     private HuntPlaceFragment mHuntPlaceFragment;
     private HuntActionFragment mHuntActionFragment;
     private ViewPager mViewPager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,34 +88,28 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         /* Set up the ViewPager with the sections adapter */
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
+        mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 Fragment fragment = null;
                 switch (position) {
                     case 0: // HuntOfferFragment
-                        cameraFab.hide();
                         fragment = mHuntOfferFragment;
                         break;
                     case 1: // HuntPlaceFragment
-                        rejectFab.hide();
                         acceptFab.hide();
-                        rotateFab.hide();
                         activateFab.hide();
+                        deferFab.hide();
+                        rejectFab.hide();
                         cameraFab.hide();
+                        evaluateFab.hide();
+                        rotateFab.hide();
+                        sortFab.hide();
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
-                        rejectFab.hide();
-                        acceptFab.hide();
-                        rotateFab.hide();
-                        activateFab.hide();
                         // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
-                        if (SharedDataManager.getActivatedPlaceID(HuntActivity.this) != null) {
+                        if (HuntOfferFragment.hasActivatedTarget()) {
                             cameraFab.show();
                         } else {
                             cameraFab.hide();
@@ -131,10 +121,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     ((PageChangeAdapter) fragment).onPageSelected();
                 }
             }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-            }
         });
 
         /* Button to reject a place */
@@ -143,7 +129,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HuntOfferFragment.rejectSelectedTarget();
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.REJECTED);
             }
         });
 
@@ -153,7 +139,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HuntOfferFragment.acceptSelectedTarget();
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACCEPTED);
             }
         });
 
@@ -164,7 +150,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             @Override
             public void onClick(View v) {
                 if (mHuntOfferFragment != null) {
-                    mHuntOfferFragment.rotateSelectedTile();
+                    if (HuntOfferFragment.hasSelectedTarget()) {
+                        mHuntOfferFragment.rotateSelectedTile();
+                    } else {
+                        mHuntOfferFragment.rotateAllTiles();
+                    }
                 }
             }
         });
@@ -176,8 +166,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             @Override
             public void onClick(View v) {
                 if (mHuntOfferFragment != null) {
-                    if (!mHuntOfferFragment.activateSelectedTarget()) {
-                        mHuntOfferFragment.deactivateSelectedTarget();
+                    if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACTIVATED)) {
+                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACCEPTED);
                     }
                 }
             }
@@ -194,7 +184,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     return;
                 }
                 /* Change state of this target */
-                HuntOfferFragment.photogenifySelectedTarget();
+                // TODO: 19.3.16 zadna zmena stavu tu ve finale nebude, pouze debug
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.PHOTOGENIC);
                 /* Retrieve reference to selected bitmap */
                 Bitmap selBitmap = mHuntPlaceFragment.getSelectedBitmap();
                 if (selBitmap == null) {
@@ -221,6 +212,37 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
+            }
+        });
+
+        /* Button to defer the target */
+        deferFab = (FloatingActionButton) findViewById(R.id.fab_defer);
+        deferFab.setVisibility(View.GONE);
+        deferFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED);
+            }
+        });
+
+        /* Button to evaluate target photos */
+        evaluateFab = (FloatingActionButton) findViewById(R.id.fab_evaluate);
+        evaluateFab.setVisibility(View.GONE);
+        evaluateFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: 19.3.16 pridat komunikaci se serverem + rozdil pokud je vybrany target nebo ne
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
+            }
+        });
+
+        /* Button to sort the targets on offer page according to their states */
+        sortFab = (FloatingActionButton) findViewById(R.id.fab_sort);
+        sortFab.setVisibility(View.GONE);
+        sortFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                HuntOfferFragment.sortTargets();
             }
         });
 
@@ -274,22 +296,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     protected void onSaveInstanceState(Bundle outState) {
         outState.putParcelable(LOCATION_KEY, mCurrentLocation);
         outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
-        /* Save buttons state */
-        if (rejectFab != null) {
-            outState.putBoolean(REJECT_BUTTON_VISIBLE_KEY, rejectFab.isShown());
-        }
-        if (acceptFab != null) {
-            outState.putBoolean(ACCEPT_BUTTON_VISIBLE_KEY, acceptFab.isShown());
-        }
-        if (rotateFab != null) {
-            outState.putBoolean(ROTATE_BUTTON_VISIBLE_KEY, rotateFab.isShown());
-        }
-        if (activateFab != null) {
-            outState.putBoolean(ACTIVATE_BUTTON_VISIBLE_KEY, activateFab.isShown());
-        }
-        if (cameraFab != null) {
-            outState.putBoolean(CAMERA_BUTTON_VISIBLE_KEY, cameraFab.isShown());
-        }
 
         super.onSaveInstanceState(outState);
     }
@@ -306,27 +312,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             if (mHuntActionFragment != null) {
                 mHuntActionFragment.changeLocation(mCurrentLocation);
             }
-
-            /* Load buttons state and show them if possible */
-            if (savedInstanceState.getBoolean(REJECT_BUTTON_VISIBLE_KEY, false)) {
-                rejectFab.show();
-            }
-            if (savedInstanceState.getBoolean(ACCEPT_BUTTON_VISIBLE_KEY, false)) {
-                acceptFab.show();
-            }
-            if (savedInstanceState.getBoolean(ROTATE_BUTTON_VISIBLE_KEY, false)) {
-                rotateFab.show();
-            }
-            if (savedInstanceState.getBoolean(ACTIVATE_BUTTON_VISIBLE_KEY, false)) {
-                activateFab.show();
-            }
-            if (savedInstanceState.getBoolean(CAMERA_BUTTON_VISIBLE_KEY, false)) {
-                cameraFab.show();
-            }
         }
 
         /* Send the selected place to children pages */
-        String selectedID = SharedDataManager.getSelectedPlaceID(this);
+        String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
         Place selected = SharedDataManager.getPlace(this, selectedID);
         if (selected != null) {
             HuntPlaceFragment.changePlace(this, selected);
@@ -341,11 +330,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Log.d(TAG, "camera result ok...");
                 if (data != null) {
                     if (data.getBooleanExtra(CameraActivity.PHOTOS_TAKEN_KEY, false)) {
-                        HuntOfferFragment.lockSelectedTarget();
+                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.LOCKED);
                         Log.d(TAG, "camera result: bylo vyfoceno misto");
                     }
                     if (data.getBooleanExtra(CameraActivity.PHOTOS_EVALUATED_KEY, false)) {
-                        HuntOfferFragment.completeSelectedTarget();
+                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
                         Log.d(TAG, "camera result: bylo vyfoceno a vyhodnoceno misto");
                     }
                 }
@@ -443,40 +432,37 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //    }
 
     @Override
-    public void onPlaceSelected(Place place) {
-        String savedID = SharedDataManager.getSelectedPlaceID(this);
-        if (!Objects.equals(place.getID(), savedID)) {
-            SharedDataManager.saveSelectedPlaceID(this, place.getID());
-            HuntPlaceFragment.changePlace(this, place);
-            HuntActionFragment.changePlace(place);
+    public void onTargetChanged(Place place) {
+        HuntPlaceFragment.changePlace(this, place);
+        HuntActionFragment.changePlace(place);
+    }
+
+    private void resolveButtonStates(Target.TargetState state) {
+        resolveButtonState(acceptFab, state.canAccept());
+        resolveButtonState(activateFab, state.canActivate() || state.canDeactivate());
+        resolveButtonState(deferFab, state.canDefer());
+        resolveButtonState(rejectFab, state.canReject());
+        resolveButtonState(cameraFab, state.canLock());
+        resolveButtonState(evaluateFab, state.canComplete());
+    }
+
+    private void resolveButtonState(FloatingActionButton fab, boolean show) {
+        if (show) {
+            fab.show();
+        } else {
+            fab.hide();
         }
     }
 
     @Override
     public void onItemSelected(Target.TargetState state) {
-        switch (state) {
-            case ACCEPTED:
-                acceptFab.hide();
-                rejectFab.show();
-                activateFab.show();
-                break;
-            case ACTIVATED:
-                acceptFab.hide();
-                rejectFab.hide();
-                activateFab.show();
-                break;
-            case REJECTED:
-                acceptFab.show();
-                rejectFab.hide();
-                activateFab.hide();
-                break;
-            default:
-                acceptFab.setVisibility(View.GONE);
-                rejectFab.setVisibility(View.GONE);
-                activateFab.setVisibility(View.GONE);
-                break;
+        if (mViewPager.getCurrentItem() == 0) {
+            resolveButtonStates(state);
+
+            evaluateFab.hide();
+            rotateFab.show();
+            sortFab.hide();
         }
-        rotateFab.show();
     }
 
     @Override
@@ -485,8 +471,28 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setVisibility(View.GONE);
         activateFab.setVisibility(View.GONE);
         rotateFab.setVisibility(View.GONE);
+        evaluateFab.setVisibility(View.GONE);
+        sortFab.setVisibility(View.GONE);
+        cameraFab.setVisibility(View.GONE);
+        deferFab.setVisibility(View.GONE);
+
         /* Go to the page with place information */
         mViewPager.setCurrentItem(1, true);
+    }
+
+    @Override
+    public void onItemUnselected() {
+        if (mViewPager.getCurrentItem() == 0) {
+            acceptFab.setVisibility(View.GONE);
+            activateFab.setVisibility(View.GONE);
+            deferFab.setVisibility(View.GONE);
+            rejectFab.setVisibility(View.GONE);
+            cameraFab.setVisibility(View.GONE);
+
+            evaluateFab.show();
+            rotateFab.show();
+            sortFab.show();
+        }
     }
 
     @Override
@@ -500,7 +506,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
      */
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
-        private String tabtitles[] = new String[] {
+        private String tabTitles[] = new String[] {
                 getString(R.string.title_fragment_offer),
                 getString(R.string.title_fragment_info),
                 getString(R.string.title_fragment_hunt)};
@@ -534,10 +540,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         @Override
         public Fragment getItem(int position) {
-//            Place demoPlace = green_places != null && green_places.size() > 0 ? green_places.get(0) : null;
             if (position == 0) {
-//                HuntOfferFragment.mParamGreen = green_places;
-//                HuntOfferFragment.mParamRed = red_places;
                 return HuntOfferFragment.newInstance();
             } if (position == 1) {
                 return HuntPlaceFragment.newInstance();
@@ -553,7 +556,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return tabtitles[position];
+            return tabTitles[position];
         }
 
     }

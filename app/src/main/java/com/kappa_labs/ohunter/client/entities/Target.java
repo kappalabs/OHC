@@ -15,15 +15,13 @@ public class Target implements Serializable, Comparable<Target> {
      * Represents a state of target.
      */
     public enum TargetState {
-        PHOTOGENIC(80),
-        ACTIVATED(70),
-        ACCEPTED(60),
-        REJECTED(50),
+        PHOTOGENIC(70),
+        ACTIVATED(60),
+        ACCEPTED(50),
         LOCKED(40),
-        COMPLETED(30),
-        FETCHING(20),
-        EMPTY(10),
-        UNAVAILABLE(0);
+        DEFERRED(30),
+        COMPLETED(20),
+        REJECTED(10);
 
         private int mWeight;
 
@@ -46,12 +44,85 @@ public class Target implements Serializable, Comparable<Target> {
             }
             return 0;
         }
+
+        /**
+         * Decides by automaton rules if given state can be changed to photogenic.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canPhotogenify() {
+            return this == TargetState.ACTIVATED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to activated.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canActivate() {
+            return this == TargetState.ACCEPTED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed back from activated.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canDeactivate() {
+            return this == TargetState.ACTIVATED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to accepted.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canAccept() {
+            return this == TargetState.DEFERRED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to locked.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canLock() {
+            return this == TargetState.PHOTOGENIC;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to deferred.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canDefer() {
+            return this == TargetState.ACCEPTED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to completed.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canComplete() {
+            return this == TargetState.LOCKED;
+        }
+
+        /**
+         * Decides by automaton rules if given state can be changed to rejected.
+         *
+         * @return True when rules are satisfied, false if not.
+         */
+        public boolean canReject() {
+            return this == TargetState.DEFERRED;
+        }
+
     }
 
     private boolean rotated;
     private boolean isRotationDrawn;
     private boolean highlighted;
-    private TargetState mState = TargetState.EMPTY;
+    private TargetState mState = TargetState.DEFERRED;
     private String placeID;
     private int photoIndex;
     private boolean isPhotoDrawn;
@@ -72,13 +143,54 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     /**
+     * Tries to change the state of this target. Returns true on success, false on fail.
+     * Does nothing on fail.
+     *
+     * @param state The new state to set.
+     * @return True on success, false on fail.
+     */
+    public boolean changeState(TargetState state) {
+        switch (state) {
+            case PHOTOGENIC:
+                return photogenify();
+            case ACTIVATED:
+                return activate();
+            case ACCEPTED:
+                return deactivate() || accept();
+            case LOCKED:
+                return lock();
+            case DEFERRED:
+                return defer();
+            case COMPLETED:
+                return complete();
+            case REJECTED:
+                return reject();
+        }
+        return false;
+    }
+
+    /**
+     * Makes a target photogenic if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean photogenify() {
+        if (mState.canPhotogenify()) {
+            mState = TargetState.PHOTOGENIC;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Activates a target if automaton rules are satisfied. Returns true on success,
      * false otherwise.
      *
      * @return True on success, false otherwise.
      */
     public boolean activate() {
-        if (mState == TargetState.ACCEPTED) {
+        if (mState.canActivate()) {
             mState = TargetState.ACTIVATED;
             return true;
         }
@@ -92,58 +204,8 @@ public class Target implements Serializable, Comparable<Target> {
      * @return True on success, false otherwise.
      */
     public boolean deactivate() {
-        if (mState == TargetState.ACTIVATED) {
+        if (mState.canDeactivate()) {
             mState = TargetState.ACCEPTED;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if this target is activated, false otherwise.
-     * @return True if this target is activated, false otherwise.
-     */
-    public boolean isActivated() {
-        return mState == TargetState.ACTIVATED;
-    }
-
-    /**
-     * Makes a target photogenic if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean photogenify() {
-        if (mState == TargetState.ACTIVATED) {
-            mState = TargetState.PHOTOGENIC;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Locks a target if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean lock() {
-        if (mState == TargetState.PHOTOGENIC) {
-            mState = TargetState.LOCKED;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Completes a target if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean complete() {
-        if (mState == TargetState.ACCEPTED || mState == TargetState.LOCKED) {
-            mState = TargetState.COMPLETED;
             return true;
         }
         return false;
@@ -156,7 +218,7 @@ public class Target implements Serializable, Comparable<Target> {
      * @return True on success, false otherwise.
      */
     public boolean accept() {
-        if (mState == TargetState.REJECTED) {
+        if (mState.canAccept()) {
             mState = TargetState.ACCEPTED;
             return true;
         }
@@ -164,12 +226,45 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     /**
-     * Returns true if the target is accepted, false otherwise.
+     * Locks a target if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
      *
-     * @return True if the target is accepted, false otherwise.
+     * @return True on success, false otherwise.
      */
-    public boolean isAccepted() {
-        return mState == TargetState.ACCEPTED;
+    public boolean lock() {
+        if (mState.canLock()) {
+            mState = TargetState.LOCKED;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Defers a target if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean defer() {
+        if (mState.canDefer()) {
+            mState = TargetState.DEFERRED;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Completes a target if automaton rules are satisfied. Returns true on success,
+     * false otherwise.
+     *
+     * @return True on success, false otherwise.
+     */
+    public boolean complete() {
+        if (mState.canComplete()) {
+            mState = TargetState.COMPLETED;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -179,7 +274,7 @@ public class Target implements Serializable, Comparable<Target> {
      * @return True on success, false otherwise.
      */
     public boolean reject() {
-        if (mState == TargetState.ACCEPTED) {
+        if (mState.canReject()) {
             mState = TargetState.REJECTED;
             return true;
         }
@@ -187,12 +282,11 @@ public class Target implements Serializable, Comparable<Target> {
     }
 
     /**
-     * Returns true if the target is rejected, false otherwise.
-     *
-     * @return True if the target is rejected, false otherwise.
+     * Returns true if this target is activated, false otherwise.
+     * @return True if this target is activated, false otherwise.
      */
-    public boolean isRejected() {
-        return mState == TargetState.REJECTED;
+    public boolean isActivated() {
+        return mState == TargetState.ACTIVATED;
     }
 
     /**
@@ -296,14 +390,14 @@ public class Target implements Serializable, Comparable<Target> {
         return mState;
     }
 
-    /**
-     * Sets the state of this target.
-     *
-     * @param state The state to be set.
-     */
-    public void setState(TargetState state) {
-        this.mState = state;
-    }
+//    /**
+//     * Sets the state of this target.
+//     *
+//     * @param state The state to be set.
+//     */
+//    public void setState(TargetState state) {
+//        this.mState = state;
+//    }
 
     /**
      * Gets the current state of rotation for connected target tile.

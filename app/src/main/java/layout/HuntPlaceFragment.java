@@ -19,7 +19,6 @@ import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.Utils;
 import com.kappa_labs.ohunter.client.entities.PlaceInfo;
-import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -269,7 +268,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                         photoBitmaps[finalI] = bitmap;
                     }
                 });
-                //TODO: proc je tady nekdy photo.simage null?
+                //TODO: proc je tady nekdy photo.simage null? - souvisi to s paralelnimi vlakny
                 bitmapTask.execute(photo.sImage);
                 daytimeTexts[i] = Utils.daytimeToString(context, photo.daytime);
 

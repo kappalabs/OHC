@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 
 import com.kappa_labs.ohunter.client.entities.Target;
@@ -114,6 +115,7 @@ public class TargetTileView extends View {
         if (backgroundDrawable != null) {
             backgroundDrawable.setBounds(0, 0, getWidth(), getHeight());
             backgroundDrawable.draw(canvas);
+            mTarget.setIsPhotoDrawn(true);
         }
 
         /* Draw text on the opposite side of tile */
@@ -224,6 +226,8 @@ public class TargetTileView extends View {
         switch (mTarget.getState()) {
             case ACCEPTED:
                 return ContextCompat.getColor(getContext(), R.color.state_green);
+            case DEFERRED:
+                return ContextCompat.getColor(getContext(), R.color.state_deferred);
             case REJECTED:
                 return ContextCompat.getColor(getContext(), R.color.state_red);
             case ACTIVATED:
@@ -287,10 +291,8 @@ public class TargetTileView extends View {
         if (!mTarget.isPhotoDrawn()) {
             Place place = PlacesManager.getPlace(getContext(), getPlaceID());
             if (place != null) {
-                this.backgroundDrawable =
-                        cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
+                backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
             }
-            mTarget.setIsPhotoDrawn(true);
         }
         invalidate();
     }
@@ -390,25 +392,6 @@ public class TargetTileView extends View {
             mTarget.setHighlighted(highlighted);
             invalidate();
         }
-    }
-
-    /**
-     * Returns true if the target is accepted, false otherwise.
-     *
-     * @return True if the target is accepted, false otherwise.
-     */
-    public boolean isAccepted() {
-        return mTarget.isAccepted();
-    }
-
-    /**
-     * Rejects a target if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean isRejected() {
-        return mTarget.isRejected();
     }
 
 }

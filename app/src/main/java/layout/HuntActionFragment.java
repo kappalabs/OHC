@@ -250,9 +250,13 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
      * @param place The new Place, which this fragment should activate on the map.
      */
     public static void changePlace(Place place) {
-        targetReady = true;
-        targetLatitude = place.latitude;
-        targetLongitude = place.longitude;
+        if (place != null) {
+            targetReady = true;
+            targetLatitude = place.latitude;
+            targetLongitude = place.longitude;
+        } else {
+            targetReady = false;
+        }
         infoInvalidated = true;
         zoomInvalidated = true;
     }

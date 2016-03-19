@@ -68,7 +68,7 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_reject"
         app:layout_anchor="@id/container"
-        app:layout_anchorGravity="left|bottom"
+        app:layout_anchorGravity="center|bottom"
         app:backgroundTint="@color/state_red" />
 
     <android.support.design.widget.FloatingActionButton
@@ -98,7 +98,37 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_camera"
         app:layout_anchor="@id/container"
-        app:layout_anchorGravity="right|bottom"
+        app:layout_anchorGravity="center|bottom"
         app:backgroundTint="@color/state_photogenic" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_defer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_defer"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="left|bottom"
+        app:backgroundTint="@color/state_deferred" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_evaluate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_evaluate"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="left|bottom"
+        app:backgroundTint="@color/state_locked" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_sort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_sort"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="center|bottom"
+        app:backgroundTint="@color/black" />
 
 </android.support.design.widget.CoordinatorLayout>

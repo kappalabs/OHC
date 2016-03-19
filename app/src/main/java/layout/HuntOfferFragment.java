@@ -37,8 +37,6 @@ import com.kappa_labs.ohunter.client.SharedDataManager;
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
 //    private static final String TAG = "HuntOfferFragment";
-    private static final String SELECTED_INDEX_KEY = "SELECTED_INDEX_KEY";
-    private static final String ACTIVATED_INDEX_KEY = "ACTIVATED_INDEX_KEY";
 
     private static OnFragmentInteractionListener mListener;
 
@@ -65,23 +63,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        if (savedInstanceState != null) {
-            if (savedInstanceState.keySet().contains(SELECTED_INDEX_KEY)) {
-                selectedIndex = savedInstanceState.getInt(SELECTED_INDEX_KEY);
-            }
-            if (savedInstanceState.keySet().contains(ACTIVATED_INDEX_KEY)) {
-                activatedIndex = savedInstanceState.getInt(ACTIVATED_INDEX_KEY);
-            }
-        }
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(SELECTED_INDEX_KEY, selectedIndex);
-        outState.putInt(ACTIVATED_INDEX_KEY, activatedIndex);
         SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
 
         super.onSaveInstanceState(outState);
@@ -105,6 +87,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (targets.isEmpty()) {
             initTargets();
         }
+        updateSelection();
 
         /* Short click selects the tile */
         offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -112,18 +95,29 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (view instanceof TargetTileView) {
                     TargetTileView tile = (TargetTileView) view;
-                    selectedIndex = position;
-                    for (Target iTile : targets) {
-                        iTile.setHighlighted(false);
-                    }
-                    mAdapter.notifyDataSetChanged();
-                    tile.setHighlighted(true);
-                    tile.update();
+                    if (selectedIndex != position) {
+                        selectedIndex = position;
+                        for (Target iTile : targets) {
+                            iTile.setHighlighted(false);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                        tile.setHighlighted(true);
+                        tile.update();
 
-                    /* Notify the listener */
-                    if (mListener != null) {
-                        mListener.onPlaceSelected(tile.getPlace());
-                        mListener.onItemSelected(tile.getState());
+                        /* Notify the listener */
+                        if (mListener != null) {
+                            mListener.onTargetChanged(tile.getPlace());
+                            mListener.onItemSelected(tile.getState());
+                        }
+                    } else {
+                        selectedIndex = -1;
+                        for (Target iTile : targets) {
+                            iTile.setHighlighted(false);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                        if (mListener != null) {
+                            mListener.onItemUnselected();
+                        }
                     }
                 }
             }
@@ -135,18 +129,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 if (view instanceof TargetTileView) {
                     TargetTileView tile = (TargetTileView) view;
-                    selectedIndex = position;
-                    /* Change highlighted items */
-                    for (Target iTile : targets) {
-                        iTile.setHighlighted(false);
-                    }
-                    mAdapter.notifyDataSetChanged();
-                    tile.setHighlighted(true);
-                    tile.update();
+                    if (selectedIndex != position) {
+                        selectedIndex = position;
+                        /* Change highlighted items */
+                        for (Target iTile : targets) {
+                            iTile.setHighlighted(false);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                        tile.setHighlighted(true);
+                        tile.update();
 
-                    /* Notify the listener and request to show the next page (with place information) */
+                        /* Notify the listener and request to show the next page (with place information) */
+                        if (mListener != null) {
+                            mListener.onTargetChanged(tile.getPlace());
+                        }
+                    }
                     if (mListener != null) {
-                        mListener.onPlaceSelected(tile.getPlace());
                         mListener.onRequestNextPage();
                     }
                 }
@@ -156,6 +154,22 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         });
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        Target target = getSelectedTarget();
+        if (target != null) {
+            Place place = PlacesManager.getPlace(getContext(), target.getPlaceID());
+            if (place != null) {
+                mListener.onTargetChanged(place);
+            }
+            mListener.onItemSelected(target.getState());
+        } else {
+            mListener.onItemUnselected();
+        }
     }
 
     private void initTargets() {
@@ -177,18 +191,19 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     return;
                 }
 
-                /* Divide given places into two groups (green and red) */
+                /* Divide given places into two groups (accepted and deferred) */
                 List<Integer> range = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
                     range.add(i);
-                    targets.get(i).setState(Target.TargetState.REJECTED);
+//                    targets.get(i).setState(Target.TargetState.DEFERRED);
                 }
                 /* Randomly pick green places */
                 Random random = new Random();
                 int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
                 while (min > 0) {
                     int index = random.nextInt(range.size());
-                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
+//                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
+                    targets.get(range.remove(index)).accept();
                     --min;
                 }
 
@@ -251,17 +266,54 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         return null;
     }
 
-//    /**
-//     * Try to get the currently activated target. Return selected target if available, null otherwise.
-//     *
-//     * @return The activated target if available, null otherwise.
-//     */
-//    private Target getActivatedTarget() {
-//        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
-//            return targets.get(activatedIndex);
-//        }
-//        return null;
-//    }
+    /**
+     * Gets the Place ID of currently selected target.
+     *
+     * @return The Place ID of currently selected target.
+     */
+    public static String getSelectedTargetPlaceID() {
+        Target target = getSelectedTarget();
+        if (target != null) {
+            return target.getPlaceID();
+        }
+        return null;
+    }
+
+    /**
+     * Try to get the currently activated target. Return activated target if available, null otherwise.
+     *
+     * @return The activated target if available, null otherwise.
+     */
+    private static Target getActivatedTarget() {
+        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
+            return targets.get(activatedIndex);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the Place ID of currently activated target.
+     *
+     * @return The Place ID of currently activated target.
+     */
+    public static String getActivatedTargetPlaceID() {
+        Target target = getActivatedTarget();
+        if (target != null) {
+            return target.getPlaceID();
+        }
+        return null;
+    }
+
+    /**
+     * Sorts the targets according to their state importance.
+     */
+    public static void sortTargets() {
+        Collections.sort(targets);
+        updateSelection();
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
+    }
 
     /**
      * Rotates currently selected target if possible, i.e. some target is selected.
@@ -270,6 +322,18 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         Target tile = getSelectedTarget();
         if (tile != null && mAdapter != null) {
             tile.changeRotation();
+            mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Rotates currently selected target if possible, i.e. some target is selected.
+     */
+    public void rotateAllTiles() {
+        if (mAdapter != null) {
+            for (Target iTarget : targets) {
+                iTarget.changeRotation();
+            }
             mAdapter.notifyDataSetChanged();
         }
     }
@@ -300,154 +364,24 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Activates currently selected target if possible, i.e. target state is sufficient
-     * and some target is selected. Deactivates every other activated tile.
+     * Tries to change the state of currently selected target. Returns true on success, false on fail.
+     * Does nothing on fail.
      *
-     * @return True on success, false otherwise.
+     * @param state The new state to set.
+     * @return True on success, false on fail.
      */
-    public boolean activateSelectedTarget() {
-        boolean isOk = false;
-        Target tile = getSelectedTarget();
-        if (tile != null) {
+    public static boolean restateSelectedTarget(Target.TargetState state) {
+        boolean isOk;
+        Target target = getSelectedTarget();
+        isOk = target != null && target.changeState(state);
+        /* Activating one target deactivates the others */
+        if (isOk && state == Target.TargetState.ACTIVATED) {
             for (Target iTile : targets) {
-                if (iTile != tile) {
+                if (iTile != target) {
                     iTile.deactivate();
                 }
             }
-            isOk = tile.activate();
-            if (isOk) {
-                SharedDataManager.saveActivatedPlaceID(getContext(), tile.getPlaceID());
-            }
-
-            /* Rearrange the tiles */
-            Collections.sort(targets);
-            updateSelection();
-            mAdapter.notifyDataSetChanged();
-
-            /* Inform the listener about the change of state */
-            if (mListener != null) {
-                mListener.onItemSelected(tile.getState());
-            }
         }
-        return isOk;
-    }
-
-    public boolean deactivateSelectedTarget() {
-        boolean isOk = false;
-        Target tile = getSelectedTarget();
-        if (tile != null) {
-            isOk = tile.deactivate();
-            if (isOk) {
-                SharedDataManager.saveActivatedPlaceID(getContext(), null);
-            }
-
-            /* Rearrange the tiles */
-            Collections.sort(targets);
-            updateSelection();
-            mAdapter.notifyDataSetChanged();
-
-            /* Inform the listener about the change of state */
-            if (mListener != null) {
-                mListener.onItemSelected(tile.getState());
-            }
-        }
-        return isOk;
-    }
-
-    /**
-     * Rejects currently selected target if possible, i.e. target state is sufficient
-     * and some target is selected.
-     *
-     * @return True on success, false otherwise.
-     */
-    public static boolean rejectSelectedTarget() {
-        boolean isOk;
-        Target target = getSelectedTarget();
-        isOk = target != null && target.reject();
-        /* Rearrange the tiles */
-        Collections.sort(targets);
-        updateSelection();
-        mAdapter.notifyDataSetChanged();
-
-        /* Inform the listener about the change of state */
-        if (mListener != null && isOk) {
-            mListener.onItemSelected(target.getState());
-        }
-
-        return isOk;
-    }
-
-    /**
-     * Accepts currently selected target if possible, i.e. target state is sufficient
-     * and some target is selected.
-     *
-     * @return True on success, false otherwise.
-     */
-    public static boolean acceptSelectedTarget() {
-        boolean isOk;
-        Target target = getSelectedTarget();
-        isOk = target != null && target.accept();
-        /* Rearrange the tiles */
-        Collections.sort(targets);
-        updateSelection();
-        mAdapter.notifyDataSetChanged();
-
-        /* Inform the listener about the change of state */
-        if (mListener != null && isOk) {
-            mListener.onItemSelected(target.getState());
-        }
-
-        return isOk;
-    }
-
-    /**
-     * Makes currently selected target photogenic if possible, i.e. target state is sufficient
-     * and some target is selected.
-     *
-     * @return True on success, false otherwise.
-     */
-    public static boolean photogenifySelectedTarget() {
-        boolean isOk;
-        Target target = getSelectedTarget();
-        isOk = target != null && target.photogenify();
-        /* Rearrange the tiles */
-        Collections.sort(targets);
-        updateSelection();
-        mAdapter.notifyDataSetChanged();
-
-        /* Inform the listener about the change of state */
-        if (mListener != null && isOk) {
-            mListener.onItemSelected(target.getState());
-        }
-
-        return isOk;
-    }
-
-    //TODO: generalizace vsech techto metod...
-    public static boolean lockSelectedTarget() {
-        boolean isOk;
-        Target target = getSelectedTarget();
-        isOk = target != null && target.lock();
-        /* Rearrange the tiles */
-        Collections.sort(targets);
-        updateSelection();
-        mAdapter.notifyDataSetChanged();
-
-        /* Inform the listener about the change of state */
-        if (mListener != null && isOk) {
-            mListener.onItemSelected(target.getState());
-        }
-
-        return isOk;
-    }
-
-    //TODO: generalizace vsech techto metod...
-    public static boolean completeSelectedTarget() {
-        boolean isOk;
-        Target target = getSelectedTarget();
-        isOk = target != null && target.complete();
-        /* Rearrange the tiles */
-        Collections.sort(targets);
         updateSelection();
         mAdapter.notifyDataSetChanged();
 
@@ -482,17 +416,28 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         Target target = getSelectedTarget();
         if (target != null) {
             mListener.onItemSelected(target.getState());
+        } else {
+            mListener.onItemUnselected();
         }
     }
 
-//    /**
-//     * Check if activated/hunted target exists.
-//     *
-//     * @return True if activated/hunted target exists, false otherwise.
-//     */
-//    public boolean hasActivatedTarget() {
-//        return getActivatedTarget() != null;
-//    }
+    /**
+     * Check if selected target exists.
+     *
+     * @return True if selected target exists, false otherwise.
+     */
+    public static boolean hasSelectedTarget() {
+        return getSelectedTarget() != null;
+    }
+
+    /**
+     * Check if activated/hunted target exists.
+     *
+     * @return True if activated/hunted target exists, false otherwise.
+     */
+    public static boolean hasActivatedTarget() {
+        return getActivatedTarget() != null;
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -521,9 +466,10 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onPlaceSelected(Place place);
+        void onTargetChanged(Place place);
         void onItemSelected(Target.TargetState targetState);
         void onRequestNextPage();
+        void onItemUnselected();
     }
 
 }

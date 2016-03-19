@@ -5,13 +5,15 @@
     <color name="dark_pink">#9900CC</color>
     <color name="limiter_overlay">#7FDF6868</color>
     <color name="tile_background">@color/my_primary_light</color>
+    <color name="black">#000000</color>
 
     <color name="state_green">#26CC14</color>
     <color name="state_red">#FF3219</color>
     <color name="state_activated">#FFEA00</color>
     <color name="state_completed">#00AFFF</color>
-    <color name="state_locked">#797B7F</color>
+    <color name="state_locked">@color/kappa_blue</color>
     <color name="state_photogenic">@color/dark_pink</color>
+    <color name="state_deferred">#797B7F</color>
 
     <color name="black_shadow">#7f000000</color>
     <color name="white_shadow">#7fffffff</color>
