@@ -1,10 +1,6 @@
 package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.LruCache;
@@ -12,18 +8,18 @@ import android.util.LruCache;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
-import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 /**
- * Created by kappa on 9.3.16.
+ * Class for managing download and access to places. Places are cached to support faster access.
+ * Download is done by asynchronous tasks for better UI smoothness.
  */
 public class PlacesManager {
 
@@ -35,13 +31,13 @@ public class PlacesManager {
     private Context mContext;
     private PlacesManagerListener mListener;
     private Player mPlayer;
-    private ArrayList<String> placeIDs;
+    private List<String> placeIDs;
     /* Counts the number of pending tasks */
     private int mCounter;
     private static LruCache<String, Place> mPlacesCache;
 //    private static LruCache<String, Bitmap> mPreviewCache;
 
-    public PlacesManager(Context context, PlacesManagerListener listener, Player player, ArrayList<String> placeIDs) {
+    public PlacesManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mContext = context;
         this.mListener = listener;
         this.mPlayer = player;
@@ -116,16 +112,16 @@ public class PlacesManager {
             Utils.RetrieveResponseTask responseTask =
                     Utils.getInstance().new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
                         @Override
-                        public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
+                        public void onResponseTaskCompleted(Request _, Response response, OHException ohex, int code) {
                             if (ohex == null && response != null && response.places != null && response.places.length > 0) {
                                 /* Save the result locally */
                                 SharedDataManager.addPlace(mContext, response.places[0]);
                                 /* Let the listener do something with the new place */
                                 mListener.onPlaceReady(response.places[0]);
-                            } else if (ohex != null) {
-                                //TODO: zkontroluj ohex zpravu a pripadne opakuj request
-                            } else {
-                                //remove
+//                            } else if (ohex != null) {
+//                                //TODO: zkontroluj ohex zpravu a pripadne opakuj request
+//                            } else {
+//                                //remove
                             }
                             if (--mCounter == 0) {
                                 mListener.onPreparationEnded();

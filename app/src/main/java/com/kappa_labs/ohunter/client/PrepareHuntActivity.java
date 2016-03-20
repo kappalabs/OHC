@@ -49,6 +49,7 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import layout.HuntOfferFragment;
@@ -212,7 +213,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     }
 
     @Override
-    public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request _, Response response, OHException ohex, int code) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -228,13 +229,13 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             return;
         }
         /* Success */
-        ArrayList<Place> places = new ArrayList<>();
+        List<Place> places = new ArrayList<>();
         if (response.places != null) {
             Collections.addAll(places, response.places);
         }
         if (code == RADAR_SEARCH_KEY) {
             Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
-            ArrayList<String> radarPlaceIDs = new ArrayList<>();
+            List<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {
                 radarPlaceIDs.add(place.getID());
             }

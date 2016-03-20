@@ -1,7 +1,5 @@
 package com.kappa_labs.ohunter.client;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -24,7 +22,6 @@ import com.kappa_labs.ohunter.lib.requests.LoginRequest;
 import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,10 +33,6 @@ import java.util.regex.Pattern;
 public class LoginActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted {
 
     public static final String TAG = "LoginActivity";
-    public static final String PREFS_FILE = "com.kappa_labs.ohunter.client.PREFS_FILE";
-    public static final String PREFS_SERVER_HISTORY = "PREFS_SERVER_HISTORY";
-    public static final String PREFS_LAST_NICKNAME= "PREFS_LAST_NICKNAME";
-    public static final String PREFS_LAST_SERVER = "PREFS_LAST_SERVER";
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -50,7 +43,6 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     private AutoCompleteTextView mNicknameAutoTextView;
     private AutoCompleteTextView mServerAutoTextView;
     private EditText mPasswordEditText;
-    private SharedPreferences mPreferences;
     private Set<String> serverHistory;
 
 
@@ -59,13 +51,11 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mPreferences = getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
-
         /* Set up the login form */
         mNicknameAutoTextView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView_nickname);
 
         mServerAutoTextView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView_server);
-        serverHistory = mPreferences.getStringSet(PREFS_SERVER_HISTORY, new HashSet<String>());
+        serverHistory = SharedDataManager.getServerHistory(this);
         populateServerAutoComplete();
 
         mPasswordEditText = (EditText) findViewById(R.id.editText_password);
@@ -105,9 +95,8 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     }
 
     private void updateValuesFromPreferences() {
-        mNicknameAutoTextView.setText(mPreferences.getString(PREFS_LAST_NICKNAME, ""));
-        mServerAutoTextView.setText(mPreferences.getString(PREFS_LAST_SERVER,
-                getString(R.string.server_address_template)));
+        mNicknameAutoTextView.setText(SharedDataManager.getLastNickname(this));
+        mServerAutoTextView.setText(SharedDataManager.getLastServer(this));
     }
 
     @Override
@@ -251,7 +240,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     }
 
     @Override
-    public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
         mAuthTask = null;
 
         /* Handle the error */
@@ -312,13 +301,9 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     }
 
     private void savePreferences() {
-        SharedPreferences settings = getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putString(PREFS_LAST_NICKNAME, mNicknameAutoTextView.getText().toString());
-        editor.putString(PREFS_LAST_SERVER, mServerAutoTextView.getText().toString());
-        editor.putStringSet(PREFS_SERVER_HISTORY, serverHistory);
-
-        editor.apply();
+        SharedDataManager.setLastNickname(this, mNicknameAutoTextView.getText().toString());
+        SharedDataManager.setLastServer(this, mServerAutoTextView.getText().toString());
+        SharedDataManager.setServerHistory(this, serverHistory);
     }
 
 }

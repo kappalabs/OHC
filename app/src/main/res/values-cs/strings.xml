@@ -13,7 +13,6 @@
     <string name="daytime_night">Tmavé</string>
     <string name="daytime_unknown">Nejspíš v pořádku</string>
     <string name="dialog_store_offline_message">Připojení k internetu není k dispozici. Fotky mohou být uloženy a vyhodnoceny později.</string>
-    <string name="dialog_store_offline_no">Zpět</string>
     <string name="dialog_store_offline_title">Použít offline režim?</string>
     <string name="dialog_store_offline_yes">Uložit</string>
     <string name="distance_to_target">Vzdálenost od cíle:</string>
@@ -79,4 +78,9 @@
     <string name="photo_bright">Světlá fotografie</string>
     <string name="photo_dark">Tmavá fotografie</string>
     <string name="photo_probably_ok">Nejspíš v pořádku</string>
+    <string name="no_pending_evaluation">Není k dispozici žádný cíl k ohodnocení.</string>
+    <string name="cannot_save_request">Při zápisu dat nastala chyba, zkus to znovu.</string>
+    <string name="connect_to_server">Připoj se prosím k serveru, poté proveď vyhodnocení.</string>
+    <string name="dialog_store_offline_exit">Odejít</string>
+    <string name="dialog_store_offline_wait">Zpět</string>
 </resources>

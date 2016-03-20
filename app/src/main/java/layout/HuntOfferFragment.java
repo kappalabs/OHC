@@ -11,20 +11,19 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import com.kappa_labs.ohunter.client.HuntActivity;
-import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.TargetTileView;
+import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.PlacesManager;
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.SharedDataManager;
+import com.kappa_labs.ohunter.client.TargetTileView;
 import com.kappa_labs.ohunter.client.TileAdapter;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import com.kappa_labs.ohunter.client.PageChangeAdapter;
-import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.client.SharedDataManager;
 
 /**
  * A {@link Fragment} subclass to provide offer menu of possible targets to user.
@@ -260,7 +259,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @return The selected target if available, null otherwise.
      */
     private static Target getSelectedTarget() {
-        if (targets != null && selectedIndex >= 0 && selectedIndex < targets.size()) {
+        if (selectedIndex >= 0 && selectedIndex < targets.size()) {
             return targets.get(selectedIndex);
         }
         return null;
@@ -285,24 +284,24 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @return The activated target if available, null otherwise.
      */
     private static Target getActivatedTarget() {
-        if (targets != null && activatedIndex >= 0 && activatedIndex < targets.size()) {
+        if (activatedIndex >= 0 && activatedIndex < targets.size()) {
             return targets.get(activatedIndex);
         }
         return null;
     }
 
-    /**
-     * Gets the Place ID of currently activated target.
-     *
-     * @return The Place ID of currently activated target.
-     */
-    public static String getActivatedTargetPlaceID() {
-        Target target = getActivatedTarget();
-        if (target != null) {
-            return target.getPlaceID();
-        }
-        return null;
-    }
+//    /**
+//     * Gets the Place ID of currently activated target.
+//     *
+//     * @return The Place ID of currently activated target.
+//     */
+//    public static String getActivatedTargetPlaceID() {
+//        Target target = getActivatedTarget();
+//        if (target != null) {
+//            return target.getPlaceID();
+//        }
+//        return null;
+//    }
 
     /**
      * Sorts the targets according to their state importance.

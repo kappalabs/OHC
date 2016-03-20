@@ -27,18 +27,21 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Objects;
+import java.util.List;
 
 import layout.HuntActionFragment;
 import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener, Utils.OnResponseTaskCompleted {
 
     public static final String TAG = "HuntActivity";
     public static final String LOCATION_KEY = "location_key";
@@ -55,7 +58,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
 
-    public static ArrayList<String> radarPlaceIDs = new ArrayList<>(0);
+    public static List<String> radarPlaceIDs = new ArrayList<>(0);
     public static Activity hunt;
 
     private GoogleApiClient mGoogleApiClient;
@@ -183,9 +186,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     Log.e(TAG, "Can't access the place fragment yet!");
                     return;
                 }
-                /* Change state of this target */
-                // TODO: 19.3.16 zadna zmena stavu tu ve finale nebude, pouze debug
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.PHOTOGENIC);
                 /* Retrieve reference to selected bitmap */
                 Bitmap selBitmap = mHuntPlaceFragment.getSelectedBitmap();
                 if (selBitmap == null) {
@@ -208,10 +208,15 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     templateBitmap = selBitmap.copy(selBitmap.getConfig(), true);
                 }
                 /* Start camera activity with the template bitmap on background */
-                CameraActivity.setTemplateImage(templateBitmap);
+                // TODO: 20.3.16 nemusi jit vzdy o zrovna oznacene misto (je to vsak lepsi nez aktivovane)
+                CameraActivity.init(templateBitmap, HuntOfferFragment.getSelectedTargetPlaceID());
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
+
+                /* Change state of this target */
+                // TODO: 19.3.16 zadna zmena stavu tu ve finale nebude, pouze debug
+                HuntOfferFragment.restateSelectedTarget(Target.TargetState.PHOTOGENIC);
             }
         });
 
@@ -231,8 +236,30 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         evaluateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: 19.3.16 pridat komunikaci se serverem + rozdil pokud je vybrany target nebo ne
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
+                if (HuntOfferFragment.hasSelectedTarget()) {
+                    /* Send only this one for evaluation */
+                    Request request = SharedDataManager.getCompareRequestForPlace(
+                            HuntActivity.this, HuntOfferFragment.getSelectedTargetPlaceID());
+                    if (request == null) {
+                        Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
+                        return;
+                    }
+                    /* Asynchronously execute and wait for callback when result ready*/
+                    Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                            new RetrieveResponseTask(HuntActivity.this,
+                            Utils.getServerCommunicationDialog(HuntActivity.this));
+                    responseTask.execute(request);
+                } else {
+                    /* Send all pending compare requests for evaluation */
+                    if (SharedDataManager.hasPendingCompareRequests(HuntActivity.this)) {
+                        // TODO: 20.3.16 odeslani na server
+                        Toast.makeText(HuntActivity.this, "TODO: ohodnocuji vsechny vyfocene...",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(HuntActivity.this, getString(R.string.no_pending_evaluation),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
             }
         });
 
@@ -459,7 +486,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (mViewPager.getCurrentItem() == 0) {
             resolveButtonStates(state);
 
-            evaluateFab.hide();
             rotateFab.show();
             sortFab.hide();
         }
@@ -498,6 +524,30 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     @Override
     public void onSelectionChanged(int photoIndex) {
         HuntOfferFragment.changeSelectedTargetPhoto(photoIndex);
+    }
+
+    @Override
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
+        /* Problem on server side */
+        if (ohex != null) {
+            Toast.makeText(HuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
+                    Toast.LENGTH_SHORT).show();
+            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+        }
+        /* Problem on client side */
+        if (response == null) {
+            Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
+            Toast.makeText(HuntActivity.this, getString(R.string.server_unreachable_error),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        /* Success */
+        Toast.makeText(HuntActivity.this,
+                getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "response similarity: " + response.similarity);
+        SharedDataManager.removeCompareRequestForPlace(this, HuntOfferFragment.getSelectedTargetPlaceID());
+        // TODO: 20.3.16 nemusi, a casto se nejedna o prave vybrany cil (lze ulozit do requestu)...
+        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
     }
 
     /**

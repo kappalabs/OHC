@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.client;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -17,6 +16,7 @@ import android.widget.TextView;
 import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
                 Bitmap b = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
                 b_.recycle();
-                CameraActivity.setTemplateImage(b);
+                CameraActivity.init(b, "testPlaceID");
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, CameraActivity.class);
                 startActivity(i);
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //TODO
                 //DEBUG: pouze test funkcionality nabidky
-                ArrayList<String> ids = new ArrayList<>();
+                List<String> ids = new ArrayList<>();
                 ids.add("ChIJbcDGzgOVC0cRHVtUxuhyPyc");
                 ids.add("ChIJnzfcNpSUC0cR02jk07H0ROA");
                 ids.add("ChIJAyNP5o6UC0cRH2h_j6e-d9c");
@@ -127,9 +127,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /* Set the last used server address */
-        SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFS_FILE, MODE_PRIVATE);
-        if (!Utils.initServer(preferences.getString(LoginActivity.PREFS_LAST_SERVER,
-                getString(R.string.prompt_server)))) {
+        if (!Utils.initServer(SharedDataManager.getLastServer(this))) {
             /* Wrong server address */
 //            logout();
             updateInfo();

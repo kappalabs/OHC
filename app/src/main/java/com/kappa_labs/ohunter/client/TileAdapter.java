@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.client;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;

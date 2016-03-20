@@ -27,16 +27,20 @@
     <string name="error_database_problem">Database error, try it again</string>
     <string name="error_camera_player_null">You must either log in, or enter offline mode!</string>
     <string name="error_camera_no_photo">You have to take a picture!</string>
+    <string name="camera_activity_photos_counter" translatable="false">%1$d%2$s</string>
     <string name="server_address_template" translatable="false">192.168.0.1:4242</string>
     <string name="similarity_is">Similarity is</string>
     <string name="recieved_ohex">Server sent OHExeption:</string>
     <string name="server_communication">Server communication</string>
     <string name="waiting_for_data">Waiting for data…</string>
     <string name="waiting_for_result">Waiting for result…</string>
+    <string name="no_pending_evaluation">No pending evaluation is available.</string>
+    <string name="cannot_save_request">Error when writing data, try it again.</string>
+    <string name="connect_to_server">Please connect to the server, then try to evaluate.</string>
 
     <string name="main_activity_player_title">Hello %1$s, your score is %2$d!</string>
     <string name="main_activity_server_address" translatable="false">%1$s:%2$d</string>
-    <string name="main_activity_timer" translatable="true">Hunt ends in %1$02d:%2$02d:%3$02d</string>
+    <string name="main_activity_timer">Hunt ends in %1$02d:%2$02d:%3$02d</string>
 
     <string name="north_shortcut">N</string>
     <string name="east_shortcut">E</string>
@@ -91,7 +95,8 @@
     <string name="dialog_store_offline_title">Use offline mode?</string>
     <string name="dialog_store_offline_message">Internet connection not available. You can store the photos now and evaluate them later.</string>
     <string name="dialog_store_offline_yes">Store</string>
-    <string name="dialog_store_offline_no">Back</string>
+    <string name="dialog_store_offline_wait">Back</string>
+    <string name="dialog_store_offline_exit">Exit camera</string>
 
     <string name="executing_task">Counting</string>
     <string name="server_unreachable_error">Server unavailable! Try it again.</string>

@@ -35,7 +35,6 @@ public class Utils {
 
     private static String mAddress = DEFAULT_ADDRESS;
     private static int mPort = DEFAULT_PORT;
-    private static int mTimeout = DEFAULT_TIMEOUT;
 
     /* Matrices for Sobel filter */
     private static final int[][] SOBEL_ROW = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
@@ -164,6 +163,7 @@ public class Utils {
         private OnResponseTaskCompleted mListener;
         private ProgressDialog mProgressDialog;
         private int mCode;
+        private Request mRequest;
 
 
         /**
@@ -193,7 +193,8 @@ public class Utils {
         @Override
         protected Response doInBackground(Request... params) {
             try {
-                return getServerResponse(params[0]);
+                mRequest = params[0];
+                return getServerResponse(mRequest);
             } catch (OHException e) {
                 ohException = e;
                 return null;
@@ -202,7 +203,7 @@ public class Utils {
 
         protected void onPostExecute(Response response) {
             if (mListener != null) {
-                mListener.onResponseTaskCompleted(response, ohException, mCode);
+                mListener.onResponseTaskCompleted(mRequest, response, ohException, mCode);
             }
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
@@ -211,7 +212,7 @@ public class Utils {
     }
 
     public interface OnResponseTaskCompleted {
-        void onResponseTaskCompleted(Response response, OHException ohex, int code);
+        void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code);
     }
 
     public static ProgressDialog getStandardDialog(Context context, String title, String message) {
@@ -238,6 +239,7 @@ public class Utils {
         Socket server = null;
         try {
             server = new Socket();
+            int mTimeout = DEFAULT_TIMEOUT;
             server.connect(new InetSocketAddress(mAddress, mPort), mTimeout);
             ObjectOutputStream oos = null;
             ObjectInputStream ois = null;

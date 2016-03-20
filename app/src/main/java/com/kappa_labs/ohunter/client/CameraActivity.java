@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.client;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +12,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
@@ -28,7 +28,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -37,8 +36,6 @@ import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.io.ByteArrayOutputStream;
-
-import layout.HuntOfferFragment;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -52,14 +49,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public static final int DEFAULT_NUM_ATTEMPTS = 3;
     public static final int DEFAULT_MIN_ATTEMPTS = 1;
 
-    public static final String PHOTOS_TAKEN_KEY = "PHOTOS_TAKEN_KEY";
-    public static final String PHOTOS_EVALUATED_KEY = "PHOTOS_EVALUATED_KEY";
+    public static final String PHOTOS_TAKEN_KEY = "photos_taken";
+    public static final String PHOTOS_EVALUATED_KEY = "photos_evaluated";
 
     private ImageView templateImageView;
-    private SeekBar opacitySeekBar;
-    private SeekBar colorSeekBar;
     private Button shootButton;
-    private Button rotateLeftButton, rotateRightButton;
     private TextView numberOfPhotosTextview;
     private TextView scoreTextview;
     private ImageView lastPhotoImageview;
@@ -68,6 +62,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     private FrameLayout limiterTop, limiterLeft, limiterBottom, limiterRight;
 
     private static Bitmap referenceImage, edgesImage;
+    private static String placeID;
 
     private int numberOfAttempts = 0;
     private int vLimit, hLimit;
@@ -90,7 +85,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         limiterRight = (FrameLayout) findViewById(R.id.limiter_right);
 
         numberOfPhotosTextview = (TextView) findViewById(R.id.textView_numberOfPhotos);
-        numberOfPhotosTextview.setText(DEFAULT_NUM_ATTEMPTS + getString(R.string.number_sign));
+        numberOfPhotosTextview.setText(
+                String.format(getResources().getString(R.string.camera_activity_photos_counter),
+                DEFAULT_NUM_ATTEMPTS, getString(R.string.number_sign)));
 
         scoreTextview = (TextView) findViewById(R.id.textView_score);
         scoreTextview.setVisibility(View.GONE);
@@ -103,7 +100,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
         });
 
-        rotateLeftButton = (Button) findViewById(R.id.button_rotateLeft);
+        Button rotateLeftButton = (Button) findViewById(R.id.button_rotateLeft);
         rotateLeftButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -124,7 +121,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
         });
 
-        rotateRightButton = (Button) findViewById(R.id.button_rotateRight);
+        Button rotateRightButton = (Button) findViewById(R.id.button_rotateRight);
         rotateRightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -145,7 +142,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
         });
 
-        opacitySeekBar = (SeekBar) findViewById(R.id.seekBar_opacity);
+        SeekBar opacitySeekBar = (SeekBar) findViewById(R.id.seekBar_opacity);
         opacitySeekBar.setProgress(DEFAULT_ALPHA);
         opacitySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -154,13 +151,15 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { }
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) { }
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
         });
 
-        colorSeekBar = (SeekBar) findViewById(R.id.seekBar_color);
+        SeekBar colorSeekBar = (SeekBar) findViewById(R.id.seekBar_color);
         colorSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -168,14 +167,16 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                     return;
                 }
                 changeBitmapColor(edgesImage, templateImageView,
-                        Color.HSVToColor(new float[]{(float)progress / seekBar.getMax() * 360, 1, 1}));
+                        Color.HSVToColor(new float[]{(float) progress / seekBar.getMax() * 360, 1, 1}));
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { }
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) { }
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
         });
 
         uploadFab = (FloatingActionButton) findViewById(R.id.fab_upload);
@@ -184,9 +185,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             @Override
             public void onClick(View v) {
                 //TODO: pripojeni k serveru, odeslani dat - pripadne offline ulozeni
-                if (CameraOverlay.mBitmap != null) {
-                    serverCommunication();
-                }
+                serverCommunication();
             }
         });
 
@@ -233,59 +232,58 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         return c;
     }
 
-    private void serverCommunication() {
+    private Request makeCompareRequest() {
         Player player = SharedDataManager.getPlayer(this);
         if (player == null) {
             Log.e(TAG, "serverCommunication(): Player is null in CameraActivity!");
             Toast.makeText(this, getString(R.string.error_camera_player_null), Toast.LENGTH_SHORT).show();
-            return;
+            return null;
         }
 
-        Bitmap b;
-        /* First photo */
-        b = referenceImage;
+        /* Reference photo */
+        Bitmap b = referenceImage;
         Photo photo1 = new Photo();
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo1.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
-        /* Second photo */
-        b = getCroppedCameraPicture();
-        if (b == null) {
-            Log.e(TAG, "Cannot get the cropped picture from camera!");
+        /* Similar photos should be stored by now */
+        Photo[] similar = SharedDataManager.getPhotosOfPlace(this, placeID);
+        if (similar.length == 0) {
+            Log.e(TAG, "Making request, but no photo is stored/prepared!");
             Toast.makeText(this, getString(R.string.error_camera_no_photo), Toast.LENGTH_SHORT).show();
-            return;
         }
-        Photo photo2 = new Photo();
-        stream = new ByteArrayOutputStream();
-        b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        photo2.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
 
-        Request request = new CompareRequest(player, photo1, photo2);
+        return new CompareRequest(player, photo1, similar);
+    }
 
-        /* Asynchronously execute and wait for callback when result ready*/
-        Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
-        responseTask.execute(request);
+    private void serverCommunication() {
+        Request request = SharedDataManager.getCompareRequestForPlace(this, placeID);
+        if (request == null) {
+            request = makeCompareRequest();
+        }
+        if (request != null) {
+            /* Asynchronously execute and wait for callback when result ready*/
+            Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                    new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
+            responseTask.execute(request);
+        }
     }
 
     @Override
-    public void onResponseTaskCompleted(Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(CameraActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
                     Toast.LENGTH_SHORT).show();
             Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
-            return;
         }
         /* Problem on client side */
         if (response == null) {
             Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
             Toast.makeText(CameraActivity.this, getString(R.string.server_unreachable_error),
                     Toast.LENGTH_SHORT).show();
-            //TODO: zobrazovani dialogu s nabidkou offline + pripadne uzamceni mista
-            StoreOfflineDialogFragment dialogFragment = new StoreOfflineDialogFragment();
-            dialogFragment.show(getSupportFragmentManager(), null);
+            makeOfflineStoreDialog(request);
             return;
         }
         /* Success */
@@ -295,6 +293,39 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         scoreTextview.setText(String.format("%.1f%%", response.similarity * 100));
         scoreTextview.setVisibility(View.VISIBLE);
         photosEvaluated = true;
+    }
+
+    private void makeOfflineStoreDialog(final Request request) {
+        StoreOfflineDialogFragment dialogFragment = new StoreOfflineDialogFragment();
+        dialogFragment.setListener(new NoticeDialogListener() {
+            @Override
+            public void onDialogStoreOfflineClick() {
+                    /* Store the photos for later use */
+                if (SharedDataManager.setCompareRequestForPlace(CameraActivity.this, request, placeID)) {
+                    SharedDataManager.clearPhotosOfPlace(CameraActivity.this, placeID);
+                    finish();
+                } else {
+                    Log.e(TAG, "cannot write the compare request");
+                    Toast.makeText(CameraActivity.this,
+                            getString(R.string.cannot_save_request), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onDialogExitClick() {
+                photosTaken = false;
+                photosEvaluated = false;
+                finish();
+            }
+
+            @Override
+            public void onDialogWaitClick() {
+                /* User should turn on mobile data of Wifi now */
+                Toast.makeText(CameraActivity.this, getString(R.string.connect_to_server),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        dialogFragment.show(getSupportFragmentManager(), null);
     }
 
     @Override
@@ -361,14 +392,23 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     @Override
     public void onImageReady() {
-        /* Store the photo */
-        //TODO
-        String activatedID = HuntOfferFragment.getActivatedTargetPlaceID();
-        SharedDataManager.addBitmapToPlace(this, activatedID, CameraOverlay.mBitmap);
+        /* Store the new photo */
+        Bitmap picture = getCroppedCameraPicture();
+        if (picture == null) {
+            return;
+        }
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        picture.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        Photo photo = new Photo();
+        photo.sImage = new SImage(stream.toByteArray(), picture.getWidth(), picture.getHeight());
+        SharedDataManager.addPhotoOfPlace(this, placeID, photo, ((Long) System.currentTimeMillis()).toString());
+
         /* Update UI information */
         lastPhotoImageview.setImageBitmap(CameraOverlay.mBitmap);
         ++numberOfAttempts;
-        numberOfPhotosTextview.setText((DEFAULT_NUM_ATTEMPTS - numberOfAttempts) + getString(R.string.number_sign));
+        numberOfPhotosTextview.setText(
+                String.format(getResources().getString(R.string.camera_activity_photos_counter),
+                        (DEFAULT_NUM_ATTEMPTS - numberOfAttempts), getString(R.string.number_sign)));
         if (numberOfAttempts >= DEFAULT_MIN_ATTEMPTS) {
             // TODO: zobrazovat fab uz tady?
             photosTaken = true;
@@ -400,6 +440,16 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     @Override
+    public void onBackPressed() {
+        // TODO: 20.3.16 mozna sem pridat vice ruznych dialogu informujicich o tom, co mel hrac provest
+        if (photosTaken && !photosEvaluated) {
+            makeOfflineStoreDialog(makeCompareRequest());
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void finish() {
         Intent data = new Intent();
         data.putExtra(PHOTOS_TAKEN_KEY, photosTaken);
@@ -419,7 +469,19 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         }
     }
 
-    public static void setTemplateImage(Bitmap templateImage) {
+    /**
+     * Initializes the background template/reference image and Place ID of the place,
+     * that will be photographed. Should be called before starting this activity.
+     *
+     * @param templateImage Background template image (will be converted to show edges).
+     * @param placeID Place ID of the target, that is being photographed.
+     */
+    public static void init(Bitmap templateImage, String placeID) {
+        setTemplateImage(templateImage);
+        CameraActivity.placeID = placeID;
+    }
+
+    private static void setTemplateImage(Bitmap templateImage) {
         if (referenceImage != null) {
             referenceImage.recycle();
         }
@@ -440,33 +502,55 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     public static class StoreOfflineDialogFragment extends DialogFragment {
 
-//        private Context mContext;
-//
-//
-//        public StoreOfflineDialogFragment(Context context) {
-//            mContext = context;
+        private NoticeDialogListener mListener;
+
+
+//        public StoreOfflineDialogFragment(NoticeDialogListener mListener) {
+//            this.mListener = mListener;
 //        }
 
+        public void setListener(NoticeDialogListener mListener) {
+            this.mListener = mListener;
+        }
+
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(R.string.dialog_store_offline_title)
                     .setMessage(R.string.dialog_store_offline_message)
                     .setPositiveButton(R.string.dialog_store_offline_yes, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            /* Store the photos for later use */
-//                            SharedDataManager.getActivePlace(mContext);
+                            if (mListener != null) {
+                                mListener.onDialogStoreOfflineClick();
+                            }
                         }
                     })
-                    .setNegativeButton(R.string.dialog_store_offline_no, new DialogInterface.OnClickListener() {
+                    .setNeutralButton(R.string.dialog_store_offline_wait, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (mListener != null) {
+                                mListener.onDialogWaitClick();
+                            }
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_store_offline_exit, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                        /* User should turn on mobile data of Wifi now */
+                            if (mListener != null) {
+                                mListener.onDialogExitClick();
+                            }
                         }
                     });
-            // Create the AlertDialog object and return it
+            /* Create the AlertDialog object and return it */
             return builder.create();
         }
+
+    }
+
+    private interface NoticeDialogListener {
+        void onDialogStoreOfflineClick();
+        void onDialogExitClick();
+        void onDialogWaitClick();
     }
 
 }
