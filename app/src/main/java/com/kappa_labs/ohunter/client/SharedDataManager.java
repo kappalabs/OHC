@@ -430,7 +430,7 @@ public class SharedDataManager {
     public static boolean setCompareRequestForPlace(Context context, Request request, String placeID) {
         boolean isOk = writeObject(context, request, COMPARE_REQUEST_FILENAME, getDirectoryForPlace(placeID));
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
-        requests.add(getDirectoryForPlace(placeID));
+        requests.add(placeID);
         getSharedPreferences(context).edit().putStringSet(REQUESTS_SET_KEY, requests).apply();
 
         return isOk;
@@ -462,19 +462,18 @@ public class SharedDataManager {
         removeObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForPlace(placeID));
         /* Remove the request from list of all pending requests */
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
-        requests.remove(getDirectoryForPlace(placeID));
+        requests.remove(placeID);
         getSharedPreferences(context).edit().putStringSet(REQUESTS_SET_KEY, requests).apply();
     }
 
     /**
-     * Finds out if any compare request is available and has not been sent.
+     * Returns place IDs of places with pending compare requests for current hunt.
      *
      * @param context Context of the caller.
-     * @return True if some request is available, false if not.
+     * @return Place IDs of places with pending compare requests for current hunt.
      */
-    public static boolean hasPendingCompareRequests(Context context) {
-        Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
-        return !requests.isEmpty();
+    public static Set<String> getPendingCompareRequestsIDs(Context context) {
+        return getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
     }
 
     /**

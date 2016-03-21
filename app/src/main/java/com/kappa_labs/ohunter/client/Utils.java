@@ -162,7 +162,7 @@ public class Utils {
         private OHException ohException;
         private OnResponseTaskCompleted mListener;
         private ProgressDialog mProgressDialog;
-        private int mCode;
+        private Object mData;
         private Request mRequest;
 
 
@@ -182,12 +182,12 @@ public class Utils {
          *
          * @param caller The caller, that will be notified, can be null.
          * @param progressDialog Reference to dialog, which will be closed after this task.
-         * @param code Code to identify this task.
+         * @param data Data object that will be returned on callback, when this task is completed.
          */
-        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog, int code) {
+        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog, Object data) {
             this.mListener = caller;
             this.mProgressDialog = progressDialog;
-            this.mCode = code;
+            this.mData = data;
         }
 
         @Override
@@ -203,7 +203,7 @@ public class Utils {
 
         protected void onPostExecute(Response response) {
             if (mListener != null) {
-                mListener.onResponseTaskCompleted(mRequest, response, ohException, mCode);
+                mListener.onResponseTaskCompleted(mRequest, response, ohException, mData);
             }
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
@@ -212,7 +212,7 @@ public class Utils {
     }
 
     public interface OnResponseTaskCompleted {
-        void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code);
+        void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data);
     }
 
     public static ProgressDialog getStandardDialog(Context context, String title, String message) {

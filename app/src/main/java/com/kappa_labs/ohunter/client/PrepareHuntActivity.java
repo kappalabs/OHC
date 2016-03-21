@@ -213,7 +213,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     }
 
     @Override
-    public void onResponseTaskCompleted(Request _, Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request _request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -233,7 +233,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         if (response.places != null) {
             Collections.addAll(places, response.places);
         }
-        if (code == RADAR_SEARCH_KEY) {
+        if (data instanceof Integer && (Integer) data == RADAR_SEARCH_KEY) {
             Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
             List<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {

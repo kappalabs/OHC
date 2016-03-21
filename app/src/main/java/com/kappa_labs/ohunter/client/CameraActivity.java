@@ -271,7 +271,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     @Override
-    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object _data) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(CameraActivity.this, getString(R.string.recieved_ohex) + " " + ohex,

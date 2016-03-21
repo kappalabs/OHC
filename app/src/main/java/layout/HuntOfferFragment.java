@@ -22,7 +22,10 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -40,6 +43,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static OnFragmentInteractionListener mListener;
 
     private static List<Target> targets = new ArrayList<>();
+//    private static Map<String, Target> targets = new HashMap<>();
     private static TileAdapter mAdapter;
 
     private ProgressBar fetchingProgressBar;
@@ -363,15 +367,30 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Finds target with given place ID.
+     *
+     * @param placeID Place ID of the target.
+     * @return The target with given place ID, null if does not exist.
+     */
+    private static Target getTargetByID(String placeID) {
+        for (Target target : targets) {
+            if (Objects.equals(target.getPlaceID(), placeID)) {
+                return target;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Tries to change the state of currently selected target. Returns true on success, false on fail.
      * Does nothing on fail.
      *
+     * @param target The target, whose state will be changed.
      * @param state The new state to set.
      * @return True on success, false on fail.
      */
-    public static boolean restateSelectedTarget(Target.TargetState state) {
+    private static boolean restateTarget(Target target, Target.TargetState state) {
         boolean isOk;
-        Target target = getSelectedTarget();
         isOk = target != null && target.changeState(state);
         /* Activating one target deactivates the others */
         if (isOk && state == Target.TargetState.ACTIVATED) {
@@ -390,6 +409,29 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         }
 
         return isOk;
+    }
+
+    /**
+     * Tries to change the state of a target specified by given place ID. Returns true on success, false on fail.
+     * Does nothing on fail.
+     *
+     * @param placeID The place ID of a target, whose state will be changed.
+     * @param state The new state to set.
+     * @return True on success, false on fail.
+     */
+    public static boolean restateTarget(String placeID, Target.TargetState state) {
+        return restateTarget(getTargetByID(placeID), state);
+    }
+
+    /**
+     * Tries to change the state of currently selected target. Returns true on success, false on fail.
+     * Does nothing on fail.
+     *
+     * @param state The new state to set.
+     * @return True on success, false on fail.
+     */
+    public static boolean restateSelectedTarget(Target.TargetState state) {
+        return restateTarget(getSelectedTarget(), state);
     }
 
     /**

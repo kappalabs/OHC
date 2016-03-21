@@ -112,7 +112,7 @@ public class PlacesManager {
             Utils.RetrieveResponseTask responseTask =
                     Utils.getInstance().new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
                         @Override
-                        public void onResponseTaskCompleted(Request _, Response response, OHException ohex, int code) {
+                        public void onResponseTaskCompleted(Request _request, Response response, OHException ohex, Object _data) {
                             if (ohex == null && response != null && response.places != null && response.places.length > 0) {
                                 /* Save the result locally */
                                 SharedDataManager.addPlace(mContext, response.places[0]);

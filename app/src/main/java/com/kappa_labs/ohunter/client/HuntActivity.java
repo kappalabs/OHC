@@ -35,6 +35,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import layout.HuntActionFragment;
 import layout.HuntOfferFragment;
@@ -237,9 +238,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             @Override
             public void onClick(View v) {
                 if (HuntOfferFragment.hasSelectedTarget()) {
-                    /* Send only this one for evaluation */
+                    String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
+                    /* Send only selected target for evaluation */
                     Request request = SharedDataManager.getCompareRequestForPlace(
-                            HuntActivity.this, HuntOfferFragment.getSelectedTargetPlaceID());
+                            HuntActivity.this, selectedID);
                     if (request == null) {
                         Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
                         return;
@@ -247,14 +249,18 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     /* Asynchronously execute and wait for callback when result ready*/
                     Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                             new RetrieveResponseTask(HuntActivity.this,
-                            Utils.getServerCommunicationDialog(HuntActivity.this));
+                            Utils.getServerCommunicationDialog(HuntActivity.this), selectedID);
                     responseTask.execute(request);
                 } else {
                     /* Send all pending compare requests for evaluation */
-                    if (SharedDataManager.hasPendingCompareRequests(HuntActivity.this)) {
-                        // TODO: 20.3.16 odeslani na server
-                        Toast.makeText(HuntActivity.this, "TODO: ohodnocuji vsechny vyfocene...",
-                                Toast.LENGTH_SHORT).show();
+                    Set<String> ids = SharedDataManager.getPendingCompareRequestsIDs(HuntActivity.this);
+                    if (!ids.isEmpty()) {
+                        for (String id : ids) {
+                            Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, id);
+                            Utils.RetrieveResponseTask responseTask = Utils.getInstance().new RetrieveResponseTask(HuntActivity.this,
+                                    Utils.getServerCommunicationDialog(HuntActivity.this), id);
+                            responseTask.execute(request);
+                        }
                     } else {
                         Toast.makeText(HuntActivity.this, getString(R.string.no_pending_evaluation),
                                 Toast.LENGTH_SHORT).show();
@@ -527,7 +533,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     }
 
     @Override
-    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(HuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
@@ -545,9 +551,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         Toast.makeText(HuntActivity.this,
                 getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
         Log.d(TAG, "response similarity: " + response.similarity);
-        SharedDataManager.removeCompareRequestForPlace(this, HuntOfferFragment.getSelectedTargetPlaceID());
-        // TODO: 20.3.16 nemusi, a casto se nejedna o prave vybrany cil (lze ulozit do requestu)...
-        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
+        if (data instanceof String) {
+            String placeID = (String) data;
+            SharedDataManager.removeCompareRequestForPlace(this, placeID);
+            HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
+        }
     }
 
     /**

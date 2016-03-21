@@ -240,7 +240,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
     }
 
     @Override
-    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, int code) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object _data) {
         mAuthTask = null;
 
         /* Handle the error */
