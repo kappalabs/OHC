@@ -63,6 +63,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private static Bitmap referenceImage, edgesImage;
     private static String placeID;
+    private static String photoReference;
 
     private int numberOfAttempts = 0;
     private int vLimit, hLimit;
@@ -246,6 +247,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo1.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
+        photo1.reference = photoReference;
 
         /* Similar photos should be stored by now */
         Photo[] similar = SharedDataManager.getPhotosOfPlace(this, placeID);
@@ -476,9 +478,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      * @param templateImage Background template image (will be converted to show edges).
      * @param placeID Place ID of the target, that is being photographed.
      */
-    public static void init(Bitmap templateImage, String placeID) {
+    public static void init(Bitmap templateImage, String placeID, String photoReference) {
         setTemplateImage(templateImage);
         CameraActivity.placeID = placeID;
+        CameraActivity.photoReference = photoReference;
     }
 
     private static void setTemplateImage(Bitmap templateImage) {

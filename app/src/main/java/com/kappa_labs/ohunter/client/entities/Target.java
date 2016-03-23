@@ -390,14 +390,14 @@ public class Target implements Serializable, Comparable<Target> {
         return mState;
     }
 
-//    /**
-//     * Sets the state of this target.
-//     *
-//     * @param state The state to be set.
-//     */
-//    public void setState(TargetState state) {
-//        this.mState = state;
-//    }
+    /**
+     * Sets the state of this target without checking the automaton.
+     *
+     * @param state The state to be set.
+     */
+    public void setState(TargetState state) {
+        this.mState = state;
+    }
 
     /**
      * Gets the current state of rotation for connected target tile.

@@ -29,6 +29,9 @@ import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.CompareRequest;
+import com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest;
+import com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.text.DateFormat;
@@ -133,7 +136,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.REJECTED);
+                /* Send information about the rejected target into the database on server */
+                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
+                Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                        new RetrieveResponseTask(HuntActivity.this,
+                        Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
+                responseTask.execute(
+                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this), placeID, 5));
             }
         });
 
@@ -210,12 +219,18 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 }
                 /* Start camera activity with the template bitmap on background */
                 // TODO: 20.3.16 nemusi jit vzdy o zrovna oznacene misto (je to vsak lepsi nez aktivovane)
-                CameraActivity.init(templateBitmap, HuntOfferFragment.getSelectedTargetPlaceID());
+                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
+                int photoIndex = HuntPlaceFragment.getSelectedPhotoIndex();
+                Place p = PlacesManager.getPlace(HuntActivity.this, placeID);
+                if (p == null || photoIndex < 0 || photoIndex >= p.getNumberOfPhotos() || p.getPhoto(photoIndex) == null) {
+                    Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                CameraActivity.init(templateBitmap, placeID, p.getPhoto(photoIndex).reference);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
 
-                /* Change state of this target */
                 // TODO: 19.3.16 zadna zmena stavu tu ve finale nebude, pouze debug
                 HuntOfferFragment.restateSelectedTarget(Target.TargetState.PHOTOGENIC);
             }
@@ -246,7 +261,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
                         return;
                     }
-                    /* Asynchronously execute and wait for callback when result ready*/
+                    /* Asynchronously execute and wait for callback when result ready */
                     Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                             new RetrieveResponseTask(HuntActivity.this,
                             Utils.getServerCommunicationDialog(HuntActivity.this), selectedID);
@@ -257,6 +272,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     if (!ids.isEmpty()) {
                         for (String id : ids) {
                             Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, id);
+                            if (request == null) {
+                                Log.e(TAG, "Request for place " + id + " is no available, skipping...");
+                                continue;
+                            }
                             Utils.RetrieveResponseTask responseTask = Utils.getInstance().new RetrieveResponseTask(HuntActivity.this,
                                     Utils.getServerCommunicationDialog(HuntActivity.this), id);
                             responseTask.execute(request);
@@ -536,25 +555,53 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
-            Toast.makeText(HuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
-                    Toast.LENGTH_SHORT).show();
+            if (ohex.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
+                Toast.makeText(HuntActivity.this, getString(R.string.ohex_serialization),
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(HuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
+                        Toast.LENGTH_SHORT).show();
+            }
             Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            return;
         }
         /* Problem on client side */
         if (response == null) {
-            Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
+            Log.e(TAG, "Problem on client side");
             Toast.makeText(HuntActivity.this, getString(R.string.server_unreachable_error),
                     Toast.LENGTH_SHORT).show();
             return;
         }
         /* Success */
-        Toast.makeText(HuntActivity.this,
-                getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "response similarity: " + response.similarity);
-        if (data instanceof String) {
+        if (data instanceof String && request instanceof CompareRequest) {
+            /* Request to evaluate similarity successfully finished */
+            String placeID = (String) data;
+            String photoReference = ((CompareRequest) request).getReferencePhoto().reference;
+
+            Toast.makeText(HuntActivity.this,
+                    getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "response similarity: " + response.similarity);
+
+            /* Now send information about the completed target into the database on server */
+            Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                    new RetrieveResponseTask(HuntActivity.this,
+                    Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
+            responseTask.execute(
+                    new CompletePlaceRequest(SharedDataManager.getPlayer(this), placeID, photoReference, 20));
+            // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
+            Log.d(TAG, "Byla spocitana podobnost mista " + placeID);
+        } else if (data instanceof String && request instanceof  CompletePlaceRequest) {
+            /* Request to complete the evaluated target successfully finished (stored in database) */
             String placeID = (String) data;
             SharedDataManager.removeCompareRequestForPlace(this, placeID);
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
+            SharedDataManager.setPlayer(this, response.player);
+            Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
+        } else if (data instanceof String && request instanceof RejectPlaceRequest) {
+            String placeID = (String) data;
+            HuntOfferFragment.restateTarget(placeID, Target.TargetState.REJECTED);
+            SharedDataManager.setPlayer(this, response.player);
+            Log.d(TAG, "Do databaze bylo zapsano zamitnuti mista " + placeID);
         }
     }
 

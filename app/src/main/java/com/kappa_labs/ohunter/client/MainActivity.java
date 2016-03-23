@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
                 Bitmap b = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
                 b_.recycle();
-                CameraActivity.init(b, "testPlaceID");
+                CameraActivity.init(b, "testPlaceID", "testPlaceReference");
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, CameraActivity.class);
                 startActivity(i);

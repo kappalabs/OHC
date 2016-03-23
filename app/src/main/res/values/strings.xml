@@ -30,13 +30,15 @@
     <string name="camera_activity_photos_counter" translatable="false">%1$d%2$s</string>
     <string name="server_address_template" translatable="false">192.168.0.1:4242</string>
     <string name="similarity_is">Similarity is</string>
-    <string name="recieved_ohex">Server sent OHExeption:</string>
     <string name="server_communication">Server communication</string>
     <string name="waiting_for_data">Waiting for data…</string>
     <string name="waiting_for_result">Waiting for result…</string>
     <string name="no_pending_evaluation">No pending evaluation is available.</string>
     <string name="cannot_save_request">Error when writing data, try it again.</string>
     <string name="connect_to_server">Please connect to the server, then try to evaluate.</string>
+
+    <string name="ohex_general">Server sent OHExeption:</string>
+    <string name="ohex_serialization">You are using incompatible version, update your client</string>
 
     <string name="main_activity_player_title">Hello %1$s, your score is %2$d!</string>
     <string name="main_activity_server_address" translatable="false">%1$s:%2$d</string>

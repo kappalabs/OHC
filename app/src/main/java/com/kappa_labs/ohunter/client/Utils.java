@@ -129,10 +129,16 @@ public class Utils {
     public class BitmapWorkerTask extends AsyncTask<SImage, Void, Bitmap> {
 
         private OnBitmapReady mListener;
+        private Object mData;
 
 
         public BitmapWorkerTask(OnBitmapReady caller) {
             this.mListener = caller;
+        }
+
+        public BitmapWorkerTask(OnBitmapReady caller, Object data) {
+            this.mListener = caller;
+            this.mData = data;
         }
 
         @Override
@@ -148,13 +154,13 @@ public class Utils {
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             if (mListener != null) {
-                mListener.onBitmapReady(bitmap);
+                mListener.onBitmapReady(bitmap, mData);
             }
         }
     }
 
     public interface OnBitmapReady {
-        void onBitmapReady(Bitmap bitmap);
+        void onBitmapReady(Bitmap bitmap, Object data);
     }
 
     class RetrieveResponseTask extends AsyncTask<Request, Void, Response> {

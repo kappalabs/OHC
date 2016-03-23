@@ -44,8 +44,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     private static List<PlaceInfo> infoList;
     private static double maxHeightRatio;
     private static boolean dataInvalidated = true;
-
-    private int selectedPhotoIndex;
+    private static int selectedPhotoIndex;
 
     private LinearLayout mInfoContainerView;
     private SeekBar mPhotoSeekBar;
@@ -166,6 +165,15 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Gets the index of currently selected image.
+     *
+     * @return The index of currently selected image.
+     */
+    public static int getSelectedPhotoIndex() {
+        return selectedPhotoIndex;
+    }
+
+    /**
      * Update information on this fragment if it's invalidated (i.e. after calling changePlace()).
      */
     public void update() {
@@ -261,13 +269,15 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             /* Initialize data for photos */
             for (int i = 0; i < numberOfPhotos; i++) {
                 Photo photo = place.getPhoto(i);
-                final int finalI = i;
                 Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
                     @Override
-                    public void onBitmapReady(Bitmap bitmap) {
-                        photoBitmaps[finalI] = bitmap;
+                    public void onBitmapReady(Bitmap bitmap, Object data) {
+                        if (data instanceof BitmapReferencer) {
+                            BitmapReferencer referencer = (BitmapReferencer) data;
+                            referencer.bitmaps[referencer.index] = bitmap;
+                        }
                     }
-                });
+                }, new BitmapReferencer(photoBitmaps, i));
                 //TODO: proc je tady nekdy photo.simage null? - souvisi to s paralelnimi vlakny
                 bitmapTask.execute(photo.sImage);
                 daytimeTexts[i] = Utils.daytimeToString(context, photo.daytime);
@@ -289,6 +299,16 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             Collections.sort(infoList);
 
             dataInvalidated = true;
+        }
+    }
+
+    private static class BitmapReferencer {
+        public Bitmap[] bitmaps;
+        public int index;
+
+        public BitmapReferencer(Bitmap[] bitmaps, int index) {
+            this.bitmaps = bitmaps;
+            this.index = index;
         }
     }
 

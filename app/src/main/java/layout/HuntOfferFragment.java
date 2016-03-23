@@ -22,9 +22,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
@@ -188,7 +186,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             public void onPreparationEnded() {
                 fetchingProgressBar.setVisibility(View.GONE);
 
-                /* No place is available */
+                /* No target is available */
                 if (targets.isEmpty()) {
                     //TODO: zobrazit nejakou zpravu pro uzivatele
                     return;
@@ -198,19 +196,18 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 List<Integer> range = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
                     range.add(i);
-//                    targets.get(i).setState(Target.TargetState.DEFERRED);
+                    targets.get(i).setState(Target.TargetState.DEFERRED);
                 }
-                /* Randomly pick green places */
+                /* Randomly pick few targets and accept them */
                 Random random = new Random();
                 int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
                 while (min > 0) {
                     int index = random.nextInt(range.size());
-//                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
-                    targets.get(range.remove(index)).accept();
+                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
                     --min;
                 }
 
-                /* Sort places  */
+                /* Sort targets based on their state  */
                 Collections.sort(targets);
                 mAdapter.notifyDataSetChanged();
 
