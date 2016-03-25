@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import com.kappa_labs.ohunter.client.HuntActivity;
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.PlacesManager;
+import com.kappa_labs.ohunter.client.PointsManager;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.SharedDataManager;
 import com.kappa_labs.ohunter.client.TargetTileView;
@@ -107,7 +108,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                         /* Notify the listener */
                         if (mListener != null) {
-                            mListener.onTargetChanged(tile.getPlace());
+//                            mListener.onTargetChanged(tile.getPlace());
+                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
                             mListener.onItemSelected(tile.getState());
                         }
                     } else {
@@ -142,7 +144,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                         /* Notify the listener and request to show the next page (with place information) */
                         if (mListener != null) {
-                            mListener.onTargetChanged(tile.getPlace());
+//                            mListener.onTargetChanged(tile.getPlace());
+                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
                         }
                     }
                     if (mListener != null) {
@@ -191,6 +194,10 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     //TODO: zobrazit nejakou zpravu pro uzivatele
                     return;
                 }
+
+                /* Remove points from the player for starting a new area (hunt) */
+                PointsManager manager = new PointsManager(getContext());
+                manager.addPoints(-manager.getBeginAreaCost());
 
                 /* Divide given places into two groups (accepted and deferred) */
                 List<Integer> range = new ArrayList<>();
@@ -369,7 +376,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @param placeID Place ID of the target.
      * @return The target with given place ID, null if does not exist.
      */
-    private static Target getTargetByID(String placeID) {
+    public static Target getTargetByID(String placeID) {
         for (Target target : targets) {
             if (Objects.equals(target.getPlaceID(), placeID)) {
                 return target;

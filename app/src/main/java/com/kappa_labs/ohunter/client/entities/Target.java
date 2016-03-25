@@ -126,6 +126,9 @@ public class Target implements Serializable, Comparable<Target> {
     private String placeID;
     private int photoIndex;
     private boolean isPhotoDrawn;
+    private int discoveryGain, similarityGain;
+    private int rejectLoss;
+    private boolean isStateInvalidated;
 
 
     /**
@@ -150,6 +153,7 @@ public class Target implements Serializable, Comparable<Target> {
      * @return True on success, false on fail.
      */
     public boolean changeState(TargetState state) {
+        isStateInvalidated = true;
         switch (state) {
             case PHOTOGENIC:
                 return photogenify();
@@ -415,6 +419,78 @@ public class Target implements Serializable, Comparable<Target> {
      */
     public void setIsRotationDrawn(boolean isRotationDrawn) {
         this.isRotationDrawn = isRotationDrawn;
+    }
+
+    /**
+     * Gets the score/points gain given for discovery of this target.
+     *
+     * @return The score/points gain given for discovery of this target.
+     */
+    public int getDiscoveryGain() {
+        return discoveryGain;
+    }
+
+    /**
+     * Sets the score/points gain given for discovery of this target.
+     *
+     * @param discoveryGain The score/points gain given for discovery of this target.
+     */
+    public void setDiscoveryGain(int discoveryGain) {
+        this.discoveryGain = discoveryGain;
+    }
+
+    /**
+     * Gets the score/points gain given for similarity of a photo of this target.
+     *
+     * @return The score/points gain given for similarity of a photo of this target.
+     */
+    public int getSimilarityGain() {
+        return similarityGain;
+    }
+
+    /**
+     * Sets the score/points gain given for similarity of a photo of this target.
+     *
+     * @param similarityGain The score/points gain given for similarity of a photo of this target.
+     */
+    public void setSimilarityGain(int similarityGain) {
+        this.similarityGain = similarityGain;
+    }
+
+    /**
+     * Gets the score/points decrease caused by rejecting this target.
+     *
+     * @return The score/points decrease caused by rejecting this target.
+     */
+    public int getRejectLoss() {
+        return rejectLoss;
+    }
+
+    /**
+     * Sets the score/points decrease caused by rejecting this target.
+     *
+     * @param rejectLoss The score/points decrease caused by rejecting this target.
+     */
+    public void setRejectLoss(int rejectLoss) {
+        this.rejectLoss = rejectLoss;
+    }
+
+    /**
+     * Gets if the state has been changed and is still invalidated.
+     *
+     * @return True if the state has been changed and is still invalidated, false otherwise.
+     */
+    public boolean isStateInvalidated() {
+        return isStateInvalidated;
+    }
+
+    /**
+     * Sets if the state has been changed and is invalidated.
+     *
+     * @param isStateInvalidated True if the state has been changed and is invalidated, false otherwise.
+     */
+    public void setIsStateInvalidated(boolean isStateInvalidated) {
+        this.isStateInvalidated = isStateInvalidated;
     }
 
 }

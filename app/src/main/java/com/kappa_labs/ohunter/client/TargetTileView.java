@@ -10,26 +10,28 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
+import android.text.Layout;
+import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
-import java.util.Objects;
-
 /**
- * TODO: document your custom view class.
+ * Tile view to show basic information about one target. Shows its state by color, basic information
+ * on the other side of the itself and number of points given/taken for manipulation with its target.
  */
 public class TargetTileView extends View {
 
-    private static final String TAG = "PlaceTileView";
+//    private static final String TAG = "PlaceTileView";
 
     private String nameTitleString = getResources().getString(R.string.name_label);
     private String nameString;
@@ -37,23 +39,23 @@ public class TargetTileView extends View {
     private String addressString;
     private String photosTitleString = getResources().getString(R.string.num_photos_label);
     private String photosString;
+    private String gainString, lossString;
     private Drawable backgroundDrawable;
-    private float textDimension;
-    private float titleTextDimension;
     private int titleTextColor = ContextCompat.getColor(getContext(), R.color.my_primary_text);
     private int textColor = ContextCompat.getColor(getContext(), R.color.my_secondary_text);
 
     private TextPaint mTextPaint, mTitleTextPaint;
-    private float nameTextWidth, addressTextWidth, photosTextWidth;
-    private float nameTextHeight, addressTextHeight, photosTextHeight;
-    private float nameTitleWidth, addressTitleWidth, photosTitleWidth;
-    private float nameTitleHeight, addressTitleHeight, photosTitleHeight;
+    private TextPaint mGainTextPaint, mGainBackgroundPaint, mLossTextPaint, mLossBackgroundPaint;
+    private float gainTextHeight, lossTextHeight;
+    private StaticLayout nameTitleLayout, nameTextLayout;
+    private StaticLayout addressTitleLayout, addressTextLayout;
+    private StaticLayout photosTitleLayout, photosTextLayout;
+    private float verticalGap = dpToPx(5);
+    private boolean showAddress = true;
 
     private Paint mPaint = new Paint();
     private Path mPath = new Path();
 
-    // TODO: totok MP pujde do LRU cache, nacist ho jiz umime z lokalu
-    private Place mPlace;
     private Target mTarget;
 
 
@@ -67,44 +69,69 @@ public class TargetTileView extends View {
         nameString = "name";
         addressString = "address";
         photosString = "#";
+        gainString = lossString = "";
         backgroundDrawable = null;
-        textDimension = 22;
-        titleTextDimension = 25;
+        float textDimension = 24;
+        float titleTextDimension = 27;
+        float scoreTextDimension = 150;
+        int outlineWidth = 8;
 
         /* Set up a default TextPaint object */
         mTextPaint = new TextPaint();
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setTextAlign(Paint.Align.LEFT);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        mTextPaint.setTextSize(textDimension);
+        mTextPaint.setColor(textColor);
         mTitleTextPaint = new TextPaint();
         mTitleTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        mTitleTextPaint.setTextAlign(Paint.Align.LEFT);
-
-        /* Prepare metrics for titles */
+        mTitleTextPaint.setTextAlign(Paint.Align.CENTER);
         mTitleTextPaint.setTextSize(titleTextDimension);
         mTitleTextPaint.setColor(titleTextColor);
-        Paint.FontMetrics fontMetrics = mTitleTextPaint.getFontMetrics();
-        nameTitleWidth = mTitleTextPaint.measureText(nameTitleString);
-        nameTitleHeight = fontMetrics.bottom;
-        addressTitleWidth = mTitleTextPaint.measureText(addressTitleString);
-        addressTitleHeight = fontMetrics.bottom;
-        photosTitleWidth = mTitleTextPaint.measureText(photosTitleString);
-        photosTitleHeight = fontMetrics.bottom;
+        mGainTextPaint = new TextPaint();
+        mGainTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mGainTextPaint.setTextAlign(Paint.Align.CENTER);
+        mGainTextPaint.setColor(ContextCompat.getColor(getContext(), R.color.state_completed));
+        mGainTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mGainTextPaint.setTextSize(scoreTextDimension);
+        mGainBackgroundPaint = new TextPaint();
+        mGainBackgroundPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mGainBackgroundPaint.setTextAlign(Paint.Align.CENTER);
+        mGainBackgroundPaint.setColor(Color.WHITE);
+        mGainBackgroundPaint.setTextSize(scoreTextDimension);
+        mGainBackgroundPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mGainBackgroundPaint.setStyle(Paint.Style.STROKE);
+        mGainBackgroundPaint.setStrokeWidth(outlineWidth);
+        mLossTextPaint = new TextPaint();
+        mLossTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mLossTextPaint.setTextAlign(Paint.Align.CENTER);
+        mLossTextPaint.setColor(ContextCompat.getColor(getContext(), R.color.state_rejected));
+        mLossTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mLossTextPaint.setTextSize(scoreTextDimension);
+        mLossBackgroundPaint = new TextPaint();
+        mLossBackgroundPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mLossBackgroundPaint.setTextAlign(Paint.Align.CENTER);
+        mLossBackgroundPaint.setColor(Color.WHITE);
+        mLossBackgroundPaint.setTextSize(scoreTextDimension);
+        mLossBackgroundPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mLossBackgroundPaint.setStyle(Paint.Style.STROKE);
+        mLossBackgroundPaint.setStrokeWidth(outlineWidth);
 
         /* Update TextPaint and text measurements from attributes */
         invalidateTextPaintAndMeasurements();
     }
 
     private void invalidateTextPaintAndMeasurements() {
-        mTextPaint.setTextSize(textDimension);
-        mTextPaint.setColor(textColor);
-        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
+        int wid = (int) (getWidth() * 0.9);
+        nameTitleLayout = new StaticLayout(nameTitleString, mTitleTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        nameTextLayout = new StaticLayout(nameString, mTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        addressTitleLayout = new StaticLayout(addressTitleString, mTitleTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        addressTextLayout = new StaticLayout(addressString, mTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        photosTitleLayout = new StaticLayout(photosTitleString, mTitleTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        photosTextLayout = new StaticLayout(photosString, mTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
 
-        nameTextWidth = mTextPaint.measureText(nameString);
-        nameTextHeight = fontMetrics.bottom;
-        addressTextWidth = mTextPaint.measureText(addressString);
-        addressTextHeight = fontMetrics.bottom;
-        photosTextWidth = mTextPaint.measureText(photosString);
-        photosTextHeight = fontMetrics.bottom;
+        showAddress = nameTitleLayout.getHeight() + nameTextLayout.getHeight() + addressTitleLayout.getHeight()
+                + addressTextLayout.getHeight() + photosTitleLayout.getHeight() + photosTextLayout.getHeight()
+                + 3 * verticalGap <= getHeight() * 0.8f;
     }
 
     @Override
@@ -124,19 +151,38 @@ public class TargetTileView extends View {
             canvas.drawColor(ContextCompat.getColor(getContext(), R.color.white_shadow));
 
             /* Draw the text */
-            float leftGap = getWidth() / 10f;
-            float heightSum = getHeight() / 6f + nameTitleHeight / 2;
-            canvas.drawText(nameTitleString, leftGap, heightSum, mTitleTextPaint);
-            heightSum += nameTitleHeight * 3 + nameTextHeight / 2;
-            canvas.drawText(nameString, leftGap, heightSum, mTextPaint);
-            heightSum += nameTextHeight * 4 + addressTitleHeight / 2;
-            canvas.drawText(addressTitleString, leftGap, heightSum, mTitleTextPaint);
-            heightSum += addressTitleHeight * 3 + addressTextHeight / 2;
-            canvas.drawText(addressString, leftGap, heightSum, mTextPaint);
-            heightSum += addressTextHeight * 4 + photosTitleHeight / 2;
-            canvas.drawText(photosTitleString, leftGap, heightSum, mTitleTextPaint);
-            heightSum += photosTitleHeight * 3 + photosTextHeight / 2;
-            canvas.drawText(photosString, leftGap, heightSum, mTextPaint);
+            canvas.save();
+            canvas.translate(getWidth() / 2, verticalGap);
+            nameTitleLayout.draw(canvas);
+            canvas.translate(0, nameTitleLayout.getHeight());
+            nameTextLayout.draw(canvas);
+
+            if (showAddress) {
+                canvas.translate(0, nameTextLayout.getHeight() + verticalGap);
+                addressTitleLayout.draw(canvas);
+                canvas.translate(0, addressTitleLayout.getHeight());
+                addressTextLayout.draw(canvas);
+            }
+
+            canvas.translate(0, addressTextLayout.getHeight() + verticalGap);
+            photosTitleLayout.draw(canvas);
+            canvas.translate(0, photosTitleLayout.getHeight());
+            photosTextLayout.draw(canvas);
+            canvas.restore();
+        } else {
+            /* Drawings specific to the front side of the tile */
+            switch (mTarget.getState()) {
+                case COMPLETED:
+                    canvas.drawText(gainString, getWidth() / 2, (getHeight() / 2 - gainTextHeight), mGainBackgroundPaint);
+                    canvas.drawText(gainString, getWidth() / 2, (getHeight() / 2 - gainTextHeight), mGainTextPaint);
+                    mTarget.setIsStateInvalidated(false);
+                    break;
+                case REJECTED:
+                    canvas.drawText(lossString, getWidth() / 2, (getHeight() / 2 - lossTextHeight), mLossBackgroundPaint);
+                    canvas.drawText(lossString, getWidth() / 2, (getHeight() / 2 - lossTextHeight), mLossTextPaint);
+                    mTarget.setIsStateInvalidated(false);
+                    break;
+            }
         }
         /* Draw state mark in the corner */
         drawCorner(canvas);
@@ -156,10 +202,7 @@ public class TargetTileView extends View {
         int twoThirds = (int)((double) width / 3 * 2);
 
         int color = stateToColor();
-        float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        hsv[2] *= 0.8f;
-        int darker = Color.HSVToColor(hsv);
+        int darker = darkenColor(color);
 
         /* Draw the triangle in corner */
         mPath.rewind();
@@ -184,6 +227,13 @@ public class TargetTileView extends View {
         mPaint.setColor(darker);
         mPaint.setStyle(Paint.Style.STROKE);
         canvas.drawPath(mPath, mPaint);
+    }
+
+    private int darkenColor(int color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        hsv[2] *= 0.8f;
+        return Color.HSVToColor(hsv);
     }
 
     private void drawFrame(Canvas canvas) {
@@ -225,11 +275,11 @@ public class TargetTileView extends View {
     private int stateToColor() {
         switch (mTarget.getState()) {
             case ACCEPTED:
-                return ContextCompat.getColor(getContext(), R.color.state_green);
+                return ContextCompat.getColor(getContext(), R.color.state_accepted);
             case DEFERRED:
                 return ContextCompat.getColor(getContext(), R.color.state_deferred);
             case REJECTED:
-                return ContextCompat.getColor(getContext(), R.color.state_red);
+                return ContextCompat.getColor(getContext(), R.color.state_rejected);
             case ACTIVATED:
                 return ContextCompat.getColor(getContext(), R.color.state_activated);
             case COMPLETED:
@@ -294,24 +344,75 @@ public class TargetTileView extends View {
                 backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
             }
         }
+        /* Score text needs to know the measurements of this view */
+        if (mTarget.isStateInvalidated()) {
+            getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    try {
+                        updateScore();
+                        invalidate();
+                        return true;
+                    } finally {
+                        getViewTreeObserver().removeOnPreDrawListener(this);
+                    }
+                }
+            });
+        }
         invalidate();
     }
 
-    public void setTarget(Target target) {
-        this.mTarget = target;
+    public void updateScore() {
+        gainString = mTarget.getDiscoveryGain() + "+" + mTarget.getSimilarityGain();
+        lossString = mTarget.getRejectLoss() + "";
+
+        setTextSizeForWidth(mGainTextPaint, getWidth() * .8f, gainString);
+        float minSize = mGainTextPaint.getTextSize();
+        setTextSizeForWidth(mLossTextPaint, getWidth() * .6f, lossString);
+        if (mLossTextPaint.getTextSize() < minSize) {
+            minSize = mLossTextPaint.getTextSize();
+            mGainTextPaint.setTextSize(minSize);
+        }
+        mLossTextPaint.setTextSize(minSize);
+        mGainBackgroundPaint.setTextSize(minSize);
+        mLossBackgroundPaint.setTextSize(minSize);
+
+        gainTextHeight = (mGainTextPaint.descent() + mGainTextPaint.ascent()) / 2;
+        lossTextHeight = (mLossTextPaint.descent() + mLossTextPaint.ascent()) / 2;
     }
 
-    public Place getPlace() {
-        return mPlace;
+    private void setTextSizeForWidth(Paint paint, float desiredSize, String text) {
+        /* Get the bounds of the text, using testTextSize */
+        final float testTextSize = 48f;
+        paint.setTextSize(testTextSize);
+        Rect bounds = new Rect();
+        paint.getTextBounds(text, 0, text.length(), bounds);
+
+        /* Calculate the desired size as a proportion of our testTextSize */
+        float desiredTextSize = Math.min(
+                testTextSize * desiredSize / bounds.width(),
+                testTextSize * desiredSize / bounds.height());
+
+        /* Set the paint for that size */
+        paint.setTextSize(desiredTextSize);
+    }
+
+    /**
+     * Sets the target for this tile view, updates
+     *
+     * @param target The target for this tile view.
+     */
+    public void setTarget(Target target) {
+        this.mTarget = target;
+        mTarget.setIsStateInvalidated(true);
     }
 
     public void setPlace(Place place) {
         /* Change the place only when it's necessary */
-        if (place == null || this.mPlace != null && Objects.equals(this.mPlace.getID(), mTarget.getPlaceID())) {
+        if (place == null) {
             return;
         }
         setPlaceID(place.getID());
-        this.mPlace = place;
         if (place.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
 //            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
 //            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
@@ -333,7 +434,19 @@ public class TargetTileView extends View {
         this.addressString = place.getGField("formatted_address");
         this.photosString = place.getNumberOfPhotos() + "";
 
-        invalidateTextPaintAndMeasurements();
+        /* Texts need to know the measurements of the view */
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                try {
+                    invalidateTextPaintAndMeasurements();
+                    invalidate();
+                    return true;
+                } finally {
+                    getViewTreeObserver().removeOnPreDrawListener(this);
+                }
+            }
+        });
         invalidate();
     }
 
@@ -355,14 +468,8 @@ public class TargetTileView extends View {
                     bitmap.getWidth(), bitmap.getWidth()
             );
         }
-//        bitmap.recycle();
         return new BitmapDrawable(getResources(), cropped);
     }
-
-//    public void setPreview(Drawable preview) {
-//        this.backgroundDrawable = preview;
-//        invalidate();
-//    }
 
     /**
      * Gets the unique place ID string value.

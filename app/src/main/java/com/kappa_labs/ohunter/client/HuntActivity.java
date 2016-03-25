@@ -69,6 +69,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private Location mCurrentLocation;
     private LocationRequest mLocationRequest;
     private String mLastUpdateTime;
+    private PointsManager mPointsManager;
 
     private FloatingActionButton acceptFab, activateFab, deferFab, rejectFab;
     private FloatingActionButton cameraFab, evaluateFab, rotateFab, sortFab;
@@ -91,6 +92,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         /* Create the adapter that will return a fragment for each of the three
            primary sections of the activity */
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        /* Create a manager to control the player's score */
+        mPointsManager = new PointsManager(this);
 
         /* Set up the ViewPager with the sections adapter */
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -136,13 +140,20 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /* Reject only if player has enough points */
+                if (!mPointsManager.canReject()) {
+                    Toast.makeText(HuntActivity.this,
+                            getString(R.string.error_not_enough_points), Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 /* Send information about the rejected target into the database on server */
                 String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
                 Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                         new RetrieveResponseTask(HuntActivity.this,
                         Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
                 responseTask.execute(
-                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this), placeID, 5));
+                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
+                                placeID, mPointsManager.getRejectCost()));
             }
         });
 
@@ -273,7 +284,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         for (String id : ids) {
                             Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, id);
                             if (request == null) {
-                                Log.e(TAG, "Request for place " + id + " is no available, skipping...");
+                                Log.e(TAG, "Request for place " + id + " is not available, skipping...");
                                 continue;
                             }
                             Utils.RetrieveResponseTask responseTask = Utils.getInstance().new RetrieveResponseTask(HuntActivity.this,
@@ -562,7 +573,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Toast.makeText(HuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
                         Toast.LENGTH_SHORT).show();
             }
-            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            Log.e(TAG, getString(R.string.ohex_general) + ohex);
             return;
         }
         /* Problem on client side */
@@ -578,27 +589,44 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             String placeID = (String) data;
             String photoReference = ((CompareRequest) request).getReferencePhoto().reference;
 
-            Toast.makeText(HuntActivity.this,
-                    getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
+            Toast.makeText(HuntActivity.this, String.format(getString(R.string.similarity_is),
+                    response.similarity * 100), Toast.LENGTH_SHORT).show();
             Log.d(TAG, "response similarity: " + response.similarity);
+
+            // TODO: 25.3.16 Discovery zisk dat tam, kde se bude overovat vzdalenost od aktivniho cile
+            int discoveryGain = mPointsManager.getTargetDiscoveryGain();
+            int similarityGain = mPointsManager.getTargetSimilarityGain(response.similarity);
+            Log.d(TAG, "discoveryGain = " + discoveryGain + ", similarityGain = " + similarityGain);
 
             /* Now send information about the completed target into the database on server */
             Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                     new RetrieveResponseTask(HuntActivity.this,
-                    Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
+                    Utils.getServerCommunicationDialog(HuntActivity.this));
             responseTask.execute(
-                    new CompletePlaceRequest(SharedDataManager.getPlayer(this), placeID, photoReference, 20));
+                    new CompletePlaceRequest(SharedDataManager.getPlayer(this), placeID, photoReference, discoveryGain, similarityGain));
             // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
             Log.d(TAG, "Byla spocitana podobnost mista " + placeID);
-        } else if (data instanceof String && request instanceof  CompletePlaceRequest) {
+        } else if (request instanceof  CompletePlaceRequest) {
             /* Request to complete the evaluated target successfully finished (stored in database) */
-            String placeID = (String) data;
+            String placeID = ((CompletePlaceRequest) request).getPlaceID();
+            int discoveryGain = ((CompletePlaceRequest) request).getDiscoveryGain();
+            int similarityGain = ((CompletePlaceRequest) request).getSimilarityGain();
+            Target target = HuntOfferFragment.getTargetByID(placeID);
+            if (target != null) {
+                target.setDiscoveryGain(discoveryGain);
+                target.setSimilarityGain(similarityGain);
+            }
             SharedDataManager.removeCompareRequestForPlace(this, placeID);
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
             SharedDataManager.setPlayer(this, response.player);
             Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
         } else if (data instanceof String && request instanceof RejectPlaceRequest) {
             String placeID = (String) data;
+            int cost = mPointsManager.getRejectCost();
+            Target target = HuntOfferFragment.getTargetByID(placeID);
+            if (target != null) {
+                target.setRejectLoss(cost);
+            }
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.REJECTED);
             SharedDataManager.setPlayer(this, response.player);
             Log.d(TAG, "Do databaze bylo zapsano zamitnuti mista " + placeID);

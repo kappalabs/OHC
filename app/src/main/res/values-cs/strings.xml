@@ -51,13 +51,12 @@
     <string name="prompt_nickname">Přezdívka</string>
     <string name="prompt_server">Adresa serveru</string>
     <string name="radius_label">Poloměr:</string>
-    <string name="recieved_ohex">Server poslal OHException:</string>
     <string name="error_invalid_nickname">Neplatná přezdívka</string>
     <string name="select_photo_error">Musíš vybrat fotografii na stránce detailů cíle!</string>
     <string name="selected_photo_description">Vybraná fotografie</string>
     <string name="server_communication">Spojení se serverem</string>
     <string name="server_unreachable_error">Server je nedostupný! Zkus to znovu.</string>
-    <string name="similarity_is">Podobnost je</string>
+    <string name="similarity_is">Podobnost je %1$.1f%%</string>
     <string name="start_hunt_button_label">Zahájit lov!</string>
     <string name="start_new_hunt_button">Zahájit nový lov</string>
     <string name="statistics_button">Statistiky</string>
@@ -83,4 +82,8 @@
     <string name="connect_to_server">Připoj se prosím k serveru, poté proveď vyhodnocení.</string>
     <string name="dialog_store_offline_exit">Odejít</string>
     <string name="dialog_store_offline_wait">Zpět</string>
+    <string name="ohex_general">Server poslal OHException:</string>
+    <string name="ohex_serialization">Používáš nekompatibilní verzi, aktualizuj aplikaci</string>
+    <string name="error_not_enough_points">Nemáš dostatek bodů.</string>
+    <string name="error_missing_points">Chybí ti %1$d bodů.</string>
 </resources>

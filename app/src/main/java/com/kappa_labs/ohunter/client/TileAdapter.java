@@ -9,7 +9,6 @@ import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Adapter for gridView to host all the targets specified by given Place IDs in given Targets array
@@ -64,16 +63,10 @@ public class TileAdapter extends BaseAdapter {
         return targetTileView;
     }
 
-    public void loadPlace(TargetTileView targetTileView) {
-        Place place = targetTileView.getPlace();
-        /* Tile does not have place or the place it has is not what it should be */
-        if (place == null || !Objects.equals(place.getID(), targetTileView.getPlaceID())) {
-            /* Can we load the file from local file? */
-//            if ((place = SharedDataManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
-            if ((place = PlacesManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
-                /* Load the place from local file */
-                targetTileView.setPlace(place);
-            }
+    private void loadPlace(TargetTileView targetTileView) {
+        Place place;
+        if ((place = PlacesManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
+            targetTileView.setPlace(place);
         }
     }
 

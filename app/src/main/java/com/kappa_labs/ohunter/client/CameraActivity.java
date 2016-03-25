@@ -276,9 +276,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object _data) {
         /* Problem on server side */
         if (ohex != null) {
-            Toast.makeText(CameraActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
+            Toast.makeText(CameraActivity.this, getString(R.string.ohex_general) + " " + ohex,
                     Toast.LENGTH_SHORT).show();
-            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            Log.e(TAG, getString(R.string.ohex_general) + ohex);
         }
         /* Problem on client side */
         if (response == null) {

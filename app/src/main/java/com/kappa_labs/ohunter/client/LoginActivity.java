@@ -245,7 +245,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
 
         /* Handle the error */
         if (ohex != null) {
-            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            Log.e(TAG, getString(R.string.ohex_general) + ohex);
             switch (ohex.getExType()) {
                 case INCORRECT_PASSWORD:
                     mPasswordEditText.setError(getString(R.string.error_incorrect_password));

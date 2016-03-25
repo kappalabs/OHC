@@ -216,9 +216,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     public void onResponseTaskCompleted(Request _request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
-            Toast.makeText(PrepareHuntActivity.this, getString(R.string.recieved_ohex) + " " + ohex,
+            Toast.makeText(PrepareHuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
                     Toast.LENGTH_SHORT).show();
-            Log.e(TAG, getString(R.string.recieved_ohex) + ohex);
+            Log.e(TAG, getString(R.string.ohex_general) + ohex);
             return;
         }
         /* Problem on client side */

@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 
@@ -26,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
 
-    public static final long MAX_HUNT_TIME = 24 * 60 * 60 * 1000;
     private static final int TIMER_INTERVAL = 1000;
 
     private TextView playerTextView;
@@ -35,12 +35,15 @@ public class MainActivity extends AppCompatActivity {
     private Button mContinueHuntButton;
 
     private Handler mHandler;
+    private PointsManager mPointsManager;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mPointsManager = new PointsManager(this);
 
         playerTextView = (TextView) findViewById(R.id.textView_player);
         serverTextView = (TextView) findViewById(R.id.textView_server);
@@ -50,6 +53,12 @@ public class MainActivity extends AppCompatActivity {
         mNewHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!mPointsManager.canBeginArea()) {
+                    String text = String.format(getString(R.string.error_missing_points),
+                            mPointsManager.countMissingPoints(mPointsManager.getBeginAreaCost()));
+                    Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, PrepareHuntActivity.class);
                 i.setFlags(i.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
@@ -112,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 //TODO
                 Long start = SharedDataManager.getStartTime(MainActivity.this);
                 if (start != null) {
-                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - MAX_HUNT_TIME + 10000);
+                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 10000);
                     SharedDataManager.setStartTime(MainActivity.this, uprTime);
                 }
             }
@@ -211,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         if (startTime == null) {
             return;
         }
-        long diff = (MAX_HUNT_TIME - System.currentTimeMillis() + startTime) / 1000;
+        long diff = (PointsManager.MAX_HUNT_TIME_MILLIS - System.currentTimeMillis() + startTime) / 1000;
         if (diff < 0 && SharedDataManager.isHuntReady(this)) {
             onTimeIsUp();
             return;

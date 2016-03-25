@@ -69,7 +69,7 @@
         android:src="@drawable/ic_reject"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/state_red" />
+        app:backgroundTint="@color/state_rejected" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_accept"
@@ -79,7 +79,7 @@
         android:src="@drawable/ic_accept"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="left|bottom"
-        app:backgroundTint="@color/state_green" />
+        app:backgroundTint="@color/state_accepted" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_activate"

@@ -7,8 +7,8 @@
     <color name="tile_background">@color/my_primary_light</color>
     <color name="black">#000000</color>
 
-    <color name="state_green">#26CC14</color>
-    <color name="state_red">#FF3219</color>
+    <color name="state_accepted">#26CC14</color>
+    <color name="state_rejected">#FF3219</color>
     <color name="state_activated">#FFEA00</color>
     <color name="state_completed">#00AFFF</color>
     <color name="state_locked">@color/kappa_blue</color>
@@ -17,6 +17,8 @@
 
     <color name="black_shadow">#7f000000</color>
     <color name="white_shadow">#7fffffff</color>
+    <color name="rejected_shadow">#7fFF3219</color>
+    <color name="completed_shadow">#7f00AFFF</color>
 
     <color name="state_chosen">#4F00FF</color>
     <color name="state_orange">#FF7519</color>
