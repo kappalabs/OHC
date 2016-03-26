@@ -279,6 +279,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             Toast.makeText(CameraActivity.this, getString(R.string.ohex_general) + " " + ohex,
                     Toast.LENGTH_SHORT).show();
             Log.e(TAG, getString(R.string.ohex_general) + ohex);
+            return;
         }
         /* Problem on client side */
         if (response == null) {

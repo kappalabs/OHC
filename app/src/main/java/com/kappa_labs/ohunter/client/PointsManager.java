@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.client;
 import android.content.Context;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
+import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
 
 /**
  * Class to manage score points of the player.
@@ -41,6 +42,19 @@ public class PointsManager {
         Player player = SharedDataManager.getPlayer(mContext);
         player.setScore(player.getScore() + points);
         return SharedDataManager.setPlayer(mContext, player);
+    }
+
+    /**
+     * Sends the current state of the player to the server database.
+     *
+     * @param listener Listener on the server task, notified when the task is completed.
+     */
+    public void updateInDatabase(Utils.OnResponseTaskCompleted listener) {
+        Player player = SharedDataManager.getPlayer(mContext);
+        UpdatePlayerRequest request = new UpdatePlayerRequest(player);
+        Utils.RetrieveResponseTask task = Utils.getInstance().new RetrieveResponseTask(listener,
+                Utils.getServerCommunicationDialog(mContext));
+        task.execute(request);
     }
 
     /**

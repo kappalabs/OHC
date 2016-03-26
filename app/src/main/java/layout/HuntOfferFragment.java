@@ -3,12 +3,14 @@ package layout;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.HuntActivity;
 import com.kappa_labs.ohunter.client.PageChangeAdapter;
@@ -18,8 +20,12 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.SharedDataManager;
 import com.kappa_labs.ohunter.client.TargetTileView;
 import com.kappa_labs.ohunter.client.TileAdapter;
+import com.kappa_labs.ohunter.client.Utils;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +43,7 @@ import java.util.Random;
  */
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
-//    private static final String TAG = "HuntOfferFragment";
+    private static final String TAG = "HuntOfferFragment";
 
     private static OnFragmentInteractionListener mListener;
 
@@ -198,27 +204,45 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 /* Remove points from the player for starting a new area (hunt) */
                 PointsManager manager = new PointsManager(getContext());
                 manager.addPoints(-manager.getBeginAreaCost());
+                manager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
+                    @Override
+                    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
+                        if (ohex != null) {
+                            Toast.makeText(getContext(), getString(R.string.ohex_general) + " " + ohex,
+                                    Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+                            return;
+                        }
+                        if (response == null) {
+                            // TODO: 27.3.16 zkusit znovu, nebo vratit na predchozi aktivitu
+                            Log.e(TAG, "Problem on client side when starting a new area");
+                            Toast.makeText(getContext(), getString(R.string.server_unreachable_error),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                /* Divide given places into two groups (accepted and deferred) */
-                List<Integer> range = new ArrayList<>();
-                for (int i = 0; i < targets.size(); i++) {
-                    range.add(i);
-                    targets.get(i).setState(Target.TargetState.DEFERRED);
-                }
-                /* Randomly pick few targets and accept them */
-                Random random = new Random();
-                int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
-                while (min > 0) {
-                    int index = random.nextInt(range.size());
-                    targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
-                    --min;
-                }
+                        /* Divide given places into two groups (accepted and deferred) */
+                        List<Integer> range = new ArrayList<>();
+                        for (int i = 0; i < targets.size(); i++) {
+                            range.add(i);
+                            targets.get(i).setState(Target.TargetState.DEFERRED);
+                        }
+                        /* Randomly pick few targets and accept them */
+                        Random random = new Random();
+                        int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
+                        while (min > 0) {
+                            int index = random.nextInt(range.size());
+                            targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
+                            --min;
+                        }
 
-                /* Sort targets based on their state  */
-                Collections.sort(targets);
-                mAdapter.notifyDataSetChanged();
+                        /* Sort targets based on their state  */
+                        Collections.sort(targets);
+                        mAdapter.notifyDataSetChanged();
 
-                SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
+                        SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
+                    }
+                });
             }
 
             @Override

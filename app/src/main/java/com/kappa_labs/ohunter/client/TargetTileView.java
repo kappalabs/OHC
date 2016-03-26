@@ -156,15 +156,15 @@ public class TargetTileView extends View {
             nameTitleLayout.draw(canvas);
             canvas.translate(0, nameTitleLayout.getHeight());
             nameTextLayout.draw(canvas);
+            canvas.translate(0, nameTextLayout.getHeight() + verticalGap);
 
             if (showAddress) {
-                canvas.translate(0, nameTextLayout.getHeight() + verticalGap);
                 addressTitleLayout.draw(canvas);
                 canvas.translate(0, addressTitleLayout.getHeight());
                 addressTextLayout.draw(canvas);
+                canvas.translate(0, addressTextLayout.getHeight() + verticalGap);
             }
 
-            canvas.translate(0, addressTextLayout.getHeight() + verticalGap);
             photosTitleLayout.draw(canvas);
             canvas.translate(0, photosTitleLayout.getHeight());
             photosTextLayout.draw(canvas);
