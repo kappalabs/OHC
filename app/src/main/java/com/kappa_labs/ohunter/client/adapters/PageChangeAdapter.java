@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.adapters;
 
 /**
  * Interface for letting the pages in Pager know about its visibility.

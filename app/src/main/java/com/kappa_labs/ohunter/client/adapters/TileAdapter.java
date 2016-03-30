@@ -1,11 +1,13 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.adapters;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.kappa_labs.ohunter.client.activities.TargetTileView;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.List;

@@ -52,6 +52,7 @@
     <string name="daytime_label">Preferred photo:</string>
     <string name="daytime_day">Bright</string>
     <string name="daytime_night">Dark</string>
+    <string name="daytime_both">Both</string>
     <string name="daytime_unknown">Photo probably OK</string>
     <string name="photo_probably_ok">Photo probably OK</string>
     <string name="photo_bright">Bright photo</string>
@@ -108,4 +109,5 @@
     <string name="empty_number" translatable="false">__</string>
     <string name="question_marks" translatable="false">\?\?</string>
     <string name="number_sign" translatable="false">#</string>
+    <string name="radius_editText_hint" translatable="false">1–50</string>
 </resources>

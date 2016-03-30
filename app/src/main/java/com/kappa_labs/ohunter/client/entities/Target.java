@@ -2,6 +2,8 @@ package com.kappa_labs.ohunter.client.entities;
 
 import android.support.annotation.NonNull;
 
+import com.kappa_labs.ohunter.lib.entities.Place;
+
 import java.io.Serializable;
 
 /**
@@ -9,7 +11,7 @@ import java.io.Serializable;
  * Each Target is associated with one Place and TargetTileView. This class also provides logic
  * for different states of a target throughout the game.
  */
-public class Target implements Serializable, Comparable<Target> {
+public class Target extends Place implements Serializable, Comparable<Target> {
 
     /**
      * Represents a state of target.
@@ -138,6 +140,10 @@ public class Target implements Serializable, Comparable<Target> {
      */
     public Target(String placeID) {
         this.placeID = placeID;
+    }
+    
+    public Target(Place place) {
+        // TODO: 30.3.16
     }
 
     @Override

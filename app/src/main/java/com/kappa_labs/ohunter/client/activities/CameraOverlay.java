@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 
 import android.content.Context;

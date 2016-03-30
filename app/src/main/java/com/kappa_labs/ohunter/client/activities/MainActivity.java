@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,6 +14,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.PointsManager;
+import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Player;
 
 import java.util.ArrayList;

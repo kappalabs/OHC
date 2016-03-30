@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
 
@@ -19,6 +19,8 @@ public class PointsManager {
     public static final int MIN_PHOTOGRAPHED_GAIN = 1;
     public static final int SPOIL_FUNCTION_MAX = 10;
     public static final float SPOIL_FUNCTION_STAGTIME = 5f / MAX_HUNT_TIME_HOURS;
+
+    private static final double SPOIL_MULTIPLIER = (MAX_HUNT_TIME_HOURS - SPOIL_FUNCTION_STAGTIME) / Math.log(1./SPOIL_FUNCTION_MAX);
 
     private Context mContext;
 
@@ -146,7 +148,7 @@ public class PointsManager {
         if (time <= SPOIL_FUNCTION_STAGTIME) {
             return SPOIL_FUNCTION_MAX;
         }
-        return (int) Math.floor(Math.exp(-(time - SPOIL_FUNCTION_STAGTIME) * 2) * SPOIL_FUNCTION_MAX);
+        return (int) Math.floor(Math.exp((time - SPOIL_FUNCTION_STAGTIME) * SPOIL_MULTIPLIER) * SPOIL_FUNCTION_MAX);
     }
 
 }

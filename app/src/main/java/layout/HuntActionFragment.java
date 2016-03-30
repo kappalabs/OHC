@@ -24,10 +24,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.kappa_labs.ohunter.client.HuntActivity;
+import com.kappa_labs.ohunter.client.activities.HuntActivity;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
-import com.kappa_labs.ohunter.client.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
 
 /**

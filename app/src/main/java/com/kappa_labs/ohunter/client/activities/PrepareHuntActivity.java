@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -39,6 +39,10 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.MinMaxInputFilter;
+import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
@@ -74,6 +78,8 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final double DEFAULT_RADIUS = 10;
+    private static final int RADIUS_MIN = 1;
+    private static final int RADIUS_MAX = 50;
 
     /* Request code to use when launching the resolution activity */
     private static final int REQUEST_RESOLVE_ERROR = 1001;
@@ -88,7 +94,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private EditText mRadiusEditText;
     private Spinner mDaytimeSpinner;
 
-    public static Photo.DAYTIME prefferedDaytime = Photo.DAYTIME.DAY;
+    public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.DAY;
 
 
     @Override
@@ -105,14 +111,16 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        prefferedDaytime = Photo.DAYTIME.DAY;
+                        /* Requests only non-dark photos */
+                        preferredDaytime = Photo.DAYTIME.DAY;
                         break;
                     case 1:
-                        prefferedDaytime = Photo.DAYTIME.NIGHT;
+                        /* Requests only dark photos */
+                        preferredDaytime = Photo.DAYTIME.NIGHT;
                         break;
-                    //NOTE: pripadne dalsi pri rozsireni knihovny
                     default:
-                        prefferedDaytime = Photo.DAYTIME.UNKNOWN;
+                        /* Requests all the types */
+                        preferredDaytime = Photo.DAYTIME.UNKNOWN;
                         break;
                 }
             }
@@ -164,6 +172,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         mLatitudeEditText = (EditText) findViewById(R.id.editText_north);
         mLatitudeEditText.addTextChangedListener(this);
         mRadiusEditText = (EditText) findViewById(R.id.editText_radius);
+        mRadiusEditText.setFilters(new MinMaxInputFilter[]{new MinMaxInputFilter(RADIUS_MIN, RADIUS_MAX)});
         mRadiusEditText.addTextChangedListener(this);
 
         /* Create an instance of GoogleAPIClient */

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".PrepareHuntActivity"
+    tools:context=".activities.PrepareHuntActivity"
     android:focusableInTouchMode="true" >
 
     <FrameLayout
@@ -119,12 +119,12 @@
                     <EditText
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"
-                        android:ems="10"
+                        android:inputType="number"
                         android:id="@+id/editText_radius"
                         android:gravity="end"
                         android:layout_marginLeft="20dp"
-                        android:layout_weight="1" />
+                        android:layout_weight="1"
+                        android:hint="@string/radius_editText_hint" />
 
                     <TextView
                         android:layout_width="wrap_content"

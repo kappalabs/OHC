@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
@@ -22,7 +22,10 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.PlacesManager;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 /**

@@ -28,7 +28,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,31 +37,31 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".activities.LoginActivity"
             android:label="@string/title_activity_login" />
         <activity
-            android:name=".PrepareHuntActivity"
+            android:name=".activities.PrepareHuntActivity"
             android:label="@string/title_activity_prepare_hunt"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kappa_labs.ohunter.client.MainActivity" />
+                android:value=".activities.MainActivity" />
             <!-- <meta-data -->
             <!-- android:name="com.google.android.maps.v2.API_KEY" -->
             <!-- android:value="AIzaSyAUH-Q6N_oJXF3mm-a7p8wsCxpf43dyEt4" /> -->
         </activity>
         <!-- Configure this activity to use only landscape orientation -->
         <activity
-            android:name=".CameraActivity"
+            android:name=".activities.CameraActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_camera"
             android:screenOrientation="landscape"
             android:theme="@style/AppTheme.FullScreen" />
         <activity
-            android:name=".HuntActivity"
+            android:name=".activities.HuntActivity"
             android:label="@string/title_activity_hunt"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme" />
 
         <meta-data

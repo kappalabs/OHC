@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -25,7 +25,13 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.utilities.PlacesManager;
+import com.kappa_labs.ohunter.client.utilities.PointsManager;
+import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;

@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -27,6 +27,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;

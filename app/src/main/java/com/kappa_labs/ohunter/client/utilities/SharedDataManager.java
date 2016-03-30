@@ -1,9 +1,10 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
@@ -505,15 +506,15 @@ public class SharedDataManager {
         preferences.edit().remove(PHOTOS_SET_KEY).apply();
     }
 
-    /**
-     * Removes value witch given key from the preferences.
-     *
-     * @param context Context of the caller.
-     * @param key The key of the value, that should be removed.
-     */
-    public void remove(Context context, String key) {
-        getSharedPreferences(context).edit().remove(key).commit();
-    }
+//    /**
+//     * Removes value witch given key from the preferences.
+//     *
+//     * @param context Context of the caller.
+//     * @param key The key of the value, that should be removed.
+//     */
+//    public void remove(Context context, String key) {
+//        getSharedPreferences(context).edit().remove(key).commit();
+//    }
 
 //    public boolean clear(Context context) {
 //        return getSharedPreferences(context).edit().clear().commit();

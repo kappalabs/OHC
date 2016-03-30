@@ -1,11 +1,11 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.LruCache;
 
-import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -107,8 +107,8 @@ public class PlacesManager {
                 continue;
             }
             /* Otherwise retrieve the place from server */
-            Request request = new FillPlacesRequest(
-                    mPlayer, new String[]{placeID}, Photo.DAYTIME.DAY, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            Request request = new FillPlacesRequest(mPlayer, new String[]{placeID},
+                    PrepareHuntActivity.preferredDaytime, DEFAULT_WIDTH, DEFAULT_HEIGHT);
             Utils.RetrieveResponseTask responseTask =
                     Utils.getInstance().new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
                         @Override

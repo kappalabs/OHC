@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client;
+package com.kappa_labs.ohunter.client.utilities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -132,9 +133,9 @@ public class Utils {
         private Object mData;
 
 
-        public BitmapWorkerTask(OnBitmapReady caller) {
-            this.mListener = caller;
-        }
+//        public BitmapWorkerTask(OnBitmapReady caller) {
+//            this.mListener = caller;
+//        }
 
         public BitmapWorkerTask(OnBitmapReady caller, Object data) {
             this.mListener = caller;
@@ -163,7 +164,7 @@ public class Utils {
         void onBitmapReady(Bitmap bitmap, Object data);
     }
 
-    class RetrieveResponseTask extends AsyncTask<Request, Void, Response> {
+    public class RetrieveResponseTask extends AsyncTask<Request, Void, Response> {
 
         private OHException ohException;
         private OnResponseTaskCompleted mListener;
@@ -291,7 +292,7 @@ public class Utils {
         return response;
     }
 
-    class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
+    public class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
 
         private ProgressDialog mDialog;
         private Bitmap mBitmap;

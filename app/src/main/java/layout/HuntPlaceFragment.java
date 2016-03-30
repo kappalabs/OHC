@@ -15,9 +15,9 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.kappa_labs.ohunter.client.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.client.Utils;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.entities.PlaceInfo;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;

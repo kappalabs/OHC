@@ -86,4 +86,5 @@
     <string name="ohex_serialization">Používáš nekompatibilní verzi, aktualizuj aplikaci</string>
     <string name="error_not_enough_points">Nemáš dostatek bodů.</string>
     <string name="error_missing_points">Chybí ti %1$d bodů.</string>
+    <string name="daytime_both">Obojí</string>
 </resources>
