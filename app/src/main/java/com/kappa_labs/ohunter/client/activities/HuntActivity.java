@@ -100,7 +100,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         /* Create a manager to control the player's score */
-        mPointsManager = new PointsManager(this);
+        mPointsManager = MainActivity.getPointsManager();
 
         /* Set up the ViewPager with the sections adapter */
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -386,9 +386,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         /* Send the selected place to children pages */
         String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
         Place selected = SharedDataManager.getPlace(this, selectedID);
+        Target selectedTarget = HuntOfferFragment.getSelectedTarget();
         if (selected != null) {
             HuntPlaceFragment.changePlace(this, selected);
-            HuntActionFragment.changePlace(selected);
+            HuntActionFragment.changeTarget(selectedTarget);
         }
     }
 
@@ -501,9 +502,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 //    }
 
     @Override
-    public void onTargetChanged(Place place) {
-        HuntPlaceFragment.changePlace(this, place);
-        HuntActionFragment.changePlace(place);
+    public void onTargetChanged(Target target) {
+        HuntPlaceFragment.changePlace(this, target);
+        HuntActionFragment.changeTarget(target);
     }
 
     private void resolveButtonStates(Target.TargetState state) {

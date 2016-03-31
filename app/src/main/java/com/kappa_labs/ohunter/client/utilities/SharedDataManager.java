@@ -60,7 +60,9 @@ public class SharedDataManager {
     private static Long startTime;
 
 
-    private SharedDataManager() { /* Non-instantiable class */ }
+    private SharedDataManager() {
+        /* Non-instantiable class */
+    }
 
     private static SharedPreferences getSharedPreferences(Context context) {
         if (mPreferences == null) {
@@ -85,8 +87,11 @@ public class SharedDataManager {
         try {
             File file;
             if (directory != null) {
-                File dirFile = context.getDir(directory, Context.MODE_PRIVATE);
-                file = new File(dirFile, filename);
+                File subDir = new File(context.getFilesDir(), directory);
+                if (!subDir.exists() && !subDir.mkdirs()) {
+                    return false;
+                }
+                file = new File(subDir, filename);
                 outputStream = new FileOutputStream(file);
             } else {
                 outputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -116,8 +121,8 @@ public class SharedDataManager {
         try {
             File file;
             if (directory != null) {
-                File dirFile = context.getDir(directory, Context.MODE_PRIVATE);
-                file = new File(dirFile, filename);
+                File subDir = new File(context.getFilesDir(), directory);
+                file = new File(subDir, filename);
                 inputStream = new FileInputStream(file);
             } else {
                 inputStream = context.openFileInput(filename);
@@ -128,7 +133,7 @@ public class SharedDataManager {
             return ois.readObject();
         } catch (Exception e) {
             if (!(e instanceof FileNotFoundException)) {
-                Log.e(TAG, "Cannot read object: " + e);
+                Log.e(TAG, "Cannot read object \'" + filename + "\': " + e);
             }
             /* File is unavailable */
             return null;
@@ -147,15 +152,31 @@ public class SharedDataManager {
         try {
             File file;
             if (directory != null) {
-                File dirFile = context.getDir(directory, Context.MODE_PRIVATE);
-                file = new File(dirFile, filename);
+                File subDir = new File(context.getFilesDir(), directory);
+                file = new File(subDir, filename);
                 return file.delete();
             } else {
                 return context.deleteFile(filename);
             }
-
         } catch (Exception e) {
-            Log.e(TAG, "Cannot remove object: " + e);
+            Log.e(TAG, "Cannot remove object \'" + filename + "\': " + e);
+            return false;
+        }
+    }
+
+    private static boolean removeDirectory(Context context, String directory) {
+        try {
+            File subDir = new File(context.getFilesDir(), directory);
+            File[] files = subDir.listFiles();
+            boolean isOk = true;
+            for (File file : files) {
+                if (file.delete()) {
+                    isOk = false;
+                }
+            }
+            return subDir.delete() && isOk;
+        } catch (Exception e) {
+            Log.e(TAG, "Cannot remove directory \'" + directory + "\': " + e);
             return false;
         }
     }
@@ -250,9 +271,6 @@ public class SharedDataManager {
     }
 
     public static synchronized void initNewHunt(Context context, boolean ready, long time) {
-        //TODO: smazani predchozich nacachovanych souboru
-//        saveActivatedPlaceID(context, null);
-//        saveSelectedPlaceID(context, null);
         setStartTime(context, time);
         clearPendingRequests(context);
         if (huntReady == null || huntReady != ready) {
@@ -373,6 +391,29 @@ public class SharedDataManager {
      */
     public static boolean addPlace(Context context, Place place) {
         return writeObject(context, place, PLACE_FILENAME, getDirectoryForPlace(place.getID()));
+    }
+
+    /**
+     * Removes all the cache directories for targets which are available and all the preferences
+     * which are associated with these targets.
+     *
+     * @param context Context of the caller.
+     */
+    public static void removeTargets(Context context) {
+        String[] fileList = context.getFilesDir().list();
+        List<String> placeDirNames = new ArrayList<>();
+        /* Locate the directories containing the target files */
+        for (String fileName : fileList) {
+            if (fileName.startsWith(PLACE_PREFIX)) {
+                placeDirNames.add(fileName);
+            }
+        }
+        /* Remove the located directories of cached targets */
+        for (String dirName : placeDirNames) {
+            removeDirectory(context, dirName);
+            String placeID = dirName.substring(PLACE_PREFIX.length());
+            getPreferencesForPlace(context, placeID).edit().clear().commit();
+        }
     }
 
     /**

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="daytime">
+        <item name="both">@string/daytime_both</item>
         <item name="day">@string/daytime_day</item>
         <item name="night">@string/daytime_night</item>
-        <item name="both">@string/daytime_both</item>
     </string-array>
     <string-array name="dummyarray">
         <item name="1">dummy</item>

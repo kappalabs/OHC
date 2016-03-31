@@ -19,6 +19,9 @@ import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Player;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
     private Button mContinueHuntButton;
 
     private Handler mHandler;
-    private PointsManager mPointsManager;
+    private static PointsManager mPointsManager;
+
+    private static boolean requestingPoints;
 
 
     @Override
@@ -147,6 +152,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Gets the PointsManager with context of the main activity.
+     *
+     * @return The PointsManager with context of the main activity.
+     */
+    public static PointsManager getPointsManager() {
+        return mPointsManager;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -168,6 +182,9 @@ public class MainActivity extends AppCompatActivity {
             mHandler = new Handler();
             startTimer();
         }
+
+        /* Check if the player has enough points */
+        checkPoints();
 
         updateInfo();
     }
@@ -193,8 +210,35 @@ public class MainActivity extends AppCompatActivity {
         if (HuntActivity.hunt != null) {
             HuntActivity.hunt.finish();
         }
+        /* Check if the player has enough points */
+        checkPoints();
+        /* Remove cached previous targets */
+        SharedDataManager.removeTargets(MainActivity.this);
         //TODO: zobrazit nejake vysledky
         Log.d(TAG, "time's up");
+    }
+
+    private void checkPoints() {
+        /* If the score is not high enough, add points to the player, but only when the previous hunt ended */
+        if (mPointsManager.getScore() < 20 && !SharedDataManager.isHuntReady(this)) {
+            mPointsManager.setScore(30);
+            updateInfo();
+            try {
+                if (!requestingPoints) {
+                    requestingPoints = true;
+                    /* Update the value in the server database if possible */
+                    mPointsManager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
+                        @Override
+                        public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
+                            /* It's ok if the request was not successful, the update will be done later */
+                            requestingPoints = false;
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

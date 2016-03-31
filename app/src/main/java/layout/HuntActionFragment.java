@@ -25,10 +25,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
-import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.client.entities.Target;
 
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * {@link Fragment} subclass to show map, information about targets and player position.
@@ -38,10 +41,7 @@ import com.kappa_labs.ohunter.client.R;
  */
 public class HuntActionFragment extends Fragment implements OnMapReadyCallback, PageChangeAdapter {
 
-//    private static final int PERMISSIONS_REQUEST_LOCATION = 0x01;
-
     private static boolean targetReady;
-    private static double targetLatitude, targetLongitude;
     private static boolean zoomInvalidated = true;
     private static boolean infoInvalidated = true;
 
@@ -49,7 +49,10 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     private Circle mCircle;
     private SupportMapFragment fragment;
     private GoogleMap map;
-    private Marker playerMarker;
+    private static Marker playerMarker;
+    private static Target target;
+    private static List<Marker> targetMarks = new ArrayList<>();
+    private static List<Target> targets = new ArrayList<>();
 
     private TextView targetLatitudeTextView;
     private TextView playerLatitudeTextView;
@@ -141,6 +144,16 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             updateInformation();
             updatePlayerPin();
         }
+        // TODO: 31.3.16 zoptimalizovat
+        List<Target> targets = HuntOfferFragment.getTargets();
+        List<Target> filter = new ArrayList<>();
+        for (Target target : targets) {
+            if (target.getState() == Target.TargetState.ACCEPTED) {
+                filter.add(target);
+            }
+        }
+        HuntActionFragment.targets = filter;
+            updateTargetMarks();
     }
 
     private void zoomToPlace() {
@@ -153,19 +166,19 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             mCircle.remove();
         }
 
-        /* Add new area around the Place */
-        LatLng ll = new LatLng(targetLatitude, targetLongitude);
+        /* Add new active zone around the Place */
+        LatLng ll = new LatLng(target.latitude, target.longitude);
         CircleOptions co = new CircleOptions()
                 .center(ll)
-//                .radius(mPlace.radius * 1000)
                 .radius(HuntActivity.RADIUS)
                 .strokeColor(Color.argb(230, 230, 0, 0))
                 .fillColor(Color.argb(80, 0, 0, 255));
         mCircle = map.addCircle(co);
 
+        /* Add special marker for the position of the target */
         map.addMarker(new MarkerOptions()
-                .position(new LatLng(targetLatitude, targetLongitude))
-                .title("Target"));
+                .position(new LatLng(target.latitude, target.longitude))
+                .title(target.getName()));
 
         /* Move camera to the Place's position */
         float zoom = (float) (10f - Math.log(HuntActivity.RADIUS / 10000f) / Math.log(2f));
@@ -180,11 +193,11 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     private String getTargetLatitude() {
-        return targetReady ? String.format("%.6f", targetLatitude) + "N" : "??N";
+        return targetReady ? String.format("%.6f", target.latitude) + "N" : "??N";
     }
 
     private String getTargetLongitude() {
-        return targetReady ? String.format("%.6f", targetLongitude) + "N" : "??N";
+        return targetReady ? String.format("%.6f", target.longitude) + "N" : "??N";
     }
 
     private String getPlayerLatitude() {
@@ -200,8 +213,8 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             return "??m";
         }
         Location placeLoc = new Location("unknown");
-        placeLoc.setLatitude(targetLatitude);
-        placeLoc.setLongitude(targetLongitude);
+        placeLoc.setLatitude(target.latitude);
+        placeLoc.setLongitude(target.longitude);
         return mLastLocation.distanceTo(placeLoc) + "m";
     }
 
@@ -233,6 +246,25 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
     }
 
+    private void updateTargetMarks() {
+        if (map == null) {
+            return;
+        }
+        /* Remove previous marks */
+        for (Marker marker : targetMarks) {
+            marker.remove();
+        }
+        targetMarks.clear();
+        /* Add new marks */
+        for (Target target : targets) {
+            MarkerOptions options = new MarkerOptions()
+                    .position(new LatLng(target.latitude, target.longitude))
+                    .title(target.getName())
+                    .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.ic_menu_compass));
+            targetMarks.add(map.addMarker(options));
+        }
+    }
+
     /**
      * Change the location of the player.
      *
@@ -245,15 +277,14 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     /**
-     * Change Place, which this fragment should activate on the map.
+     * Change target, which this fragment should activate on the map.
      *
-     * @param place The new Place, which this fragment should activate on the map.
+     * @param target The new target, which this fragment should activate on the map.
      */
-    public static void changePlace(Place place) {
-        if (place != null) {
+    public static void changeTarget(Target target) {
+        if (target != null) {
             targetReady = true;
-            targetLatitude = place.latitude;
-            targetLongitude = place.longitude;
+            HuntActionFragment.target = target;
         } else {
             targetReady = false;
         }

@@ -60,14 +60,16 @@ import layout.HuntOfferFragment;
 
 public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
-    private GoogleMap map;
-    private GoogleApiClient mGoogleApiClient;
-    /* Highlighted area for place searching */
-    private Circle mCircle;
     private static final String TAG = "PrepareHunt";
 
-    private static final String SAVED_LAST_LONGITUDE = "saved_last_longitude";
-    private static final String SAVED_LAST_LATITUDE = "saved_last_latitude";
+    private GoogleMap map;
+    private GoogleApiClient mGoogleApiClient;
+    /* Active zone of the activated target */
+    private Circle mCircle;
+
+    private static final String SAVED_LAST_LONGITUDE = "last_longitude";
+    private static final String SAVED_LAST_LATITUDE = "last_latitude";
+    private static final String SAVED_LAST_RADIUS = "last_radius";
     private static final String LATITUDE_TEXTVIEW_KEY = "latitude_textview_key";
     private static final String LONGITUDE_TEXTVIEW_KEY = "longitude_textview_key";
     private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
@@ -77,7 +79,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
     private static final double DEFAULT_LATITUDE = 50.0797689;
     private static final double DEFAULT_LONGITUDE = 14.4297133;
-    private static final double DEFAULT_RADIUS = 10;
+    private static final int DEFAULT_RADIUS = 10;
     private static final int RADIUS_MIN = 1;
     private static final int RADIUS_MAX = 50;
 
@@ -94,7 +96,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private EditText mRadiusEditText;
     private Spinner mDaytimeSpinner;
 
-    public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.DAY;
+    public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.UNKNOWN;
 
 
     @Override
@@ -111,16 +113,16 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
+                        /* Requests all the types */
+                        preferredDaytime = Photo.DAYTIME.UNKNOWN;
+                        break;
+                    case 1:
                         /* Requests only non-dark photos */
                         preferredDaytime = Photo.DAYTIME.DAY;
                         break;
-                    case 1:
+                    case 2:
                         /* Requests only dark photos */
                         preferredDaytime = Photo.DAYTIME.NIGHT;
-                        break;
-                    default:
-                        /* Requests all the types */
-                        preferredDaytime = Photo.DAYTIME.UNKNOWN;
                         break;
                 }
             }
@@ -151,13 +153,21 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                     return;
                 }
 
+                /* Store the last used position */
+                SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putLong(SAVED_LAST_LATITUDE, Double.doubleToRawLongBits(getLatitude()));
+                editor.putLong(SAVED_LAST_LONGITUDE, Double.doubleToRawLongBits(getLongitude()));
+                editor.putInt(SAVED_LAST_RADIUS, getRadius());
+                editor.apply();
+
                 /* Reset the states for new hunt */
                 SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, System.currentTimeMillis());
+                SharedDataManager.removeTargets(PrepareHuntActivity.this);
                 HuntOfferFragment.clearTargets();
 
                 /* Start radar search to receive list of available places */
-                Request request = new RadarSearchRequest(
-                        player, getLatitude(), getLongitude(), (int)(getRadius() * 1000));
+                Request request = new RadarSearchRequest(player, getLatitude(), getLongitude(), getRadius() * 1000);
 
                 Utils.RetrieveResponseTask responseTask =
                         Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
@@ -218,6 +228,16 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                     mDaytimeSpinner.setSelection(pos);
                 }
             }
+        } else {
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            double latitude = Double.longBitsToDouble(
+                    sharedPref.getLong(SAVED_LAST_LATITUDE, Double.doubleToLongBits(DEFAULT_LATITUDE)));
+            mLatitudeEditText.setText(String.valueOf(latitude));
+            double longitude = Double.longBitsToDouble(
+                    sharedPref.getLong(SAVED_LAST_LONGITUDE, Double.doubleToLongBits(DEFAULT_LONGITUDE)));
+            mLongitudeEditText.setText(String.valueOf(longitude));
+            int radius = sharedPref.getInt(SAVED_LAST_RADIUS, DEFAULT_RADIUS);
+            mRadiusEditText.setText(String.valueOf(radius));
         }
     }
 
@@ -281,12 +301,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         return lat;
     }
 
-    private double getRadius() {
-        double radius;
+    private int getRadius() {
+        int radius;
         try {
-            radius = Double.parseDouble(mRadiusEditText.getText().toString());
+            radius = Integer.parseInt(mRadiusEditText.getText().toString());
         } catch (NumberFormatException nex) {
-            Log.e(TAG, "Radius edit text contains non-double value!");
+            Log.e(TAG, "Radius edit text contains non-integer value!");
             radius = DEFAULT_RADIUS;
             mRadiusEditText.setText(String.valueOf(DEFAULT_RADIUS));
         }
@@ -346,14 +366,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             mLastLocation = new Location("dummyprovider");
             mLastLocation.setLatitude(latitude);
             mLastLocation.setLongitude(longitude);
-
-            // TODO: toto neni moc cool reseni...
-            if (latitude == DEFAULT_LATITUDE && longitude == DEFAULT_LONGITUDE) {
-                Toast.makeText(this, getString(R.string.last_pos_not_known), Toast.LENGTH_SHORT).show();
-            }
         }
-        mLongitudeEditText.setText(String.valueOf(mLastLocation.getLongitude()));
         mLatitudeEditText.setText(String.valueOf(mLastLocation.getLatitude()));
+        mLongitudeEditText.setText(String.valueOf(mLastLocation.getLongitude()));
         if (mRadiusEditText.getText().toString().isEmpty()) {
             mRadiusEditText.setText(String.valueOf(DEFAULT_RADIUS));
         }

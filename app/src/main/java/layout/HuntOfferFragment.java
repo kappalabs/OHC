@@ -13,12 +13,13 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
+import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
-import com.kappa_labs.ohunter.client.activities.TargetTileView;
+import com.kappa_labs.ohunter.client.views.TargetTileView;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.entities.Target;
@@ -104,6 +105,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 if (view instanceof TargetTileView) {
                     TargetTileView tile = (TargetTileView) view;
                     if (selectedIndex != position) {
+                        /* Select the tile */
                         selectedIndex = position;
                         for (Target iTile : targets) {
                             iTile.setHighlighted(false);
@@ -114,11 +116,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                         /* Notify the listener */
                         if (mListener != null) {
-//                            mListener.onTargetChanged(tile.getPlace());
-                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
+                            mListener.onTargetChanged(tile.getTarget());
                             mListener.onItemSelected(tile.getState());
                         }
                     } else {
+                        /* Unselect the tile */
                         selectedIndex = -1;
                         for (Target iTile : targets) {
                             iTile.setHighlighted(false);
@@ -151,7 +153,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         /* Notify the listener and request to show the next page (with place information) */
                         if (mListener != null) {
 //                            mListener.onTargetChanged(tile.getPlace());
-                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
+//                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
+                            mListener.onTargetChanged(tile.getTarget());
                         }
                     }
                     if (mListener != null) {
@@ -172,10 +175,10 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
         Target target = getSelectedTarget();
         if (target != null) {
-            Place place = PlacesManager.getPlace(getContext(), target.getPlaceID());
-            if (place != null) {
-                mListener.onTargetChanged(place);
-            }
+//            Place place = PlacesManager.getPlace(getContext(), target.getPlaceID());
+//            if (place != null) {
+                mListener.onTargetChanged(target);
+//            }
             mListener.onItemSelected(target.getState());
         } else {
             mListener.onItemUnselected();
@@ -202,7 +205,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 }
 
                 /* Remove points from the player for starting a new area (hunt) */
-                PointsManager manager = new PointsManager(getContext());
+                PointsManager manager = MainActivity.getPointsManager();
                 manager.addPoints(-manager.getBeginAreaCost());
                 manager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
                     @Override
@@ -247,7 +250,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
             @Override
             public void onPlaceReady(Place place) {
-                targets.add(new Target(place.getID()));
+                targets.add(new Target(place));
                 SharedDataManager.saveTargets(getContext(), targets.toArray(_targets));
 //                SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
                 mAdapter.notifyDataSetChanged();
@@ -267,6 +270,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
             mAdapter.notifyDataSetChanged();
         }
+    }
+
+    /**
+     * Gets all the targets of the current hunt.
+     *
+     * @return All the targets of the current hunt.
+     */
+    public static List<Target> getTargets() {
+        return targets;
     }
 
     /**
@@ -290,7 +302,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return The selected target if available, null otherwise.
      */
-    private static Target getSelectedTarget() {
+    public static Target getSelectedTarget() {
         if (selectedIndex >= 0 && selectedIndex < targets.size()) {
             return targets.get(selectedIndex);
         }
@@ -535,7 +547,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onTargetChanged(Place place);
+        void onTargetChanged(Target target);
         void onItemSelected(Target.TargetState targetState);
         void onRequestNextPage();
         void onItemUnselected();

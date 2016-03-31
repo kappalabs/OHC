@@ -46,9 +46,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     private static boolean dataInvalidated = true;
     private static int selectedPhotoIndex;
 
+    private static ImageView mPhotoImageView;
     private LinearLayout mInfoContainerView;
     private SeekBar mPhotoSeekBar;
-    private ImageView mPhotoImageView;
     private TextView mPhotoInfoTextView;
     private TextView mPhotoCounterTextView;
 
@@ -136,9 +136,8 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         if (mPhotoSeekBar == null || numberOfPhotos <= 0) {
             return -1;
         }
-        int wid = mPhotoSeekBar.getMax();
-        float step = wid / numberOfPhotos;
-        int index = (int)Math.floor(mPhotoSeekBar.getProgress() / step);
+        float step = (float) mPhotoSeekBar.getMax() / numberOfPhotos;
+        int index = (int) Math.floor(mPhotoSeekBar.getProgress() / step);
         return Math.min(Math.max(index, 0), numberOfPhotos - 1);
     }
 
@@ -174,7 +173,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Update information on this fragment if it's invalidated (i.e. after calling changePlace()).
+     * Update information on this fragment if it's invalidated (i.e. after calling changeTarget()).
      */
     public void update() {
         if (!dataInvalidated) {
@@ -275,10 +274,12 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                         if (data instanceof BitmapReferencer) {
                             BitmapReferencer referencer = (BitmapReferencer) data;
                             referencer.bitmaps[referencer.index] = bitmap;
+                            if (selectedPhotoIndex == referencer.index && mPhotoImageView != null) {
+                                mPhotoImageView.setImageBitmap(bitmap);
+                            }
                         }
                     }
                 }, new BitmapReferencer(photoBitmaps, i));
-                //TODO: proc je tady nekdy photo.simage null? - souvisi to s paralelnimi vlakny
                 bitmapTask.execute(photo.sImage);
                 daytimeTexts[i] = Utils.daytimeToString(context, photo.daytime);
 

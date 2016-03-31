@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client.activities;
+package com.kappa_labs.ohunter.client.views;
 
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
@@ -343,8 +343,9 @@ public class TargetTileView extends View {
         }
         if (!mTarget.isPhotoDrawn()) {
             Place place = PlacesManager.getPlace(getContext(), getPlaceID());
-            if (place != null) {
-                backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
+            int index = mTarget.getPhotoIndex();
+            if (place != null && index >= 0 && index < place.getNumberOfPhotos()) {
+                backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(index).sImage));
             }
         }
         /* Score text needs to know the measurements of this view */
@@ -415,7 +416,7 @@ public class TargetTileView extends View {
         if (place == null) {
             return;
         }
-        setPlaceID(place.getID());
+        mTarget.initTarget(place);
         if (place.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
 //            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
 //            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
@@ -484,19 +485,28 @@ public class TargetTileView extends View {
     }
 
     /**
-     * Sets the view's place ID string value. In the view, this string
-     * is the unique identifier of a place from Google Places API.
+     * Gets the target associated with this tile.
      *
-     * @param placeID The place ID string value to use.
+     * @return The target associated with this tile.
      */
-    public void setPlaceID(String placeID) {
-        mTarget.setPlaceID(placeID);
+    public Target getTarget() {
+        return mTarget;
     }
 
+    /**
+     * Gets the state of the target associated with this tile.
+     *
+     * @return The state of the target associated with this tile.
+     */
     public Target.TargetState getState() {
         return mTarget.getState();
     }
 
+    /**
+     * Changes the highlight around this tile.
+     *
+     * @param highlighted True to enable the highlight, false to disable.
+     */
     public void setHighlighted(boolean highlighted) {
         if (mTarget.isHighlighted() != highlighted) {
             mTarget.setHighlighted(highlighted);

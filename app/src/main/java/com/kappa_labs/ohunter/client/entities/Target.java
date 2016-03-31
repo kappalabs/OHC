@@ -125,7 +125,6 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     private boolean isRotationDrawn;
     private boolean highlighted;
     private TargetState mState = TargetState.DEFERRED;
-    private String placeID;
     private int photoIndex;
     private boolean isPhotoDrawn;
     private int discoveryGain, similarityGain;
@@ -134,16 +133,33 @@ public class Target extends Place implements Serializable, Comparable<Target> {
 
 
     /**
-     * Creates a new target associated with place identified by given place ID.
+     * Creates a new target by downcasting given place.
      *
-     * @param placeID Unique identifier from Google Places API of associated place.
+     * @param place The place that is the base of this target.
      */
-    public Target(String placeID) {
-        this.placeID = placeID;
-    }
-    
     public Target(Place place) {
-        // TODO: 30.3.16
+        initTarget(place);
+    }
+
+    public void initTarget(Place place) {
+        this.longitude = place.longitude;
+        this.latitude = place.latitude;
+        this.gfields = place.getGfields();
+        // TODO: 31.3.16 fotky spis loadovat externe, neukladat je tady
+        this.photos = place.getPhotos();
+    }
+
+    /**
+     * Gets the name of this target. Returns empty string if name does not exist.
+     *
+     * @return The name of this target. Empty string if does not exist.
+     */
+    public String getName() {
+        String name = getGField("name");
+        if (name == null) {
+            return "";
+        }
+        return name;
     }
 
     @Override
@@ -339,16 +355,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * @return The Place ID associated with this target.
      */
     public String getPlaceID() {
-        return placeID;
-    }
-
-    /**
-     * Sets the Place ID associated with this target.
-     *
-     * @param placeID The Place ID to be associated with this target.
-     */
-    public void setPlaceID(String placeID) {
-        this.placeID = placeID;
+        return getID();
     }
 
     /**

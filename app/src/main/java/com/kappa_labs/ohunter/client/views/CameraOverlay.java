@@ -1,4 +1,4 @@
-package com.kappa_labs.ohunter.client.activities;
+package com.kappa_labs.ohunter.client.views;
 
 
 import android.content.Context;

@@ -35,6 +35,27 @@ public class PointsManager {
     }
 
     /**
+     * Gets the score of the current player.
+     *
+     * @return The score of the current player.
+     */
+    public int getScore() {
+        return SharedDataManager.getPlayer(mContext).getScore();
+    }
+
+    /**
+     * Sets given points to the current player.
+     *
+     * @param score Number of points to set (can be negative).
+     * @return True on success, false on fail, when saving the change.
+     */
+    public boolean setScore(int score) {
+        Player player = SharedDataManager.getPlayer(mContext);
+        player.setScore(score);
+        return SharedDataManager.setPlayer(mContext, player);
+    }
+
+    /**
      * Adds given points to the current player.
      *
      * @param points Number of points to add (can be negative).
