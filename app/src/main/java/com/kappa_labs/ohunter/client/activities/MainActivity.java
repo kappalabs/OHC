@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         timeTextView = (TextView) findViewById(R.id.textView_time);
 
         Button mNewHuntButton = (Button) findViewById(R.id.button_new_hunt);
+        assert mNewHuntButton != null;
         mNewHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Button mStatisticsButton = (Button) findViewById(R.id.button_statistics);
+        assert mStatisticsButton != null;
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Button mHelpButton = (Button) findViewById(R.id.button_help);
+        assert mHelpButton != null;
         mHelpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -124,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Button mAboutButton = (Button) findViewById(R.id.button_about);
+        assert mAboutButton != null;
         mAboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -135,7 +139,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        Button mSettingsButton = (Button) findViewById(R.id.button_settings);
+        assert mSettingsButton != null;
+        mSettingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent();
+                i.setClass(MainActivity.this, SettingsActivity.class);
+                startActivity(i);
+            }
+        });
         Button mLogOutButton = (Button) findViewById(R.id.button_logout);
+        assert mLogOutButton != null;
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -313,20 +328,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        /* Inflate the menu; this adds items to the action bar if it is present */
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        /* Invoke the settings */
         if (id == R.id.action_settings) {
+            Intent i = new Intent();
+            i.setClass(MainActivity.this, SettingsActivity.class);
+            startActivity(i);
             return true;
         }
 

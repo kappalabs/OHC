@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">O-Hunter</string>
-    <string name="about_button">O aplikaci</string>
     <string name="action_login">Přihlásit</string>
     <string name="action_register">Registruj</string>
     <string name="action_settings">Nastavení</string>
     <string name="address_label">Adresa:</string>
-    <string name="continue_hunt_button">Pokračovat ve hře</string>
     <string name="coordinates_label">Souřadnice:</string>
     <string name="daytime_day">Světlé</string>
     <string name="daytime_label">Preferované fotografie:</string>
@@ -34,11 +32,9 @@
     <string name="gfields_place_id"><b>ID:</b></string>
     <string name="gfields_url"><b>URL:</b></string>
     <string name="gfields_website"><b>Webové stránky:</b></string>
-    <string name="help_button">Nápověda</string>
     <string name="image_gallery">Galerie fotografií:</string>
     <string name="last_photo_description">posledni_fotografie</string>
     <string name="last_pos_not_known">Poslední pozice zatím není známa</string>
-    <string name="log_out_button">Odhlásit</string>
     <string name="login_prompt">Musíš se přihlásit!</string>
     <string name="main_activity_player_title">Ahoj %1$s, tvé skóre je %2$d!</string>
     <string name="my_position">Moje pozice:</string>
@@ -58,8 +54,6 @@
     <string name="server_unreachable_error">Server je nedostupný! Zkus to znovu.</string>
     <string name="similarity_is">Podobnost je %1$.1f%%</string>
     <string name="start_hunt_button_label">Zahájit lov!</string>
-    <string name="start_new_hunt_button">Zahájit nový lov</string>
-    <string name="statistics_button">Statistiky</string>
     <string name="target_position">Pozice cíle:</string>
     <string name="template_image_description">vzorovy_obrazek</string>
     <string name="title_activity_camera">Kamera</string>
@@ -87,4 +81,12 @@
     <string name="error_not_enough_points">Nemáš dostatek bodů.</string>
     <string name="error_missing_points">Chybí ti %1$d bodů.</string>
     <string name="daytime_both">Obojí</string>
+    <string name="title_activity_settings">Nastavení</string>
+    <string name="button_statistics">Statistiky</string>
+    <string name="button_settings">Nastavení</string>
+    <string name="button_help">Nápověda</string>
+    <string name="button_logout">Odhlásit</string>
+    <string name="button_new_hunt">Zahájit nový lov</string>
+    <string name="button_continue_hunt">Pokračovat ve hře</string>
+    <string name="button_about">O aplikaci</string>
 </resources>
