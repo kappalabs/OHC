@@ -115,6 +115,10 @@
 
     <!-- Strings related to Settings -->
 
+    <string name="pref_title_offer_columns_portrait">Number of columns in portrait orientation</string>
+    <string name="pref_title_offer_columns_landscape">Number of columns in landscape orientation</string>
+    <string name="pref_header_offer">Offer page</string>
+
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 

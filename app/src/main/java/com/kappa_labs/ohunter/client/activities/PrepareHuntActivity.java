@@ -1,11 +1,9 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -67,18 +65,13 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     /* Active zone of the activated target */
     private Circle mCircle;
 
-    private static final String SAVED_LAST_LONGITUDE = "last_longitude";
-    private static final String SAVED_LAST_LATITUDE = "last_latitude";
-    private static final String SAVED_LAST_RADIUS = "last_radius";
-    private static final String LATITUDE_TEXTVIEW_KEY = "latitude_textview_key";
-    private static final String LONGITUDE_TEXTVIEW_KEY = "longitude_textview_key";
-    private static final String RADIUS_TEXTVIEW_KEY = "radius_textview_key";
+    private static final String LATITUDE_KEY = "latitude_key";
+    private static final String LONGITUDE_KEY = "longitude_key";
+    private static final String RADIUS_KEY = "radius_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
 
     private static final int RADAR_SEARCH_KEY = 4200;
 
-    private static final double DEFAULT_LATITUDE = 50.0797689;
-    private static final double DEFAULT_LONGITUDE = 14.4297133;
     private static final int DEFAULT_RADIUS = 10;
     private static final int RADIUS_MIN = 1;
     private static final int RADIUS_MAX = 50;
@@ -132,6 +125,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         });
 
         Button mStartHuntButton = (Button) findViewById(R.id.button_start_new_hunt);
+        assert mStartHuntButton != null;
         mStartHuntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -154,12 +148,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 }
 
                 /* Store the last used position */
-                SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putLong(SAVED_LAST_LATITUDE, Double.doubleToRawLongBits(getLatitude()));
-                editor.putLong(SAVED_LAST_LONGITUDE, Double.doubleToRawLongBits(getLongitude()));
-                editor.putInt(SAVED_LAST_RADIUS, getRadius());
-                editor.apply();
+                SharedDataManager.setLastAreaLatitude(PrepareHuntActivity.this, getLatitude());
+                SharedDataManager.setLastAreaLongitude(PrepareHuntActivity.this, getLongitude());
+                SharedDataManager.setLastAreaRadius(PrepareHuntActivity.this, getRadius());
 
                 /* Reset the states for new hunt */
                 SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, System.currentTimeMillis());
@@ -178,8 +169,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         });
 
         mLongitudeEditText = (EditText) findViewById(R.id.editText_east);
+        assert mLongitudeEditText != null;
         mLongitudeEditText.addTextChangedListener(this);
         mLatitudeEditText = (EditText) findViewById(R.id.editText_north);
+        assert mLatitudeEditText != null;
         mLatitudeEditText.addTextChangedListener(this);
         mRadiusEditText = (EditText) findViewById(R.id.editText_radius);
         mRadiusEditText.setFilters(new MinMaxInputFilter[]{new MinMaxInputFilter(RADIUS_MIN, RADIUS_MAX)});
@@ -202,9 +195,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
-        outState.putString(LATITUDE_TEXTVIEW_KEY, mLatitudeEditText.getText().toString());
-        outState.putString(LONGITUDE_TEXTVIEW_KEY, mLongitudeEditText.getText().toString());
-        outState.putString(RADIUS_TEXTVIEW_KEY, mRadiusEditText.getText().toString());
+        outState.putString(LATITUDE_KEY, mLatitudeEditText.getText().toString());
+        outState.putString(LONGITUDE_KEY, mLongitudeEditText.getText().toString());
+        outState.putString(RADIUS_KEY, mRadiusEditText.getText().toString());
         outState.putInt(DAYTIME_SPINNER_KEY, mDaytimeSpinner.getSelectedItemPosition());
 
         super.onSaveInstanceState(outState);
@@ -213,14 +206,14 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             mResolvingError = savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-            if (savedInstanceState.keySet().contains(LATITUDE_TEXTVIEW_KEY)) {
-                mLatitudeEditText.setText(savedInstanceState.getString(LATITUDE_TEXTVIEW_KEY));
+            if (savedInstanceState.keySet().contains(LATITUDE_KEY)) {
+                mLatitudeEditText.setText(savedInstanceState.getString(LATITUDE_KEY));
             }
-            if (savedInstanceState.keySet().contains(LONGITUDE_TEXTVIEW_KEY)) {
-                mLongitudeEditText.setText(savedInstanceState.getString(LONGITUDE_TEXTVIEW_KEY));
+            if (savedInstanceState.keySet().contains(LONGITUDE_KEY)) {
+                mLongitudeEditText.setText(savedInstanceState.getString(LONGITUDE_KEY));
             }
-            if (savedInstanceState.keySet().contains(RADIUS_TEXTVIEW_KEY)) {
-                mRadiusEditText.setText(savedInstanceState.getString(RADIUS_TEXTVIEW_KEY));
+            if (savedInstanceState.keySet().contains(RADIUS_KEY)) {
+                mRadiusEditText.setText(savedInstanceState.getString(RADIUS_KEY));
             }
             if (savedInstanceState.keySet().contains(DAYTIME_SPINNER_KEY)) {
                 int pos = savedInstanceState.getInt(DAYTIME_SPINNER_KEY);
@@ -229,14 +222,11 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
                 }
             }
         } else {
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            double latitude = Double.longBitsToDouble(
-                    sharedPref.getLong(SAVED_LAST_LATITUDE, Double.doubleToLongBits(DEFAULT_LATITUDE)));
+            double latitude = SharedDataManager.getLastAreaLatitude(this);
             mLatitudeEditText.setText(String.valueOf(latitude));
-            double longitude = Double.longBitsToDouble(
-                    sharedPref.getLong(SAVED_LAST_LONGITUDE, Double.doubleToLongBits(DEFAULT_LONGITUDE)));
+            double longitude = SharedDataManager.getLastAreaLongitude(this);
             mLongitudeEditText.setText(String.valueOf(longitude));
-            int radius = sharedPref.getInt(SAVED_LAST_RADIUS, DEFAULT_RADIUS);
+            int radius = SharedDataManager.getLastAreaRadius(this);
             mRadiusEditText.setText(String.valueOf(radius));
         }
     }
@@ -347,26 +337,20 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
             mLastLocation = new Location("dummyprovider");
             mLastLocation.setLatitude(getLatitude());
             mLastLocation.setLongitude(getLongitude());
-            //TODO ukladani pomoci LATITUDE_TEXTVIEW_KEY atd...
-        } else if (mLastLocation != null) {
-            /* Save the retrieved location */
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putLong(SAVED_LAST_LATITUDE, Double.doubleToRawLongBits(mLastLocation.getLatitude()));
-            editor.putLong(SAVED_LAST_LONGITUDE, Double.doubleToRawLongBits(mLastLocation.getLongitude()));
-            editor.apply();
-        } else {
+        } else if (mLastLocation == null) {
             /* Load location from saved application information */
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            double latitude = Double.longBitsToDouble(
-                    sharedPref.getLong(SAVED_LAST_LATITUDE, Double.doubleToLongBits(DEFAULT_LATITUDE)));
-            double longitude = Double.longBitsToDouble(
-                    sharedPref.getLong(SAVED_LAST_LONGITUDE, Double.doubleToLongBits(DEFAULT_LONGITUDE)));
+            double latitude = SharedDataManager.getLastAreaLatitude(this);
+            double longitude = SharedDataManager.getLastAreaLongitude(this);
 
             mLastLocation = new Location("dummyprovider");
             mLastLocation.setLatitude(latitude);
             mLastLocation.setLongitude(longitude);
         }
+
+        /* Save the retrieved location */
+        SharedDataManager.setLastAreaLatitude(this, mLastLocation.getLatitude());
+        SharedDataManager.setLastAreaLongitude(this, mLastLocation.getLongitude());
+
         mLatitudeEditText.setText(String.valueOf(mLastLocation.getLatitude()));
         mLongitudeEditText.setText(String.valueOf(mLastLocation.getLongitude()));
         if (mRadiusEditText.getText().toString().isEmpty()) {

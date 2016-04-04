@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string-array name="daytime">
         <item name="both">@string/daytime_both</item>
         <item name="day">@string/daytime_day</item>
         <item name="night">@string/daytime_night</item>
     </string-array>
+
     <string-array name="dummyarray">
         <item name="1">dummy</item>
         <item name="2">dummy</item>
@@ -20,4 +22,21 @@
         <item name="12">dummy12</item>
         <item name="13">dummy13</item>
     </string-array>
+
+    <string-array name="pref_offer_number_of_columns_portrait">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+    <string-array name="pref_offer_number_of_columns_landscape">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
 </resources>

@@ -54,6 +54,7 @@ public class TargetTileView extends View {
     private StaticLayout addressTitleLayout, addressTextLayout;
     private StaticLayout photosTitleLayout, photosTextLayout;
     private float verticalGap = dpToPx(5);
+    private boolean showName = true;
     private boolean showAddress = true;
 
     private Paint mPaint = new Paint();
@@ -132,9 +133,11 @@ public class TargetTileView extends View {
         photosTitleLayout = new StaticLayout(photosTitleString, mTitleTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
         photosTextLayout = new StaticLayout(photosString, mTextPaint, wid, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
 
-        showAddress = nameTitleLayout.getHeight() + nameTextLayout.getHeight() + addressTitleLayout.getHeight()
-                + addressTextLayout.getHeight() + photosTitleLayout.getHeight() + photosTextLayout.getHeight()
-                + 3 * verticalGap <= getHeight() * 0.8f;
+        float hei = nameTitleLayout.getHeight() + nameTextLayout.getHeight()
+                + photosTitleLayout.getHeight() + photosTextLayout.getHeight() + 2 * verticalGap;
+        showAddress = hei + addressTitleLayout.getHeight() + addressTextLayout.getHeight()
+                + verticalGap <= getHeight() * 0.9f;
+        showName = showAddress || hei <= getHeight() * 0.9f;
     }
 
     @Override
@@ -156,18 +159,21 @@ public class TargetTileView extends View {
             /* Draw the text */
             canvas.save();
             canvas.translate(getWidth() / 2, verticalGap);
-            nameTitleLayout.draw(canvas);
-            canvas.translate(0, nameTitleLayout.getHeight());
-            nameTextLayout.draw(canvas);
-            canvas.translate(0, nameTextLayout.getHeight() + verticalGap);
 
+            /* Show the additional information only when there is room for it */
+            if (showName) {
+                nameTitleLayout.draw(canvas);
+                canvas.translate(0, nameTitleLayout.getHeight());
+                nameTextLayout.draw(canvas);
+                canvas.translate(0, nameTextLayout.getHeight() + verticalGap);
+            }
             if (showAddress) {
                 addressTitleLayout.draw(canvas);
                 canvas.translate(0, addressTitleLayout.getHeight());
                 addressTextLayout.draw(canvas);
                 canvas.translate(0, addressTextLayout.getHeight() + verticalGap);
             }
-
+            /* The number of photos is showed always */
             photosTitleLayout.draw(canvas);
             canvas.translate(0, photosTitleLayout.getHeight());
             photosTextLayout.draw(canvas);

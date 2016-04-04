@@ -1,6 +1,7 @@
 package layout;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -86,6 +87,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         fetchingProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_fetching);
         fetchingProgressBar.setVisibility(View.GONE);
         GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+            offerGridView.setNumColumns(SharedDataManager.getOfferColumnsPortrait(getContext()));
+        } else {
+            offerGridView.setNumColumns(SharedDataManager.getOfferColumnsLandscape(getContext()));
+        }
 
         if (mAdapter == null) {
             mAdapter = new TileAdapter(getContext(), targets);

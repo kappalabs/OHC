@@ -1,7 +1,5 @@
 <preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- These settings headers are only used on tablets. -->
-
     <header
         android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$GeneralPreferenceFragment"
         android:icon="@drawable/ic_info_black_24dp"
@@ -16,5 +14,10 @@
         android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$DataSyncPreferenceFragment"
         android:icon="@drawable/ic_sync_black_24dp"
         android:title="@string/pref_header_data_sync" />
+
+    <header
+        android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$OfferPreferenceFragment"
+        android:icon="@drawable/ic_offer"
+        android:title="@string/pref_header_offer" />
 
 </preference-headers>

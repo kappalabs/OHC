@@ -89,4 +89,7 @@
     <string name="button_new_hunt">Zahájit nový lov</string>
     <string name="button_continue_hunt">Pokračovat ve hře</string>
     <string name="button_about">O aplikaci</string>
+    <string name="pref_title_offer_columns_landscape">Počet sloupců při landscape orientaci</string>
+    <string name="pref_title_offer_columns_portrait">Počet sloupců při portrait orientaci</string>
+    <string name="pref_header_offer">Stránka nabídky</string>
 </resources>

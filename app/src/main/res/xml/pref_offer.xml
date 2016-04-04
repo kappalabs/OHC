@@ -1,0 +1,21 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="2"
+        android:entries="@array/pref_offer_number_of_columns_portrait"
+        android:entryValues="@array/pref_offer_number_of_columns_portrait"
+        android:key="offer_columns_portrait"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_offer_columns_portrait" />
+
+    <ListPreference
+        android:defaultValue="2"
+        android:entries="@array/pref_offer_number_of_columns_landscape"
+        android:entryValues="@array/pref_offer_number_of_columns_landscape"
+        android:key="offer_columns_landscape"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_offer_columns_landscape" />
+
+</PreferenceScreen>

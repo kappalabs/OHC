@@ -2,6 +2,7 @@ package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.kappa_labs.ohunter.client.R;
@@ -43,11 +44,13 @@ public class SharedDataManager {
     private static final String LAST_NICKNAME_KEY = "last_nickname";
     private static final String LAST_SERVER_KEY = "last_server";
     private static final String SERVER_HISTORY_KEY = "server_history";
+    private static final String LAST_AREA_LONGITUDE_KEY = "last_area_longitude";
+    private static final String LAST_AREA_LATITUDE_KEY = "last_area_latitude";
+    private static final String LAST_AREA_RADIUS_KEY = "last_area_radius";
 
     private static final String PHOTO_PREFIX = "photo_";
     private static final String PLACE_PREFIX = "place_";
 
-    private static final String SHARED_PREFERENCES_FILENAME = "main_preferences";
     private static final String PLACE_SHARED_DATA_FILENAME = "place_preferences_";
     private static final String PLAYER_FILENAME = "player";
     private static final String PLACE_FILENAME = "place";
@@ -66,7 +69,7 @@ public class SharedDataManager {
 
     private static SharedPreferences getSharedPreferences(Context context) {
         if (mPreferences == null) {
-            mPreferences = context.getSharedPreferences(SHARED_PREFERENCES_FILENAME, Context.MODE_PRIVATE);
+            mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         }
         return mPreferences;
     }
@@ -239,6 +242,85 @@ public class SharedDataManager {
      */
     public static void setServerHistory(Context context, Set<String> history) {
         getSharedPreferences(context).edit().putStringSet(SERVER_HISTORY_KEY, history).commit();
+    }
+
+    /**
+     * Sets the latitude of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     * @param latitude The latitude of the last area/hunt.
+     */
+    public static void setLastAreaLatitude(Context context, double latitude) {
+        getSharedPreferences(context).edit().putLong(LAST_AREA_LATITUDE_KEY,
+                Double.doubleToRawLongBits(latitude)).commit();
+    }
+
+    /**
+     * Gets the latitude of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     */
+    public static double getLastAreaLatitude(Context context) {
+        return Double.longBitsToDouble(getSharedPreferences(context).getLong(LAST_AREA_LATITUDE_KEY, 0));
+    }
+
+    /**
+     * Sets the longitude of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     * @param longitude The latitude of the last area/hunt.
+     */
+    public static void setLastAreaLongitude(Context context, double longitude) {
+        getSharedPreferences(context).edit().putLong(LAST_AREA_LONGITUDE_KEY,
+                Double.doubleToRawLongBits(longitude)).commit();
+    }
+
+    /**
+     * Gets the longitude of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     */
+    public static double getLastAreaLongitude(Context context) {
+        return Double.longBitsToDouble(getSharedPreferences(context).getLong(LAST_AREA_LONGITUDE_KEY, 0));
+    }
+
+    /**
+     * Sets the radius of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     * @param radius The latitude of the last area/hunt.
+     */
+    public static void setLastAreaRadius(Context context, int radius) {
+        getSharedPreferences(context).edit().putInt(LAST_AREA_RADIUS_KEY, radius).commit();
+    }
+
+    /**
+     * Gets the radius of the last area/hunt.
+     *
+     * @param context Context of the caller.
+     */
+    public static int getLastAreaRadius(Context context) {
+        return getSharedPreferences(context).getInt(LAST_AREA_RADIUS_KEY, 0);
+    }
+
+    /**
+     * Gets the preferred number of columns on offer page from user settings in portrait orientation.
+     *
+     * @param context Context of the caller.
+     * @return The preferred number of columns on offer page from user settings in portrait orientation.
+     */
+    public static int getOfferColumnsPortrait(Context context) {
+        return Integer.parseInt(getSharedPreferences(context).getString("offer_columns_portrait", "2"));
+    }
+
+    /**
+     * Gets the preferred number of columns on offer page from user settings in landscape orientation.
+     *
+     * @param context Context of the caller.
+     * @return The preferred number of columns on offer page from user settings in landscape orientation.
+     */
+    public static int getOfferColumnsLandscape(Context context) {
+        return Integer.parseInt(getSharedPreferences(context).getString("offer_columns_landscape", "2"));
     }
 
     /**
