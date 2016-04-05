@@ -151,6 +151,11 @@ public class TargetTileView extends View {
             mTarget.setIsPhotoDrawn(true);
         }
 
+        if (mTarget.getState() == Target.TargetState.UNAVAILABLE) {
+            /* Add mask on the background, so that the text is readable */
+            canvas.drawColor(ContextCompat.getColor(getContext(), R.color.white_shadow));
+        }
+
         /* Draw text on the opposite side of tile */
         if (mTarget.isRotationDrawn()) {
             /* Add mask on the background, so that the text is readable */

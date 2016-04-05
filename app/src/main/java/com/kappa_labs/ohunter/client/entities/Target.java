@@ -17,11 +17,12 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * Represents a state of target.
      */
     public enum TargetState {
-        PHOTOGENIC(70),
-        ACTIVATED(60),
-        ACCEPTED(50),
-        LOCKED(40),
-        DEFERRED(30),
+        PHOTOGENIC(80),
+        ACTIVATED(70),
+        ACCEPTED(60),
+        LOCKED(50),
+        DEFERRED(40),
+        UNAVAILABLE(30),
         COMPLETED(20),
         REJECTED(10);
 
@@ -98,7 +99,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return True when rules are satisfied, false if not.
          */
         public boolean canDefer() {
-            return this == TargetState.ACCEPTED;
+            return this == TargetState.UNAVAILABLE;
         }
 
         /**
@@ -116,7 +117,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return True when rules are satisfied, false if not.
          */
         public boolean canReject() {
-            return this == TargetState.DEFERRED;
+            return this == UNAVAILABLE || this == TargetState.DEFERRED;
         }
 
     }
@@ -124,7 +125,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     private boolean rotated;
     private boolean isRotationDrawn;
     private boolean highlighted;
-    private TargetState mState = TargetState.DEFERRED;
+    private TargetState mState = TargetState.UNAVAILABLE;
     private int photoIndex;
     private boolean isPhotoDrawn;
     private int discoveryGain, similarityGain;

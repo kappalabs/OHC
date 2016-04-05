@@ -230,18 +230,17 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                             return;
                         }
 
-                        /* Divide given places into two groups (accepted and deferred) */
+                        /* Divide given places into two groups (unavailable and deferred) */
                         List<Integer> range = new ArrayList<>();
                         for (int i = 0; i < targets.size(); i++) {
                             range.add(i);
-                            targets.get(i).setState(Target.TargetState.DEFERRED);
                         }
                         /* Randomly pick few targets and accept them */
                         Random random = new Random();
                         int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
                         while (min > 0) {
                             int index = random.nextInt(range.size());
-                            targets.get(range.remove(index)).setState(Target.TargetState.ACCEPTED);
+                            targets.get(range.remove(index)).setState(Target.TargetState.DEFERRED);
                             --min;
                         }
 
