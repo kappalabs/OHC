@@ -95,6 +95,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 DEFAULT_NUM_ATTEMPTS, getString(R.string.number_sign)));
 
         scoreTextview = (TextView) findViewById(R.id.textView_score);
+        assert scoreTextview != null;
         scoreTextview.setVisibility(View.GONE);
 
         shootButton = (Button) findViewById(R.id.button_shoot);
@@ -106,6 +107,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         });
 
         Button rotateLeftButton = (Button) findViewById(R.id.button_rotateLeft);
+        assert rotateLeftButton != null;
         rotateLeftButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -127,6 +129,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         });
 
         Button rotateRightButton = (Button) findViewById(R.id.button_rotateRight);
+        assert rotateRightButton != null;
         rotateRightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,6 +151,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         });
 
         SeekBar opacitySeekBar = (SeekBar) findViewById(R.id.seekBar_opacity);
+        assert opacitySeekBar != null;
         opacitySeekBar.setProgress(DEFAULT_ALPHA);
         opacitySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -165,6 +169,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         });
 
         SeekBar colorSeekBar = (SeekBar) findViewById(R.id.seekBar_color);
+        assert colorSeekBar != null;
         colorSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -185,6 +190,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         });
 
         uploadFab = (FloatingActionButton) findViewById(R.id.fab_upload);
+        assert uploadFab != null;
         uploadFab.setVisibility(View.GONE);
         uploadFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -206,6 +212,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         mCamera = getCameraInstance();
         mPreview = new CameraOverlay(this, mCamera);
         previewFrameLayout = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
+        assert previewFrameLayout != null;
         previewFrameLayout.addView(mPreview);
     }
 
@@ -438,6 +445,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 mCamera.setPreviewCallback(null);
                 mPreview = new CameraOverlay(this, mCamera);
                 FrameLayout preview = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
+                assert preview != null;
                 preview.removeAllViews();
                 preview.addView(mPreview);
             } catch (Exception e) {

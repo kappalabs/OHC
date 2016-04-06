@@ -190,10 +190,8 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
             }
             /* Retrieve the new picture */
             mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-
-            Log.d(TAG, "foto original ma velikost " + mBitmap.getWidth() + " x " + mBitmap.getHeight());
+            /* Scale the picture to match the sizes of the preview/template one */
             mBitmap = Bitmap.createScaledBitmap(mBitmap, mPreviewSize.width, mPreviewSize.height, true);
-            Log.d(TAG, "foto zmenena ma velikost " + mBitmap.getWidth() + " x " + mBitmap.getHeight());
 
             /* Allows to see the preview again */
             mCamera.stopPreview();
@@ -202,27 +200,6 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
             /* Let the parent know about the new prepared picture */
             if (mListener != null) {
                 mListener.onImageReady();
-            }
-
-            String root = Environment.getExternalStorageDirectory().toString();
-            File myDir = new File(root + "/ohunt_camera");
-            if(!myDir.exists()) {
-                myDir.mkdir();
-            }
-            File pictureFile = new File(myDir, System.currentTimeMillis()+".jpg");
-            if (pictureFile.exists()) {
-                pictureFile.delete();
-            }
-            Log.d(TAG, "ukladam do "+pictureFile.getAbsolutePath()+", canonical: "+pictureFile.getPath());
-
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-                Log.e(TAG, "File not found: " + e.getMessage());
-            } catch (IOException e) {
-                Log.e(TAG, "Error accessing file: " + e.getMessage());
             }
         }
     };
@@ -246,4 +223,5 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         void onPreviewSizeChange(int width, int height);
         void onImageReady();
     }
+
 }

@@ -104,6 +104,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Set up the ViewPager with the sections adapter */
         mViewPager = (ViewPager) findViewById(R.id.container);
+        assert mViewPager != null;
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -142,6 +143,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to reject a place */
         rejectFab = (FloatingActionButton) findViewById(R.id.fab_reject);
+        assert rejectFab != null;
         rejectFab.setVisibility(View.GONE);
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -165,6 +167,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button for accept of a place */
         acceptFab = (FloatingActionButton) findViewById(R.id.fab_accept);
+        assert acceptFab != null;
         acceptFab.setVisibility(View.GONE);
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,6 +178,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to rotate the tile */
         rotateFab = (FloatingActionButton) findViewById(R.id.fab_rotate);
+        assert rotateFab != null;
         rotateFab.setVisibility(View.GONE);
         rotateFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -191,6 +195,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to activate a place for hunt */
         activateFab = (FloatingActionButton) findViewById(R.id.fab_activate);
+        assert activateFab != null;
         activateFab.setVisibility(View.GONE);
         activateFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -205,6 +210,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button for starting the camera activity - taking similar photo */
         cameraFab = (FloatingActionButton) findViewById(R.id.fab_camera);
+        assert cameraFab != null;
         cameraFab.setVisibility(View.GONE);
         cameraFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -255,6 +261,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to defer the target */
         deferFab = (FloatingActionButton) findViewById(R.id.fab_defer);
+        assert deferFab != null;
         deferFab.setVisibility(View.GONE);
         deferFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -265,6 +272,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to evaluate target photos */
         evaluateFab = (FloatingActionButton) findViewById(R.id.fab_evaluate);
+        assert evaluateFab != null;
         evaluateFab.setVisibility(View.GONE);
         evaluateFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -307,6 +315,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Button to sort the targets on offer page according to their states */
         sortFab = (FloatingActionButton) findViewById(R.id.fab_sort);
+        assert sortFab != null;
         sortFab.setVisibility(View.GONE);
         sortFab.setOnClickListener(new View.OnClickListener() {
             @Override

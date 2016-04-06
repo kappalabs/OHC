@@ -74,6 +74,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         });
 
         Button mLogInButton = (Button) findViewById(R.id.button_login);
+        assert mLogInButton != null;
         mLogInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -82,6 +83,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
         });
 
         Button mRegisterButton = (Button) findViewById(R.id.button_register);
+        assert mRegisterButton != null;
         mRegisterButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
