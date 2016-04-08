@@ -1,6 +1,7 @@
 package layout;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -20,6 +21,7 @@ import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.client.views.TargetTileView;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.utilities.Utils;
@@ -206,7 +208,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                 /* No target is available */
                 if (targets.isEmpty()) {
-                    //TODO: zobrazit nejakou zpravu pro uzivatele
+                    Wizard.noTargetAvailableDialog(getContext(), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            getActivity().finish();
+                        }
+                    }).show(getFragmentManager(), "tag");
                     return;
                 }
 
@@ -237,7 +244,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         }
                         /* Randomly pick few targets and accept them */
                         Random random = new Random();
-                        int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_GREENS);
+                        int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_AVAILABLE);
                         while (min > 0) {
                             int index = random.nextInt(range.size());
                             targets.get(range.remove(index)).setState(Target.TargetState.DEFERRED);
@@ -249,6 +256,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         mAdapter.notifyDataSetChanged();
 
                         SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
+                        Wizard.gameInitializedDialog(getContext()).show(getFragmentManager(), "tag");
                     }
                 });
             }

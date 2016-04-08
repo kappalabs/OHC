@@ -33,9 +33,13 @@ public class SharedDataManager {
     public static final String TAG = "PreferencesManager";
 
     /**
-     * Default number of green places in the initial offer.
+     * Default number of available targets in the initial offer.
      */
-    public static final int DEFAULT_NUM_GREENS = 6;
+    public static final int DEFAULT_NUM_AVAILABLE = 6;
+    /**
+     * Default number of targets, which can be accepted in the initial offer.
+     */
+    public static final int DEFAULT_NUM_ACCEPTABLE = 4;
 
     private static final String HUNT_READY_KEY = "hunt_ready";
     private static final String START_TIME_KEY = "start_time";
@@ -47,6 +51,7 @@ public class SharedDataManager {
     private static final String LAST_AREA_LONGITUDE_KEY = "last_area_longitude";
     private static final String LAST_AREA_LATITUDE_KEY = "last_area_latitude";
     private static final String LAST_AREA_RADIUS_KEY = "last_area_radius";
+    private static final String NUM_ACCEPTABLE_KEY = "num_acceptable";
 
     private static final String PHOTO_PREFIX = "photo_";
     private static final String PLACE_PREFIX = "place_";
@@ -61,6 +66,7 @@ public class SharedDataManager {
     private static Player mPlayer;
     private static Boolean huntReady;
     private static Long startTime;
+    private static Integer numAcceptable;
 
 
     private SharedDataManager() {
@@ -182,6 +188,30 @@ public class SharedDataManager {
             Log.e(TAG, "Cannot remove directory \'" + directory + "\': " + e);
             return false;
         }
+    }
+
+    /**
+     * Gets the number of targets, which are allowed to be accepted.
+     *
+     * @param context Context of the caller.
+     * @return The number of targets, which are allowed to be accepted.
+     */
+    public static int getNumAcceptable(Context context) {
+        if (numAcceptable == null) {
+            numAcceptable = getSharedPreferences(context).getInt(NUM_ACCEPTABLE_KEY, DEFAULT_NUM_ACCEPTABLE);
+        }
+        return numAcceptable;
+    }
+
+    /**
+     * Sets the number of targets, which are allowed to be accepted.
+     *
+     * @param context Context of the caller.
+     * @param numAcceptable The number of targets, which are allowed to be accepted.
+     */
+    public static void setNumAcceptable(Context context, int numAcceptable) {
+        SharedDataManager.numAcceptable = numAcceptable;
+        getSharedPreferences(context).edit().putInt(NUM_ACCEPTABLE_KEY, numAcceptable).commit();
     }
 
     /**
@@ -355,6 +385,7 @@ public class SharedDataManager {
     public static synchronized void initNewHunt(Context context, boolean ready, long time) {
         setStartTime(context, time);
         clearPendingRequests(context);
+        setNumAcceptable(context, DEFAULT_NUM_ACCEPTABLE);
         if (huntReady == null || huntReady != ready) {
             huntReady = ready;
             getSharedPreferences(context).edit().putBoolean(HUNT_READY_KEY, ready).commit();

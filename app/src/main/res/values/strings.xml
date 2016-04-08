@@ -112,6 +112,34 @@
     <string name="number_sign" translatable="false">#</string>
     <string name="radius_editText_hint" translatable="false">1–50</string>
     <string name="title_activity_settings">Settings</string>
+    
+    <string name="dialog_wizard_game_initiated_title">The game is ready</string>
+    <string name="dialog_wizard_game_initiated_message">Now you can accept 4 targets, which are available.</string>
+    <string name="dialog_wizard_game_initiated_positive">OK</string>
+
+    <string name="dialog_wizard_no_target_title">No target is available</string>
+    <string name="dialog_wizard_no_target_message">Try to increase the radius or select another position.</string>
+    <string name="dialog_wizard_no_target_positive">OK</string>
+
+    <string name="dialog_wizard_low_acceptable_title">Cannot accept</string>
+    <string name="dialog_wizard_low_acceptable_message">You cannot accept more targets now, complete one already accepted.</string>
+    <string name="dialog_wizard_low_acceptable_positive">OK</string>
+
+    <string name="dialog_wizard_accept_question_title">Accept target</string>
+    <string name="dialog_wizard_accept_question_message">Only limited amount of targets can be accepted (%1$d). Do you want to continue?</string>
+    <string name="dialog_wizard_accept_question_positive">Yes</string>
+    <string name="dialog_wizard_accept_question_negative">No</string>
+
+    <string name="dialog_wizard_reject_question_title">Reject target</string>
+    <string name="dialog_wizard_reject_question_message">Rejecting target will cost you %1$s. Do you want to continue?</string>
+    <string name="dialog_wizard_reject_question_positive">Yes</string>
+    <string name="dialog_wizard_reject_question_negative">No</string>
+
+    <plurals name="numberOfPoints">
+        <item quantity="one">%d point</item>
+        <item quantity="few">%d points</item>
+        <item quantity="other">%d points</item>
+    </plurals>
 
     <!-- Strings related to Settings -->
 

@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -32,6 +33,7 @@ import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -154,14 +156,20 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                             getString(R.string.error_not_enough_points), Toast.LENGTH_SHORT).show();
                     return;
                 }
-                /* Send information about the rejected target into the database on server */
-                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
-                Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                        new RetrieveResponseTask(HuntActivity.this,
-                        Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
-                responseTask.execute(
-                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
-                                placeID, mPointsManager.getRejectCost()));
+                Wizard.rejectQuestionDialog(HuntActivity.this, PointsManager.getRejectCost(),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                /* Send information about the rejected target into the database on server */
+                                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
+                                Utils.RetrieveResponseTask responseTask = Utils.getInstance().
+                                        new RetrieveResponseTask(HuntActivity.this,
+                                        Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
+                                responseTask.execute(
+                                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
+                                                placeID, PointsManager.getRejectCost()));
+                            }
+                        }).show(getSupportFragmentManager(), "tag");
             }
         });
 
@@ -172,7 +180,21 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         acceptFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACCEPTED);
+                if (SharedDataManager.getNumAcceptable(HuntActivity.this) > 0) {
+                    Wizard.acceptQuestionDialog(HuntActivity.this,
+                            SharedDataManager.getNumAcceptable(HuntActivity.this),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    /* Set the state to accepted and decrease the number of acceptable targets */
+                                    HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACCEPTED);
+                                    SharedDataManager.setNumAcceptable(HuntActivity.this,
+                                            SharedDataManager.getNumAcceptable(HuntActivity.this) - 1);
+                                }
+                            }).show(getSupportFragmentManager(), "tag");
+                } else {
+                    Wizard.notEnoughAcceptableDialog(HuntActivity.this).show(getSupportFragmentManager(), "tag");
+                }
             }
         });
 
@@ -266,7 +288,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         deferFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED);
+                // TODO: 8.4.16 za toto je v novych pravidlech bodova penalizace
+//                HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED);
             }
         });
 
@@ -638,7 +661,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
         } else if (data instanceof String && request instanceof RejectPlaceRequest) {
             String placeID = (String) data;
-            int cost = mPointsManager.getRejectCost();
+            int cost = PointsManager.getRejectCost();
             Target target = HuntOfferFragment.getTargetByID(placeID);
             if (target != null) {
                 target.setRejectLoss(cost);

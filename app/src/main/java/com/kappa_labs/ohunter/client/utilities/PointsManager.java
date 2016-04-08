@@ -125,7 +125,7 @@ public class PointsManager {
      *
      * @return The cost of rejecting a target.
      */
-    public int getRejectCost() {
+    public static int getRejectCost() {
         return MAX_REJECT_COST;
     }
 

@@ -92,4 +92,10 @@
     <string name="pref_title_offer_columns_landscape">Počet sloupců při landscape orientaci</string>
     <string name="pref_title_offer_columns_portrait">Počet sloupců při portrait orientaci</string>
     <string name="pref_header_offer">Stránka nabídky</string>
+    <string name="dialog_wizard_game_initiated_message">Nyní můžeš přijmout 4 dostupné cíle.</string>
+    <string name="dialog_wizard_game_initiated_title">Hra je připravena</string>
+    <string name="dialog_wizard_game_initiated_positive">Rozumím</string>
+    <string name="dialog_wizard_no_target_message">Zkus zvětšit poloměr nebo vyber jinou pozici.</string>
+    <string name="dialog_wizard_no_target_positive">Pokračovat</string>
+    <string name="dialog_wizard_no_target_title">Není dostupný žádný cíl</string>
 </resources>
