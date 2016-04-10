@@ -79,7 +79,7 @@
     <string name="ohex_general">Server poslal OHException:</string>
     <string name="ohex_serialization">Používáš nekompatibilní verzi, aktualizuj aplikaci</string>
     <string name="error_not_enough_points">Nemáš dostatek bodů.</string>
-    <string name="error_missing_points">Chybí ti %1$d bodů.</string>
+    <string name="error_missing_points">Chybí ti %1$s.</string>
     <string name="daytime_both">Obojí</string>
     <string name="title_activity_settings">Nastavení</string>
     <string name="button_statistics">Statistiky</string>
@@ -98,4 +98,27 @@
     <string name="dialog_wizard_no_target_message">Zkus zvětšit poloměr nebo vyber jinou pozici.</string>
     <string name="dialog_wizard_no_target_positive">Pokračovat</string>
     <string name="dialog_wizard_no_target_title">Není dostupný žádný cíl</string>
+    <string name="dialog_wizard_accept_question_message">Pouze omezený počet cílů je možné přijmout (%1$1d zbývá). Chceš pokračovat?</string>
+    <string name="dialog_wizard_accept_question_negative">Ne</string>
+    <string name="dialog_wizard_accept_question_positive">Ano</string>
+    <string name="dialog_wizard_accept_question_title">Přijmout cíl</string>
+    <string name="dialog_wizard_low_acceptable_message">Teď už nemůžeš přijmout další cíl, nejdříve splň nějaký přijmutý.</string>
+    <string name="dialog_wizard_low_acceptable_positive">Rozumím</string>
+    <string name="dialog_wizard_low_acceptable_title">Nelze přijmout cíl</string>
+    <string name="dialog_wizard_reject_question_message">Zamítnutí cíle tě bude stát %1$s. Chceš pokračovat?</string>
+    <string name="dialog_wizard_reject_question_negative">Ne</string>
+    <string name="dialog_wizard_reject_question_positive">Ano</string>
+    <string name="dialog_wizard_reject_question_title">Zamítnout cíl</string>
+    <string name="numberOfPoints_few">%d bodů</string>
+    <string name="numberOfPoints_one">%d bod</string>
+    <string name="numberOfPoints_other">%d bodů</string>
+    <string name="dialog_wizard_defer_question_message">Zpřístupnění tohoto cíle tě bude stát %1$s. Chceš pokračovat?</string>
+    <string name="dialog_wizard_defer_question_negative">Ne</string>
+    <string name="dialog_wizard_defer_question_positive">Ano</string>
+    <string name="dialog_wizard_defer_question_title">Zpřístupnit cíl</string>
+    <string name="dialog_wizard_missing_points_message">Chybí ti %1$s.</string>
+    <string name="dialog_wizard_missing_points_positive">Rozumím</string>
+    <string name="dialog_wizard_missing_points_title">Nedostatek bodů</string>
+    <string name="numberOfPoints_two">%d body</string>
+    <string name="numberOfPoints_zero">%d bodů</string>
 </resources>

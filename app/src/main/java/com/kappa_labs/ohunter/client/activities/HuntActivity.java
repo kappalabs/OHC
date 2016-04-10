@@ -152,10 +152,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             public void onClick(View v) {
                 /* Reject only if player has enough points */
                 if (!mPointsManager.canReject()) {
-                    Toast.makeText(HuntActivity.this,
-                            getString(R.string.error_not_enough_points), Toast.LENGTH_SHORT).show();
+                    int points = mPointsManager.countMissingPoints(PointsManager.getRejectCost());
+                    Wizard.missingPointsDialog(HuntActivity.this, points);
                     return;
                 }
+                /* Show reject confirmation dialog */
                 Wizard.rejectQuestionDialog(HuntActivity.this, PointsManager.getRejectCost(),
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -169,7 +170,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                         new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
                                                 placeID, PointsManager.getRejectCost()));
                             }
-                        }).show(getSupportFragmentManager(), "tag");
+                        });
             }
         });
 
@@ -181,6 +182,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             @Override
             public void onClick(View v) {
                 if (SharedDataManager.getNumAcceptable(HuntActivity.this) > 0) {
+                    /* Show accept confirmation dialog */
                     Wizard.acceptQuestionDialog(HuntActivity.this,
                             SharedDataManager.getNumAcceptable(HuntActivity.this),
                             new DialogInterface.OnClickListener() {
@@ -191,9 +193,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                     SharedDataManager.setNumAcceptable(HuntActivity.this,
                                             SharedDataManager.getNumAcceptable(HuntActivity.this) - 1);
                                 }
-                            }).show(getSupportFragmentManager(), "tag");
+                            });
                 } else {
-                    Wizard.notEnoughAcceptableDialog(HuntActivity.this).show(getSupportFragmentManager(), "tag");
+                    Wizard.notEnoughAcceptableDialog(HuntActivity.this);
                 }
             }
         });
@@ -288,8 +290,29 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         deferFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: 8.4.16 za toto je v novych pravidlech bodova penalizace
-//                HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED);
+                /* Defer only if player has enough points */
+                if (!mPointsManager.canDefer()) {
+                    int points = mPointsManager.countMissingPoints(PointsManager.getDeferCost());
+                    Wizard.missingPointsDialog(HuntActivity.this, points);
+                    return;
+                }
+                /* Show defer confirmation dialog */
+                Wizard.deferQuestionDialog(HuntActivity.this, PointsManager.getDeferCost(),
+                        new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        /* Change the state of the target */
+                        if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED)) {
+                            Log.e(TAG, "Cannot defer selected target. Incorrect state?");
+                            return;
+                        }
+                        mPointsManager.removePoints(PointsManager.getDeferCost());
+
+                        /* Send information about the deferred target into the database on server */
+                        mPointsManager.updateInDatabase(null);
+                    }
+                });
             }
         });
 

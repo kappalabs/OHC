@@ -32,6 +32,7 @@ import com.kappa_labs.ohunter.client.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * {@link Fragment} subclass to show map, information about targets and player position.
@@ -193,19 +194,19 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     private String getTargetLatitude() {
-        return targetReady ? String.format("%.6f", target.latitude) + "N" : "??N";
+        return targetReady ? String.format(Locale.getDefault(), "%.6fN", target.latitude) : "??N";
     }
 
     private String getTargetLongitude() {
-        return targetReady ? String.format("%.6f", target.longitude) + "N" : "??N";
+        return targetReady ? String.format(Locale.getDefault(), "%.6fN", target.longitude) : "??N";
     }
 
     private String getPlayerLatitude() {
-        return mLastLocation == null ? "??N" : String.format("%.6f", mLastLocation.getLatitude()) + "N";
+        return mLastLocation == null ? "??N" : String.format(Locale.getDefault(), "%.6fN", mLastLocation.getLatitude());
     }
 
     private String getPlayerLongitude() {
-        return mLastLocation == null ? "??E" : String.format("%.6f", mLastLocation.getLongitude()) + "E";
+        return mLastLocation == null ? "??E" : String.format(Locale.getDefault(), "%.6fE", mLastLocation.getLongitude());
     }
 
     private String getTargetDistance() {

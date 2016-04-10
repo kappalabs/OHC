@@ -15,6 +15,7 @@ public class PointsManager {
 
     public static final int MAX_BEGIN_AREA_COST = 20;
     public static final int MAX_REJECT_COST = 5;
+    public static final int MAX_DEFER_COST = 10;
     public static final int MIN_LOCATION_FOUND_GAIN = 1;
     public static final int MIN_PHOTOGRAPHED_GAIN = 1;
     public static final int SPOIL_FUNCTION_MAX = 10;
@@ -58,12 +59,24 @@ public class PointsManager {
     /**
      * Adds given points to the current player.
      *
-     * @param points Number of points to add (can be negative).
+     * @param points Number of points to add (can be negative to subtract/remove).
      * @return True on success, false on fail, when saving the change.
      */
     public boolean addPoints(int points) {
         Player player = SharedDataManager.getPlayer(mContext);
         player.setScore(player.getScore() + points);
+        return SharedDataManager.setPlayer(mContext, player);
+    }
+
+    /**
+     * Removes given number of points from the current player.
+     *
+     * @param points Number of points to remove (can be negative to add).
+     * @return True on success, false on fail, when saving the change.
+     */
+    public boolean removePoints(int points) {
+        Player player = SharedDataManager.getPlayer(mContext);
+        player.setScore(player.getScore() - points);
         return SharedDataManager.setPlayer(mContext, player);
     }
 
@@ -92,6 +105,15 @@ public class PointsManager {
     }
 
     /**
+     * Gets the cost of beginning a new area (hunt).
+     *
+     * @return The cost of beginning a new area (hunt).
+     */
+    public int getBeginAreaCost() {
+        return MAX_BEGIN_AREA_COST;
+    }
+
+    /**
      * Returns true, if the player has enough points to start a new area (hunt).
      *
      * @return True, if the player has enough points to start a new area (hunt), false otherwise.
@@ -102,12 +124,12 @@ public class PointsManager {
     }
 
     /**
-     * Gets the cost of beginning a new area (hunt).
+     * Gets the cost of rejecting a target.
      *
-     * @return The cost of beginning a new area (hunt).
+     * @return The cost of rejecting a target.
      */
-    public int getBeginAreaCost() {
-        return MAX_BEGIN_AREA_COST;
+    public static int getRejectCost() {
+        return MAX_REJECT_COST;
     }
 
     /**
@@ -117,16 +139,26 @@ public class PointsManager {
      */
     public boolean canReject() {
         Player player = SharedDataManager.getPlayer(mContext);
-        return player.getScore() >= getRejectCost();
+        return player.getScore() >= getDeferCost();
     }
 
     /**
-     * Gets the cost of rejecting a target.
+     * Gets the cost of deferring a target.
      *
-     * @return The cost of rejecting a target.
+     * @return The cost of deferring a target.
      */
-    public static int getRejectCost() {
-        return MAX_REJECT_COST;
+    public static int getDeferCost() {
+        return MAX_DEFER_COST;
+    }
+
+    /**
+     * Returns true, if the player has enough points to defer a target.
+     *
+     * @return True, if the player has enough points to defer a target, false otherwise.
+     */
+    public boolean canDefer() {
+        Player player = SharedDataManager.getPlayer(mContext);
+        return player.getScore() >= getDeferCost();
     }
 
     /**

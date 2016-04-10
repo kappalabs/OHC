@@ -28,7 +28,7 @@
     <string name="error_camera_player_null">You must either log in, or enter offline mode!</string>
     <string name="error_camera_no_photo">You have to take a picture!</string>
     <string name="error_not_enough_points">You don\'t have enough points for this.</string>
-    <string name="error_missing_points">You are missing %1$d points.</string>
+    <string name="error_missing_points">You are missing %1$s.</string>
     <string name="camera_activity_photos_counter" translatable="false">%1$d%2$s</string>
     <string name="server_address_template" translatable="false">192.168.0.1:4242</string>
     <string name="similarity_is">Similarity is %1$.1f%%</string>
@@ -121,25 +121,34 @@
     <string name="dialog_wizard_no_target_message">Try to increase the radius or select another position.</string>
     <string name="dialog_wizard_no_target_positive">OK</string>
 
-    <string name="dialog_wizard_low_acceptable_title">Cannot accept</string>
+    <string name="dialog_wizard_low_acceptable_title">Cannot accept target</string>
     <string name="dialog_wizard_low_acceptable_message">You cannot accept more targets now, complete one already accepted.</string>
     <string name="dialog_wizard_low_acceptable_positive">OK</string>
 
     <string name="dialog_wizard_accept_question_title">Accept target</string>
-    <string name="dialog_wizard_accept_question_message">Only limited amount of targets can be accepted (%1$d). Do you want to continue?</string>
+    <string name="dialog_wizard_accept_question_message">Only limited amount of targets can be accepted (%1$d left). Do you want to continue?</string>
     <string name="dialog_wizard_accept_question_positive">Yes</string>
     <string name="dialog_wizard_accept_question_negative">No</string>
 
     <string name="dialog_wizard_reject_question_title">Reject target</string>
-    <string name="dialog_wizard_reject_question_message">Rejecting target will cost you %1$s. Do you want to continue?</string>
+    <string name="dialog_wizard_reject_question_message">Rejecting a target will cost you %1$s. Do you want to continue?</string>
     <string name="dialog_wizard_reject_question_positive">Yes</string>
     <string name="dialog_wizard_reject_question_negative">No</string>
 
-    <plurals name="numberOfPoints">
-        <item quantity="one">%d point</item>
-        <item quantity="few">%d points</item>
-        <item quantity="other">%d points</item>
-    </plurals>
+    <string name="dialog_wizard_defer_question_title">Open up target</string>
+    <string name="dialog_wizard_defer_question_message">Making this target available will cost you %1$s. Do you want to continue?</string>
+    <string name="dialog_wizard_defer_question_positive">Yes</string>
+    <string name="dialog_wizard_defer_question_negative">No</string>
+
+    <string name="dialog_wizard_missing_points_title">Not enough points</string>
+    <string name="dialog_wizard_missing_points_message">You are missing %1$s.</string>
+    <string name="dialog_wizard_missing_points_positive">OK</string>
+
+    <string name="numberOfPoints_zero">%d points</string>
+    <string name="numberOfPoints_one">%d point</string>
+    <string name="numberOfPoints_two">%d points</string>
+    <string name="numberOfPoints_few">%d points</string>
+    <string name="numberOfPoints_other">%d points</string>
 
     <!-- Strings related to Settings -->
 

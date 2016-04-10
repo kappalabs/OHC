@@ -12,12 +12,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -64,9 +64,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!mPointsManager.canBeginArea()) {
-                    String text = String.format(getString(R.string.error_missing_points),
-                            mPointsManager.countMissingPoints(mPointsManager.getBeginAreaCost()));
-                    Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+                    int points = mPointsManager.countMissingPoints(mPointsManager.getBeginAreaCost());
+                    Wizard.missingPointsDialog(MainActivity.this, points);
                     return;
                 }
                 Intent i = new Intent();
@@ -134,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 //TODO
                 Long start = SharedDataManager.getStartTime(MainActivity.this);
                 if (start != null) {
-                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 10000);
+                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 4000);
                     SharedDataManager.setStartTime(MainActivity.this, uprTime);
                 }
             }

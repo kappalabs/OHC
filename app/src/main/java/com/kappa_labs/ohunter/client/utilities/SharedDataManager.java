@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class SharedDataManager {
 
-    public static final String TAG = "PreferencesManager";
+    public static final String TAG = "SharedDataManager";
 
     /**
      * Default number of available targets in the initial offer.

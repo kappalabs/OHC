@@ -1,10 +1,16 @@
 package com.kappa_labs.ohunter.client.utilities;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.kappa_labs.ohunter.client.R;
@@ -168,7 +174,7 @@ public class Utils {
 
         private OHException ohException;
         private OnResponseTaskCompleted mListener;
-        private ProgressDialog mProgressDialog;
+        private ProgressDialogFragment mProgressDialog;
         private Object mData;
         private Request mRequest;
 
@@ -179,7 +185,7 @@ public class Utils {
          * @param caller The caller, that will be notified, can be null.
          * @param progressDialog Reference to dialog, which will be closed after this task.
          */
-        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog) {
+        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialogFragment progressDialog) {
             this.mListener = caller;
             this.mProgressDialog = progressDialog;
         }
@@ -191,7 +197,7 @@ public class Utils {
          * @param progressDialog Reference to dialog, which will be closed after this task.
          * @param data Data object that will be returned on callback, when this task is completed.
          */
-        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialog progressDialog, Object data) {
+        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialogFragment progressDialog, Object data) {
             this.mListener = caller;
             this.mProgressDialog = progressDialog;
             this.mData = data;
@@ -213,7 +219,7 @@ public class Utils {
                 mListener.onResponseTaskCompleted(mRequest, response, ohException, mData);
             }
             if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
+                mProgressDialog.dismissAllowingStateLoss();
             }
         }
     }
@@ -222,15 +228,45 @@ public class Utils {
         void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data);
     }
 
-    public static ProgressDialog getStandardDialog(Context context, String title, String message) {
-        ProgressDialog dialog = ProgressDialog.show(context, title, message, true);
+    public static class ProgressDialogFragment extends DialogFragment {
+
+        private static String mTitle, mMessage;
+
+        public void setTexts(String title, String message) {
+            mTitle = title;
+            mMessage = message;
+        }
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final ProgressDialog dialog = ProgressDialog.show(getActivity(), mTitle, mMessage, true);
+            dialog.setCancelable(false);
+//            dialog.setIndeterminate(true);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+
+            return dialog;
+        }
+    }
+
+    public static ProgressDialogFragment getStandardDialog(Context context, String title, String message) {
+        ProgressDialogFragment dialog = new ProgressDialogFragment();
+        dialog.setTexts(title, message);
         dialog.setCancelable(false);
-        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        dialog.show();
+        if (context instanceof AppCompatActivity) {
+            final AppCompatActivity activity = (AppCompatActivity) context;
+
+            FragmentTransaction transaction = activity.getSupportFragmentManager().beginTransaction();
+            transaction.add(dialog, "waiting");
+            transaction.commitAllowingStateLoss();
+        } else {
+            Log.e(TAG, "Cannot show standard dialog, context is not AppCompat Activity!");
+            return null;
+        }
         return dialog;
     }
 
-    public static ProgressDialog getServerCommunicationDialog(Context context) {
+    public static ProgressDialogFragment getServerCommunicationDialog(Context context) {
         return getStandardDialog(context, context.getString(R.string.server_communication),
                 context.getString(R.string.waiting_for_data));
     }
@@ -294,11 +330,11 @@ public class Utils {
 
     public class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
 
-        private ProgressDialog mDialog;
+        private ProgressDialogFragment mDialog;
         private Bitmap mBitmap;
         private OnEdgesTaskCompleted mListener;
 
-        public CountEdgesTask(OnEdgesTaskCompleted caller, ProgressDialog dialog, Bitmap original) {
+        public CountEdgesTask(OnEdgesTaskCompleted caller, ProgressDialogFragment dialog, Bitmap original) {
             mDialog = dialog;
             mBitmap = original;
             mListener = caller;
@@ -313,7 +349,7 @@ public class Utils {
         protected void onPostExecute(Bitmap edges) {
             super.onPostExecute(edges);
             if (mDialog != null) {
-                mDialog.dismiss();
+                mDialog.dismissAllowingStateLoss();
             }
             if (mListener != null) {
                 mListener.onEdgesTaskCompleted(edges);

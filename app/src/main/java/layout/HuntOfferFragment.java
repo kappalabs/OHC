@@ -52,13 +52,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static OnFragmentInteractionListener mListener;
 
     private static List<Target> targets = new ArrayList<>();
-//    private static Map<String, Target> targets = new HashMap<>();
     private static TileAdapter mAdapter;
 
     private ProgressBar fetchingProgressBar;
 
     private static int selectedIndex = -1;
     private static int activatedIndex = -1;
+    private static boolean loadingTargets;
 
 
     public HuntOfferFragment() {
@@ -87,7 +87,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         View view = inflater.inflate(R.layout.fragment_hunt_offer, container, false);
 
         fetchingProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_fetching);
-        fetchingProgressBar.setVisibility(View.GONE);
         GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
             offerGridView.setNumColumns(SharedDataManager.getOfferColumnsPortrait(getContext()));
@@ -101,8 +100,15 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         offerGridView.setAdapter(mAdapter);
 
         /* Targets are initiated only when no target is available */
-        if (targets.isEmpty()) {
+        if (targets.isEmpty() && !loadingTargets) {
+            loadingTargets = true;
             initTargets();
+        }
+        /* Show the progress of initializing targets on the offer screen */
+        if (loadingTargets) {
+            fetchingProgressBar.setVisibility(View.VISIBLE);
+        } else {
+            fetchingProgressBar.setVisibility(View.GONE);
         }
         updateSelection();
 
@@ -183,10 +189,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
         Target target = getSelectedTarget();
         if (target != null) {
-//            Place place = PlacesManager.getPlace(getContext(), target.getPlaceID());
-//            if (place != null) {
-                mListener.onTargetChanged(target);
-//            }
+            mListener.onTargetChanged(target);
             mListener.onItemSelected(target.getState());
         } else {
             mListener.onItemUnselected();
@@ -204,6 +207,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
             @Override
             public void onPreparationEnded() {
+                loadingTargets = false;
                 fetchingProgressBar.setVisibility(View.GONE);
 
                 /* No target is available */
@@ -213,13 +217,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         public void onClick(DialogInterface dialog, int which) {
                             getActivity().finish();
                         }
-                    }).show(getFragmentManager(), "tag");
+                    });
                     return;
                 }
 
                 /* Remove points from the player for starting a new area (hunt) */
                 PointsManager manager = MainActivity.getPointsManager();
-                manager.addPoints(-manager.getBeginAreaCost());
+                manager.removePoints(manager.getBeginAreaCost());
                 manager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
                     @Override
                     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
@@ -256,7 +260,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         mAdapter.notifyDataSetChanged();
 
                         SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
-                        Wizard.gameInitializedDialog(getContext()).show(getFragmentManager(), "tag");
+                        Wizard.gameInitializedDialog(getActivity());
                     }
                 });
             }
@@ -282,6 +286,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 }
             }
             mAdapter.notifyDataSetChanged();
+            loadingTargets = false;
+            fetchingProgressBar.setVisibility(View.GONE);
         }
     }
 
@@ -541,6 +547,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         } else {
             throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
         }
+        /* Resolves problems with rotation when async task is running*/
+        setRetainInstance(true);
     }
 
     @Override

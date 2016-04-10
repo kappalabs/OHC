@@ -6,7 +6,10 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 
 import com.kappa_labs.ohunter.client.R;
 
@@ -71,12 +74,29 @@ public class Wizard {
 
     }
 
+    private static void commitFragment(Context context, DialogFragment dialogFragment) {
+        FragmentTransaction transaction = null;
+        if (context instanceof AppCompatActivity) {
+            transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
+        } else if (context instanceof FragmentActivity) {
+            transaction = ((FragmentActivity) context).getSupportFragmentManager().beginTransaction();
+        }
+        if (transaction != null) {
+            transaction.add(dialogFragment, "tag");
+            transaction.commitAllowingStateLoss();
+        }
+    }
+
     public static DialogFragment gameInitializedDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
         BasicDialogFragment dialogFragment = new BasicDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_game_initiated_title),
                 context.getString(R.string.dialog_wizard_game_initiated_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_game_initiated_positive), null);
+        commitFragment(context, dialogFragment);
         return dialogFragment;
     }
 
@@ -87,6 +107,7 @@ public class Wizard {
                 context.getString(R.string.dialog_wizard_no_target_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_no_target_positive), positiveListener);
         dialogFragment.setCancelable(false);
+        commitFragment(context, dialogFragment);
         return dialogFragment;
     }
 
@@ -96,6 +117,7 @@ public class Wizard {
                 context.getString(R.string.dialog_wizard_low_acceptable_title),
                 context.getString(R.string.dialog_wizard_low_acceptable_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_low_acceptable_positive), null);
+        commitFragment(context, dialogFragment);
         return dialogFragment;
     }
 
@@ -106,6 +128,7 @@ public class Wizard {
                 String.format(context.getString(R.string.dialog_wizard_accept_question_message), amount));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_accept_question_positive), positiveListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_accept_question_negative), null);
+        commitFragment(context, dialogFragment);
         return dialogFragment;
     }
 
@@ -117,6 +140,30 @@ public class Wizard {
                         context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_reject_question_positive), positiveListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_reject_question_negative), null);
+        commitFragment(context, dialogFragment);
+        return dialogFragment;
+    }
+
+    public static DialogFragment deferQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
+        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_defer_question_title),
+                String.format(context.getString(R.string.dialog_wizard_defer_question_message),
+                        context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_defer_question_positive), positiveListener);
+        dialogFragment.setNegative(context.getString(R.string.dialog_wizard_defer_question_negative), null);
+        commitFragment(context, dialogFragment);
+        return dialogFragment;
+    }
+
+    public static DialogFragment missingPointsDialog(Context context, int points) {
+        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_missing_points_title),
+                String.format(context.getString(R.string.dialog_wizard_missing_points_message),
+                        context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_missing_points_positive), null);
+        commitFragment(context, dialogFragment);
         return dialogFragment;
     }
 

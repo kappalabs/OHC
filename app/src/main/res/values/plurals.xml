@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <plurals name="numberOfPoints">
+        <item quantity="zero">@string/numberOfPoints_zero</item>
+        <item quantity="one">@string/numberOfPoints_one</item>
+        <item quantity="two">@string/numberOfPoints_two</item>
+        <item quantity="few">@string/numberOfPoints_few</item>
+        <item quantity="other">@string/numberOfPoints_other</item>
+    </plurals>
+
+</resources>
