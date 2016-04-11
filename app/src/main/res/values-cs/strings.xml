@@ -121,4 +121,6 @@
     <string name="dialog_wizard_missing_points_title">Nedostatek bodů</string>
     <string name="numberOfPoints_two">%d body</string>
     <string name="numberOfPoints_zero">%d bodů</string>
+    <string name="notification_photogenified_text">Nyní můžeš nalezený cíl vyfotit.</string>
+    <string name="notification_photogenified_title">Nalezena aktivní zóna</string>
 </resources>

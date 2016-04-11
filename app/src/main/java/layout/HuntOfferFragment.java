@@ -346,7 +346,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      *
      * @return The activated target if available, null otherwise.
      */
-    private static Target getActivatedTarget() {
+    public static Target getActivatedTarget() {
         if (activatedIndex >= 0 && activatedIndex < targets.size()) {
             return targets.get(activatedIndex);
         }

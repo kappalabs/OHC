@@ -112,7 +112,10 @@
     <string name="number_sign" translatable="false">#</string>
     <string name="radius_editText_hint" translatable="false">1–50</string>
     <string name="title_activity_settings">Settings</string>
-    
+
+    <string name="notification_photogenified_title">Entered active zone</string>
+    <string name="notification_photogenified_text">Now you can take a picture of the discovered target.</string>
+
     <string name="dialog_wizard_game_initiated_title">The game is ready</string>
     <string name="dialog_wizard_game_initiated_message">Now you can accept 4 targets, which are available.</string>
     <string name="dialog_wizard_game_initiated_positive">OK</string>

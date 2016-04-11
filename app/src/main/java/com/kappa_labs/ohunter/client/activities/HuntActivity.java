@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,8 +15,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +73,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private static final int MAKE_PHOTO_REQUEST = 0x01;
 //    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
+    private static final int NOTIFICATION_PHOTOGENIFY_ID = 0x100;
 
     public static List<String> radarPlaceIDs = new ArrayList<>(0);
     public static Activity hunt;
@@ -531,6 +536,37 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         if (mHuntActionFragment != null) {
             mHuntActionFragment.changeLocation(mCurrentLocation);
+        }
+        checkTargetDistance();
+    }
+
+    /**
+     * Checks the distance to currenty activated target. Shows notification if the active zone
+     * is visited and changes the state of that target.
+     */
+    private void checkTargetDistance() {
+        Target activated = HuntOfferFragment.getActivatedTarget();
+        if (activated != null) {
+            Location placeLoc = new Location("unknown");
+            placeLoc.setLatitude(activated.latitude);
+            placeLoc.setLongitude(activated.longitude);
+            float distance = mCurrentLocation.distanceTo(placeLoc);
+            if (distance <= RADIUS && HuntOfferFragment.restateTarget(activated.getPlaceID(), Target.TargetState.PHOTOGENIC)) {
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(this)
+                                .setSmallIcon(R.drawable.ic_camera)
+                                .setContentTitle(getString(R.string.notification_photogenified_title))
+                                .setContentText(getString(R.string.notification_photogenified_text));
+                Intent resultIntent = new Intent(this, HuntActivity.class);
+
+                TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+                stackBuilder.addParentStack(HuntActivity.class);
+                stackBuilder.addNextIntent(resultIntent);
+                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                mBuilder.setContentIntent(resultPendingIntent);
+                NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(this);
+                mNotificationManager.notify(NOTIFICATION_PHOTOGENIFY_ID, mBuilder.build());
+            }
         }
     }
 
