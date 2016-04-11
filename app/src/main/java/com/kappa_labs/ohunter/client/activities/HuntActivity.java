@@ -169,7 +169,31 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                 /* Send information about the rejected target into the database on server */
                                 String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
                                 Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                                        new RetrieveResponseTask(HuntActivity.this,
+                                        new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
+                                    @Override
+                                    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
+                                        /* Server side problem */
+                                        if (ohex != null) {
+                                            handleOHException(ohex);
+                                            return;
+                                        }
+                                        /* Client side problem */
+                                        if (response == null) {
+                                            handleNullResponse();
+                                            return;
+                                        }
+                                        String placeID = (String) data;
+                                        int cost = PointsManager.getRejectCost();
+                                        Target target = HuntOfferFragment.getTargetByID(placeID);
+                                        if (target != null) {
+                                            target.setRejectLoss(cost);
+                                        }
+                                        HuntOfferFragment.restateTarget(placeID, Target.TargetState.REJECTED);
+                                        SharedDataManager.setPlayer(HuntActivity.this, response.player);
+                                        Log.d(TAG, "Do databaze bylo zapsano zamitnuti mista " + placeID);
+                                        HuntOfferFragment.randomlyOpenTarget();
+                                    }
+                                },
                                         Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
                                 responseTask.execute(
                                         new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
@@ -552,6 +576,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             placeLoc.setLongitude(activated.longitude);
             float distance = mCurrentLocation.distanceTo(placeLoc);
             if (distance <= RADIUS && HuntOfferFragment.restateTarget(activated.getPlaceID(), Target.TargetState.PHOTOGENIC)) {
+                /* Set the discovery gain for this target */
+                activated.setDiscoveryGain(mPointsManager.getTargetDiscoveryGain());
+
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(this)
                                 .setSmallIcon(R.drawable.ic_camera)
@@ -660,25 +687,33 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         HuntOfferFragment.changeSelectedTargetPhoto(photoIndex);
     }
 
+    private void handleOHException(OHException exception) {
+        if (exception.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
+            Toast.makeText(HuntActivity.this, getString(R.string.ohex_serialization),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(HuntActivity.this, getString(R.string.ohex_general) + " " + exception,
+                    Toast.LENGTH_SHORT).show();
+        }
+        Log.e(TAG, getString(R.string.ohex_general) + exception);
+    }
+
+    private void handleNullResponse() {
+        Log.e(TAG, "Problem on client side");
+        Toast.makeText(HuntActivity.this, getString(R.string.server_unreachable_error),
+                Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
-        /* Problem on server side */
+        /* Problem on the server side */
         if (ohex != null) {
-            if (ohex.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
-                Toast.makeText(HuntActivity.this, getString(R.string.ohex_serialization),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(HuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
-                        Toast.LENGTH_SHORT).show();
-            }
-            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+            handleOHException(ohex);
             return;
         }
-        /* Problem on client side */
+        /* Problem on the client side */
         if (response == null) {
-            Log.e(TAG, "Problem on client side");
-            Toast.makeText(HuntActivity.this, getString(R.string.server_unreachable_error),
-                    Toast.LENGTH_SHORT).show();
+            handleNullResponse();
             return;
         }
         /* Success */
@@ -691,8 +726,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     response.similarity * 100), Toast.LENGTH_SHORT).show();
             Log.d(TAG, "response similarity: " + response.similarity);
 
-            // TODO: 25.3.16 Discovery zisk dat tam, kde se bude overovat vzdalenost od aktivniho cile
-            int discoveryGain = mPointsManager.getTargetDiscoveryGain();
+            /* Retrieve the discovery gain and count the similarity gain */
+            Target target = HuntOfferFragment.getTargetByID(placeID);
+            if (target == null) {
+                Log.e(TAG, "onResponseTaskCompleted(): target for placeID " + placeID + " is not available");
+                return;
+            }
+            int discoveryGain = target.getDiscoveryGain();
             int similarityGain = mPointsManager.getTargetSimilarityGain(response.similarity);
             Log.d(TAG, "discoveryGain = " + discoveryGain + ", similarityGain = " + similarityGain);
 

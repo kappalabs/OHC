@@ -292,6 +292,26 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Randomly selects unavailable target and makes it available to accept.
+     *
+     * @return True on success, false if no unavailable target is available.
+     */
+    public static boolean randomlyOpenTarget() {
+        List<Target> unavailables = new ArrayList<>();
+        for (Target target : targets) {
+            if (target.getState() == Target.TargetState.UNAVAILABLE) {
+                unavailables.add(target);
+            }
+        }
+        if (unavailables.size() > 0) {
+            Collections.shuffle(unavailables);
+            unavailables.get(0).defer();
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Gets all the targets of the current hunt.
      *
      * @return All the targets of the current hunt.

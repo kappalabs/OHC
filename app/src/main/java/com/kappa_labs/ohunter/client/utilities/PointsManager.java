@@ -139,7 +139,7 @@ public class PointsManager {
      */
     public boolean canReject() {
         Player player = SharedDataManager.getPlayer(mContext);
-        return player.getScore() >= getDeferCost();
+        return player.getScore() >= getRejectCost();
     }
 
     /**
