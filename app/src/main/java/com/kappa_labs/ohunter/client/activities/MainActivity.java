@@ -83,6 +83,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+        Button huntHistoryButton = (Button) findViewById(R.id.button_hunt_history);
+        assert huntHistoryButton != null;
+        huntHistoryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: 12.4.16 historie (hlavne posledniho) lovu
+            }
+        });
         Button mStatisticsButton = (Button) findViewById(R.id.button_statistics);
         assert mStatisticsButton != null;
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {

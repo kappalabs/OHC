@@ -423,7 +423,7 @@ public class Utils {
             case NIGHT:
                 return context.getString(R.string.photo_dark);
             default:
-                return context.getString(R.string.photo_probably_ok);
+                return context.getString(R.string.photo_unknown);
         }
     }
 

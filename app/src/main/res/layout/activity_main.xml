@@ -65,6 +65,12 @@
 
             <Button
                 android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/button_hunt_history"
+                android:id="@+id/button_hunt_history" />
+
+            <Button
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/button_statistics"
                 android:id="@+id/button_statistics" />

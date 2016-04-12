@@ -571,10 +571,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private void checkTargetDistance() {
         Target activated = HuntOfferFragment.getActivatedTarget();
         if (activated != null) {
-            Location placeLoc = new Location("unknown");
-            placeLoc.setLatitude(activated.latitude);
-            placeLoc.setLongitude(activated.longitude);
-            float distance = mCurrentLocation.distanceTo(placeLoc);
+            float[] results = new float[1];
+            Location.distanceBetween(activated.latitude, activated.longitude, mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), results);
+            float distance = results[0];
             if (distance <= RADIUS && HuntOfferFragment.restateTarget(activated.getPlaceID(), Target.TargetState.PHOTOGENIC)) {
                 /* Set the discovery gain for this target */
                 activated.setDiscoveryGain(mPointsManager.getTargetDiscoveryGain());

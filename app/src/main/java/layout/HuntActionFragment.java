@@ -213,10 +213,9 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         if (mLastLocation == null || !targetReady) {
             return "??m";
         }
-        Location placeLoc = new Location("unknown");
-        placeLoc.setLatitude(target.latitude);
-        placeLoc.setLongitude(target.longitude);
-        return mLastLocation.distanceTo(placeLoc) + "m";
+        float[] results = new float[1];
+        Location.distanceBetween(target.latitude, target.longitude, mLastLocation.getLatitude(), mLastLocation.getLongitude(), results);
+        return String.format(Locale.getDefault(), "%.6fm", results[0]);
     }
 
     /**

@@ -49,14 +49,13 @@
     <string name="north_shortcut">N</string>
     <string name="east_shortcut">E</string>
 
-    <string name="daytime_label">Preferred photo:</string>
-    <string name="daytime_day">Bright</string>
-    <string name="daytime_night">Dark</string>
+    <string name="daytime_label">Preferred daytime:</string>
+    <string name="daytime_day">Day</string>
+    <string name="daytime_night">Night</string>
     <string name="daytime_both">Both</string>
-    <string name="daytime_unknown">Photo probably OK</string>
-    <string name="photo_probably_ok">Photo probably OK</string>
     <string name="photo_bright">Bright photo</string>
     <string name="photo_dark">Dark photo</string>
+    <string name="photo_unknown">Probably bright photo</string>
 
     <string name="gfields_name"><b>Name:</b></string>
     <string name="gfields_place_id"><b>ID:</b></string>
@@ -84,6 +83,7 @@
     <string name="your_nickname">Your nickname</string>
     <string name="button_new_hunt">Start new hunt</string>
     <string name="button_continue_hunt">Continue hunt</string>
+    <string name="button_hunt_history">History</string>
     <string name="button_statistics">Statistics</string>
     <string name="button_help">Help</string>
     <string name="button_settings">Settings</string>
