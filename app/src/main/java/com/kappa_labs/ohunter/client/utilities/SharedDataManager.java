@@ -215,6 +215,20 @@ public class SharedDataManager {
     }
 
     /**
+     * Adds the number of targets, which are allowed to be accepted.
+     *
+     * @param context Context of the caller.
+     * @param numAcceptable The number of targets, which will be added..
+     */
+    public static void addNumAcceptable(Context context, int numAcceptable) {
+        if (SharedDataManager.numAcceptable == null) {
+            getNumAcceptable(context);
+        }
+        SharedDataManager.numAcceptable += numAcceptable;
+        getSharedPreferences(context).edit().putInt(NUM_ACCEPTABLE_KEY, SharedDataManager.numAcceptable).commit();
+    }
+
+    /**
      * Gets the last used nickname from shared preferences.
      *
      * @param context Context of the caller.

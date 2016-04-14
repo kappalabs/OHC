@@ -1,12 +1,9 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.app.Activity;
-import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,11 +12,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,13 +25,14 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -67,13 +62,12 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private static final int FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
 
     /**
-     * Radius around the target when the camera can activate.
+     * Default radius of active zone around a target (in meters).
      */
-    public static final int RADIUS = 150;
+    public static final int DEFAULT_RADIUS = 150;
     private static final int MAKE_PHOTO_REQUEST = 0x01;
 //    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
 //    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
-    private static final int NOTIFICATION_PHOTOGENIFY_ID = 0x100;
 
     public static List<String> radarPlaceIDs = new ArrayList<>(0);
     public static Activity hunt;
@@ -84,7 +78,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private String mLastUpdateTime;
     private PointsManager mPointsManager;
 
-    private FloatingActionButton acceptFab, activateFab, deferFab, rejectFab;
+    private FloatingActionButton acceptFab, openUpFab, rejectFab;
     private FloatingActionButton cameraFab, evaluateFab, rotateFab, sortFab;
     private HuntOfferFragment mHuntOfferFragment;
     private HuntPlaceFragment mHuntPlaceFragment;
@@ -123,8 +117,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         break;
                     case 1: // HuntPlaceFragment
                         acceptFab.hide();
-                        activateFab.hide();
-                        deferFab.hide();
+                        openUpFab.hide();
                         rejectFab.hide();
                         cameraFab.hide();
                         evaluateFab.hide();
@@ -133,8 +126,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
-                        // TODO: dalsi logika zahrnujici vzdalenost od vybraneho cile
-                        if (HuntOfferFragment.hasActivatedTarget()) {
+                        // TODO: 13.4.16 pouze pro debug, toto tlacitko zde mozna ani nebude
+                        Target selected = HuntOfferFragment.getSelectedTarget();
+                        if (selected != null && selected.getState().canPhotogenify()) {
                             cameraFab.show();
                         } else {
                             cameraFab.hide();
@@ -194,7 +188,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                         HuntOfferFragment.randomlyOpenTarget();
                                     }
                                 },
-                                        Utils.getServerCommunicationDialog(HuntActivity.this), placeID);
+                                        null
+                                        // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
+                                        /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, placeID);
                                 responseTask.execute(
                                         new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
                                                 placeID, PointsManager.getRejectCost()));
@@ -246,21 +242,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
         });
 
-        /* Button to activate a place for hunt */
-        activateFab = (FloatingActionButton) findViewById(R.id.fab_activate);
-        assert activateFab != null;
-        activateFab.setVisibility(View.GONE);
-        activateFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mHuntOfferFragment != null) {
-                    if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACTIVATED)) {
-                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.ACCEPTED);
-                    }
-                }
-            }
-        });
-
         /* Button for starting the camera activity - taking similar photo */
         cameraFab = (FloatingActionButton) findViewById(R.id.fab_camera);
         assert cameraFab != null;
@@ -268,55 +249,38 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         cameraFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mHuntPlaceFragment == null) {
-                    Log.e(TAG, "Can't access the place fragment yet!");
+                Target selected = HuntOfferFragment.getSelectedTarget();
+                // TODO: 13.4.16 pouze pro debug, aby nebylo nutne k cili primo chodit
+                if (selected != null && selected.getState() != Target.TargetState.PHOTOGENIC) {
+                    mCurrentLocation = new Location("dummyprovider");
+                    mCurrentLocation.setLatitude(selected.latitude);
+                    mCurrentLocation.setLongitude(selected.longitude);
+                    checkTargetDistance();
                     return;
                 }
-                /* Retrieve reference to selected bitmap */
-                Bitmap selBitmap = mHuntPlaceFragment.getSelectedBitmap();
-                if (selBitmap == null) {
+                /* Check if target is selected and its state is ready for camera */
+                if (selected == null || selected.getState() != Target.TargetState.PHOTOGENIC) {
+                    Log.e(TAG, "Camera button was not suppose to be available, selected target is null!");
+                    return;
+                }
+                Photo photo = selected.getSelectedPhoto();
+                if (photo == null) {
                     Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Bitmap templateBitmap;
-                /* Change the orientation of the picture if necessary */
-                if (selBitmap.getWidth() < selBitmap.getHeight()) {
-                    Matrix matrix = new Matrix();
-                    matrix.postRotate(-90);
-
-                    templateBitmap = Bitmap.createBitmap(selBitmap, 0, 0, selBitmap.getWidth(),
-                            selBitmap.getHeight(), matrix, true);
-                    /* We need to make a copy of the image before sending it to camera */
-                    templateBitmap = Bitmap.createScaledBitmap(templateBitmap,
-                            templateBitmap.getWidth(), templateBitmap.getHeight(), false);
-                } else {
-                    /* We need to make a copy of the image before sending it to camera */
-                    templateBitmap = selBitmap.copy(selBitmap.getConfig(), true);
-                }
-                /* Start camera activity with the template bitmap on background */
-                // TODO: 20.3.16 nemusi jit vzdy o zrovna oznacene misto (je to vsak lepsi nez aktivovane)
-                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
-                int photoIndex = HuntPlaceFragment.getSelectedPhotoIndex();
-                Place p = PlacesManager.getPlace(HuntActivity.this, placeID);
-                if (p == null || photoIndex < 0 || photoIndex >= p.getNumberOfPhotos() || p.getPhoto(photoIndex) == null) {
-                    Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                CameraActivity.init(templateBitmap, placeID, p.getPhoto(photoIndex).reference);
+                /* Start the camera activity */
+                CameraActivity.setTarget(selected);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
-
-                // TODO: 19.3.16 zadna zmena stavu tu ve finale nebude, pouze debug
-                HuntOfferFragment.restateSelectedTarget(Target.TargetState.PHOTOGENIC);
             }
         });
 
         /* Button to defer the target */
-        deferFab = (FloatingActionButton) findViewById(R.id.fab_defer);
-        assert deferFab != null;
-        deferFab.setVisibility(View.GONE);
-        deferFab.setOnClickListener(new View.OnClickListener() {
+        openUpFab = (FloatingActionButton) findViewById(R.id.fab_open_up);
+        assert openUpFab != null;
+        openUpFab.setVisibility(View.GONE);
+        openUpFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 /* Defer only if player has enough points */
@@ -330,9 +294,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
                         /* Change the state of the target */
-                        if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.DEFERRED)) {
+                        if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.OPENED)) {
                             Log.e(TAG, "Cannot defer selected target. Incorrect state?");
                             return;
                         }
@@ -352,11 +315,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         evaluateFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (HuntOfferFragment.hasSelectedTarget()) {
-                    String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
+                Target selected = HuntOfferFragment.getSelectedTarget();
+                if (selected != null) {
                     /* Send only selected target for evaluation */
                     Request request = SharedDataManager.getCompareRequestForPlace(
-                            HuntActivity.this, selectedID);
+                            HuntActivity.this, selected.getPlaceID());
                     if (request == null) {
                         Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
                         return;
@@ -364,7 +327,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     /* Asynchronously execute and wait for callback when result ready */
                     Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                             new RetrieveResponseTask(HuntActivity.this,
-                            Utils.getServerCommunicationDialog(HuntActivity.this), selectedID);
+                            null
+                            // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
+                            /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, selected.getPlaceID());
                     responseTask.execute(request);
                 } else {
                     /* Send all pending compare requests for evaluation */
@@ -377,7 +342,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                 continue;
                             }
                             Utils.RetrieveResponseTask responseTask = Utils.getInstance().new RetrieveResponseTask(HuntActivity.this,
-                                    Utils.getServerCommunicationDialog(HuntActivity.this), id);
+                                    null
+                                    // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
+                                    /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, id);
                             responseTask.execute(request);
                         }
                     } else {
@@ -565,34 +532,31 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     }
 
     /**
-     * Checks the distance to currenty activated target. Shows notification if the active zone
-     * is visited and changes the state of that target.
+     * Checks the distance to every target which can be photogenified. Shows notification
+     * if the active zone of at least one of them is visited and changes the state of these targets.
      */
     private void checkTargetDistance() {
-        Target activated = HuntOfferFragment.getActivatedTarget();
-        if (activated != null) {
-            float[] results = new float[1];
-            Location.distanceBetween(activated.latitude, activated.longitude, mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), results);
-            float distance = results[0];
-            if (distance <= RADIUS && HuntOfferFragment.restateTarget(activated.getPlaceID(), Target.TargetState.PHOTOGENIC)) {
-                /* Set the discovery gain for this target */
-                activated.setDiscoveryGain(mPointsManager.getTargetDiscoveryGain());
-
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_camera)
-                                .setContentTitle(getString(R.string.notification_photogenified_title))
-                                .setContentText(getString(R.string.notification_photogenified_text));
-                Intent resultIntent = new Intent(this, HuntActivity.class);
-
-                TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-                stackBuilder.addParentStack(HuntActivity.class);
-                stackBuilder.addNextIntent(resultIntent);
-                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                mBuilder.setContentIntent(resultPendingIntent);
-                NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(this);
-                mNotificationManager.notify(NOTIFICATION_PHOTOGENIFY_ID, mBuilder.build());
+        if (mCurrentLocation == null) {
+            return;
+        }
+        float[] results = new float[1];
+        boolean showNotification = false;
+        for (Target target : HuntOfferFragment.getTargets()) {
+            /* Check the distance to every target, which can be photogenified */
+            if (target.getState().canPhotogenify()) {
+                Location.distanceBetween(target.latitude, target.longitude,
+                        mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), results);
+                float distance = results[0];
+                if (distance <= DEFAULT_RADIUS && HuntOfferFragment.restateTarget(target.getPlaceID(), Target.TargetState.PHOTOGENIC)) {
+                    /* Set the discovery gain for this target */
+                    target.setDiscoveryGain(mPointsManager.getTargetDiscoveryGain());
+                    showNotification = true;
+                }
             }
+        }
+        /* Show only one notification for all photogenified targets */
+        if (showNotification) {
+            Wizard.showPhotogenifiedNotification(this);
         }
     }
 
@@ -626,8 +590,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     private void resolveButtonStates(Target.TargetState state) {
         resolveButtonState(acceptFab, state.canAccept());
-        resolveButtonState(activateFab, state.canActivate() || state.canDeactivate());
-        resolveButtonState(deferFab, state.canDefer());
+        resolveButtonState(openUpFab, state.canOpenUp());
         resolveButtonState(rejectFab, state.canReject());
         resolveButtonState(cameraFab, state.canLock());
         resolveButtonState(evaluateFab, state.canComplete());
@@ -655,12 +618,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public void onRequestNextPage() {
         acceptFab.setVisibility(View.GONE);
         rejectFab.setVisibility(View.GONE);
-        activateFab.setVisibility(View.GONE);
         rotateFab.setVisibility(View.GONE);
         evaluateFab.setVisibility(View.GONE);
         sortFab.setVisibility(View.GONE);
         cameraFab.setVisibility(View.GONE);
-        deferFab.setVisibility(View.GONE);
+        openUpFab.setVisibility(View.GONE);
 
         /* Go to the page with place information */
         mViewPager.setCurrentItem(1, true);
@@ -670,8 +632,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     public void onItemUnselected() {
         if (mViewPager.getCurrentItem() == 0) {
             acceptFab.setVisibility(View.GONE);
-            activateFab.setVisibility(View.GONE);
-            deferFab.setVisibility(View.GONE);
+            openUpFab.setVisibility(View.GONE);
             rejectFab.setVisibility(View.GONE);
             cameraFab.setVisibility(View.GONE);
 
@@ -738,7 +699,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             /* Now send information about the completed target into the database on server */
             Utils.RetrieveResponseTask responseTask = Utils.getInstance().
                     new RetrieveResponseTask(HuntActivity.this,
-                    Utils.getServerCommunicationDialog(HuntActivity.this));
+                    null
+                    // TODO: 13.4.16 je-li dialog nutny, je potrebne to vyresit jinak, rotace zpusobi ztratu instance...
+                    /* Utils.getServerCommunicationDialog(HuntActivity.this)*/);
             responseTask.execute(
                     new CompletePlaceRequest(SharedDataManager.getPlayer(this), placeID, photoReference, discoveryGain, similarityGain));
             // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
@@ -755,7 +718,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
             SharedDataManager.removeCompareRequestForPlace(this, placeID);
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
+            SharedDataManager.addNumAcceptable(this, PlacesManager.DEFAULT_INCREMENT_ACCEPTABLE);
+            HuntOfferFragment.randomlyOpenTargets(PlacesManager.DEFAULT_NUM_OPENED);
             SharedDataManager.setPlayer(this, response.player);
+            Wizard.targetCompletedDialog(this);
             Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
         } else if (data instanceof String && request instanceof RejectPlaceRequest) {
             String placeID = (String) data;

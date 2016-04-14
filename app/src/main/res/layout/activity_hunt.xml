@@ -82,16 +82,6 @@
         app:backgroundTint="@color/state_accepted" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_activate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/ic_activate"
-        app:layout_anchor="@id/container"
-        app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/state_activated" />
-
-    <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -99,17 +89,17 @@
         android:src="@drawable/ic_camera"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="center|bottom"
-        app:backgroundTint="@color/state_photogenic" />
+        app:backgroundTint="@color/state_locked" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_defer"
+        android:id="@+id/fab_open_up"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_defer"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="left|bottom"
-        app:backgroundTint="@color/state_deferred" />
+        app:backgroundTint="@color/state_opened" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_evaluate"
@@ -119,7 +109,7 @@
         android:src="@drawable/ic_evaluate"
         app:layout_anchor="@id/container"
         app:layout_anchorGravity="left|bottom"
-        app:backgroundTint="@color/state_locked" />
+        app:backgroundTint="@color/state_completed" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_sort"

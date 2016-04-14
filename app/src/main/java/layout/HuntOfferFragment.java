@@ -57,7 +57,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private ProgressBar fetchingProgressBar;
 
     private static int selectedIndex = -1;
-    private static int activatedIndex = -1;
     private static boolean loadingTargets;
 
 
@@ -246,12 +245,12 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         for (int i = 0; i < targets.size(); i++) {
                             range.add(i);
                         }
-                        /* Randomly pick few targets and accept them */
+                        /* Randomly pick few targets and open them up */
                         Random random = new Random();
                         int min = Math.min(targets.size(), SharedDataManager.DEFAULT_NUM_AVAILABLE);
                         while (min > 0) {
                             int index = random.nextInt(range.size());
-                            targets.get(range.remove(index)).setState(Target.TargetState.DEFERRED);
+                            targets.get(range.remove(index)).setState(Target.TargetState.OPENED);
                             --min;
                         }
 
@@ -292,23 +291,33 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Randomly selects unavailable target and makes it available to accept.
+     * Randomly selects given amount of unavailable targets and makes them available to accept.
      *
-     * @return True on success, false if no unavailable target is available.
+     * @param amount Amount of targets to open up.
+     * @return Number of targets, that were opened up.
      */
-    public static boolean randomlyOpenTarget() {
+    public static int randomlyOpenTargets(int amount) {
         List<Target> unavailables = new ArrayList<>();
         for (Target target : targets) {
             if (target.getState() == Target.TargetState.UNAVAILABLE) {
                 unavailables.add(target);
             }
         }
-        if (unavailables.size() > 0) {
+        int numOpened = 0;
+        while (numOpened < unavailables.size() && numOpened < amount) {
             Collections.shuffle(unavailables);
-            unavailables.get(0).defer();
-            return true;
+            unavailables.get(numOpened++).openUp();
         }
-        return false;
+        return numOpened;
+    }
+
+    /**
+     * Randomly selects unavailable target and makes it available to accept.
+     *
+     * @return True on success, false if no unavailable target is available.
+     */
+    public static boolean randomlyOpenTarget() {
+        return randomlyOpenTargets(1) == 1;
     }
 
     /**
@@ -362,31 +371,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Try to get the currently activated target. Return activated target if available, null otherwise.
-     *
-     * @return The activated target if available, null otherwise.
-     */
-    public static Target getActivatedTarget() {
-        if (activatedIndex >= 0 && activatedIndex < targets.size()) {
-            return targets.get(activatedIndex);
-        }
-        return null;
-    }
-
-//    /**
-//     * Gets the Place ID of currently activated target.
-//     *
-//     * @return The Place ID of currently activated target.
-//     */
-//    public static String getActivatedTargetPlaceID() {
-//        Target target = getActivatedTarget();
-//        if (target != null) {
-//            return target.getPlaceID();
-//        }
-//        return null;
-//    }
-
-    /**
      * Sorts the targets according to their state importance.
      */
     public static void sortTargets() {
@@ -425,18 +409,10 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     private static void updateSelection() {
         selectedIndex = -1;
-        activatedIndex = -1;
         boolean gotFirst = false;
         for (int i = 0; i < targets.size(); i++) {
             if (targets.get(i).isHighlighted()) {
                 selectedIndex = i;
-                if (gotFirst) {
-                    return;
-                }
-                gotFirst = true;
-            }
-            if (targets.get(i).isActivated()) {
-                activatedIndex = i;
                 if (gotFirst) {
                     return;
                 }
@@ -471,14 +447,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static boolean restateTarget(Target target, Target.TargetState state) {
         boolean isOk;
         isOk = target != null && target.changeState(state);
-        /* Activating one target deactivates the others */
-        if (isOk && state == Target.TargetState.ACTIVATED) {
-            for (Target iTile : targets) {
-                if (iTile != target) {
-                    iTile.deactivate();
-                }
-            }
-        }
         updateSelection();
         mAdapter.notifyDataSetChanged();
 
@@ -548,15 +516,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public static boolean hasSelectedTarget() {
         return getSelectedTarget() != null;
-    }
-
-    /**
-     * Check if activated/hunted target exists.
-     *
-     * @return True if activated/hunted target exists, false otherwise.
-     */
-    public static boolean hasActivatedTarget() {
-        return getActivatedTarget() != null;
     }
 
     @Override

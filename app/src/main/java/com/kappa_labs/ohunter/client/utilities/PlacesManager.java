@@ -21,12 +21,23 @@ import java.util.Random;
  * Class for managing download and access to places. Places are cached to support faster access.
  * Download is done by asynchronous tasks for better UI smoothness.
  */
+// TODO: 13.4.16 prepracovat na targetmanager se vsemi targety nabidky zde
 public class PlacesManager {
 
     private static final String TAG = "PlacesManager";
 
     public static final int DEFAULT_WIDTH = 320;
     public static final int DEFAULT_HEIGHT = 200;
+
+    /**
+     * Default number of targets to be opened when a target is completed.
+     */
+    public static final int DEFAULT_NUM_OPENED = 2;
+    /**
+     * Default number of targets, which will be added to the total number of the acceptable when new
+     * target is completed.
+     */
+    public static final int DEFAULT_INCREMENT_ACCEPTABLE = 1;
 
     private Context mContext;
     private PlacesManagerListener mListener;

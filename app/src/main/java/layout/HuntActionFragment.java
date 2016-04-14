@@ -171,7 +171,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         LatLng ll = new LatLng(target.latitude, target.longitude);
         CircleOptions co = new CircleOptions()
                 .center(ll)
-                .radius(HuntActivity.RADIUS)
+                .radius(HuntActivity.DEFAULT_RADIUS)
                 .strokeColor(Color.argb(230, 230, 0, 0))
                 .fillColor(Color.argb(80, 0, 0, 255));
         mCircle = map.addCircle(co);
@@ -182,7 +182,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
                 .title(target.getName()));
 
         /* Move camera to the Place's position */
-        float zoom = (float) (10f - Math.log(HuntActivity.RADIUS / 10000f) / Math.log(2f));
+        float zoom = (float) (10f - Math.log(HuntActivity.DEFAULT_RADIUS / 10000f) / Math.log(2f));
         zoom = Math.min(20, Math.max(zoom, 1));
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .zoom(zoom)

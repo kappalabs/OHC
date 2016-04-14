@@ -88,10 +88,10 @@
     <string name="button_new_hunt">Zahájit nový lov</string>
     <string name="button_continue_hunt">Pokračovat ve hře</string>
     <string name="button_about">O aplikaci</string>
-    <string name="pref_title_offer_columns_landscape">Počet sloupců při landscape orientaci</string>
-    <string name="pref_title_offer_columns_portrait">Počet sloupců při portrait orientaci</string>
+    <string name="pref_title_offer_columns_landscape">Počet sloupců při orientaci na šířku</string>
+    <string name="pref_title_offer_columns_portrait">Počet sloupců při orientaci na výšku</string>
     <string name="pref_header_offer">Stránka nabídky</string>
-    <string name="dialog_wizard_game_initiated_message">Nyní můžeš přijmout 4 dostupné cíle.</string>
+    <string name="dialog_wizard_game_initiated_message">Nyní můžeš přijmout 4 přístupné cíle.</string>
     <string name="dialog_wizard_game_initiated_title">Hra je připravena</string>
     <string name="dialog_wizard_game_initiated_positive">Rozumím</string>
     <string name="dialog_wizard_no_target_message">Zkus zvětšit poloměr nebo vyber jinou pozici.</string>
@@ -121,6 +121,14 @@
     <string name="numberOfPoints_two">%d body</string>
     <string name="numberOfPoints_zero">%d bodů</string>
     <string name="notification_photogenified_text">Nyní můžeš nalezený cíl vyfotit.</string>
-    <string name="notification_photogenified_title">Nalezena aktivní zóna</string>
+    <string name="notification_photogenified_title">Cíl navštíven</string>
     <string name="button_hunt_history">Historie</string>
+    <string name="dialog_wizard_store_compare_message">Chceš tyto fotografie použít ke splnění tohoto cíle?</string>
+    <string name="dialog_wizard_store_compare_negative">Ne</string>
+    <string name="dialog_wizard_store_compare_neutral">Zpět</string>
+    <string name="dialog_wizard_store_compare_positive">Ano</string>
+    <string name="dialog_wizard_store_compare_title">Připravit k vyhodnocení?</string>
+    <string name="dialog_wizard_target_completed_message">Body byly započteny. Nyní můžeš přijmout jeden nový cíl.</string>
+    <string name="dialog_wizard_target_completed_positive">Rozumím</string>
+    <string name="dialog_wizard_target_completed_title">Cíl splněn</string>
 </resources>

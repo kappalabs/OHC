@@ -40,7 +40,7 @@
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/title_activity_login"
-            android:theme="@style/AppTheme.ActionBar"/>
+            android:theme="@style/AppTheme.ActionBar" />
         <activity
             android:name=".activities.PrepareHuntActivity"
             android:label="@string/title_activity_prepare_hunt"

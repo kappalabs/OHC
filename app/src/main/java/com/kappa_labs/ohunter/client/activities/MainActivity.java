@@ -14,15 +14,20 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
+import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,9 +105,17 @@ public class MainActivity extends AppCompatActivity {
                 //DEBUG: pouze test image...
                 Bitmap b_ = BitmapFactory.decodeResource(getResources(), R.drawable.img);
                 double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
-                Bitmap b = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
+                Bitmap picture = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
                 b_.recycle();
-                CameraActivity.init(b, "testPlaceID", "testPlaceReference");
+                Place place = new Place();
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                picture.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                Photo photo = new Photo();
+                photo.sImage = new SImage(stream.toByteArray(), picture.getWidth(), picture.getHeight());
+                photo.reference = "testPhotoReference";
+                place.addPhoto(photo);
+                place.setID("testPlaceID");
+                CameraActivity.setTarget(new Target(place));
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, CameraActivity.class);
                 startActivity(i);

@@ -2,6 +2,7 @@ package com.kappa_labs.ohunter.client.entities;
 
 import android.support.annotation.NonNull;
 
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.io.Serializable;
@@ -17,11 +18,10 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * Represents a state of target.
      */
     public enum TargetState {
-        PHOTOGENIC(80),
-        ACTIVATED(70),
+        PHOTOGENIC(70),
         ACCEPTED(60),
         LOCKED(50),
-        DEFERRED(40),
+        OPENED(40),
         UNAVAILABLE(30),
         COMPLETED(20),
         REJECTED(10);
@@ -54,25 +54,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return True when rules are satisfied, false if not.
          */
         public boolean canPhotogenify() {
-            return this == TargetState.ACTIVATED;
-        }
-
-        /**
-         * Decides by automaton rules if given state can be changed to activated.
-         *
-         * @return True when rules are satisfied, false if not.
-         */
-        public boolean canActivate() {
             return this == TargetState.ACCEPTED;
-        }
-
-        /**
-         * Decides by automaton rules if given state can be changed back from activated.
-         *
-         * @return True when rules are satisfied, false if not.
-         */
-        public boolean canDeactivate() {
-            return this == TargetState.ACTIVATED;
         }
 
         /**
@@ -81,7 +63,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return True when rules are satisfied, false if not.
          */
         public boolean canAccept() {
-            return this == TargetState.DEFERRED;
+            return this == TargetState.OPENED;
         }
 
         /**
@@ -94,11 +76,11 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         }
 
         /**
-         * Decides by automaton rules if given state can be changed to deferred.
+         * Decides by automaton rules if given state can be changed to opened.
          *
          * @return True when rules are satisfied, false if not.
          */
-        public boolean canDefer() {
+        public boolean canOpenUp() {
             return this == TargetState.UNAVAILABLE;
         }
 
@@ -117,7 +99,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return True when rules are satisfied, false if not.
          */
         public boolean canReject() {
-            return this == UNAVAILABLE || this == TargetState.DEFERRED;
+            return this == UNAVAILABLE || this == TargetState.OPENED;
         }
 
     }
@@ -180,14 +162,12 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         switch (state) {
             case PHOTOGENIC:
                 return photogenify();
-            case ACTIVATED:
-                return activate();
             case ACCEPTED:
-                return deactivate() || accept();
+                return accept();
             case LOCKED:
                 return lock();
-            case DEFERRED:
-                return defer();
+            case OPENED:
+                return openUp();
             case COMPLETED:
                 return complete();
             case REJECTED:
@@ -205,34 +185,6 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     public boolean photogenify() {
         if (mState.canPhotogenify()) {
             mState = TargetState.PHOTOGENIC;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Activates a target if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean activate() {
-        if (mState.canActivate()) {
-            mState = TargetState.ACTIVATED;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Deactivates a target if automaton rules are satisfied. Returns true on success,
-     * false otherwise.
-     *
-     * @return True on success, false otherwise.
-     */
-    public boolean deactivate() {
-        if (mState.canDeactivate()) {
-            mState = TargetState.ACCEPTED;
             return true;
         }
         return false;
@@ -267,14 +219,14 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     }
 
     /**
-     * Defers a target if automaton rules are satisfied. Returns true on success,
+     * Opens up a target if automaton rules are satisfied. Returns true on success,
      * false otherwise.
      *
      * @return True on success, false otherwise.
      */
-    public boolean defer() {
-        if (mState.canDefer()) {
-            mState = TargetState.DEFERRED;
+    public boolean openUp() {
+        if (mState.canOpenUp()) {
+            mState = TargetState.OPENED;
             return true;
         }
         return false;
@@ -306,14 +258,6 @@ public class Target extends Place implements Serializable, Comparable<Target> {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Returns true if this target is activated, false otherwise.
-     * @return True if this target is activated, false otherwise.
-     */
-    public boolean isActivated() {
-        return mState == TargetState.ACTIVATED;
     }
 
     /**
@@ -366,6 +310,37 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      */
     public int getPhotoIndex() {
         return photoIndex;
+    }
+
+    /**
+     * Checks if the given photo index is in valid bounds.
+     *
+     * @param index Index of the photo to be checked.
+     * @return True if the photo index is in valid bounds, false otherwise.
+     */
+    public boolean isPhotoIndexValid(int index) {
+        return index >= 0 && index < photos.size();
+    }
+
+    /**
+     * Checks if the photo index is in valid bounds.
+     *
+     * @return True if the photo index is in valid bounds, false otherwise.
+     */
+    public boolean isPhotoIndexValid() {
+        return isPhotoIndexValid(photoIndex);
+    }
+
+    /**
+     * Returns the selected Photo object or null if the index is not valid.
+     *
+     * @return The selected Photo object or null if the index is not valid.
+     */
+    public Photo getSelectedPhoto() {
+        if (isPhotoIndexValid()) {
+            return photos.get(photoIndex);
+        }
+        return null;
     }
 
     /**

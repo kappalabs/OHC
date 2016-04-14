@@ -1,22 +1,32 @@
 package com.kappa_labs.ohunter.client.utilities;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.activities.HuntActivity;
 
 /**
  * Class providing instructions for the player throughout the game.
  */
 public class Wizard {
+
+    private static final int NOTIFICATION_PHOTOGENIFY_ID = 0x100;
+
 
     public static class BasicDialogFragment extends DialogFragment {
 
@@ -76,12 +86,15 @@ public class Wizard {
 
     private static void commitFragment(Context context, DialogFragment dialogFragment) {
         FragmentTransaction transaction = null;
+        Activity activity = null;
         if (context instanceof AppCompatActivity) {
+            activity = ((AppCompatActivity) context);
             transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         } else if (context instanceof FragmentActivity) {
+            activity = ((FragmentActivity) context);
             transaction = ((FragmentActivity) context).getSupportFragmentManager().beginTransaction();
         }
-        if (transaction != null) {
+        if (transaction != null && !activity.isFinishing() && !activity.isDestroyed()) {
             transaction.add(dialogFragment, "tag");
             transaction.commitAllowingStateLoss();
         }
@@ -165,6 +178,45 @@ public class Wizard {
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_missing_points_positive), null);
         commitFragment(context, dialogFragment);
         return dialogFragment;
+    }
+
+    public static DialogFragment storeForEvaluationDialog(Context context, DialogInterface.OnClickListener positiveListener, DialogInterface.OnClickListener neutralListener, DialogInterface.OnClickListener negativeListener) {
+        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_store_compare_title),
+                context.getString(R.string.dialog_wizard_store_compare_message));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_store_compare_positive), positiveListener);
+        dialogFragment.setNeutral(context.getString(R.string.dialog_wizard_store_compare_neutral), neutralListener);
+        dialogFragment.setNegative(context.getString(R.string.dialog_wizard_store_compare_negative), negativeListener);
+        commitFragment(context, dialogFragment);
+        return dialogFragment;
+    }
+
+    public static DialogFragment targetCompletedDialog(Context context) {
+        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_target_completed_title),
+                context.getString(R.string.dialog_wizard_target_completed_message));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_target_completed_positive), null);
+        commitFragment(context, dialogFragment);
+        return dialogFragment;
+    }
+
+    public static void showPhotogenifiedNotification(Context context) {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.ic_camera)
+                        .setContentTitle(context.getString(R.string.notification_photogenified_title))
+                        .setContentText(context.getString(R.string.notification_photogenified_text));
+        Intent resultIntent = new Intent(context, HuntActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(HuntActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
+        mNotificationManager.notify(NOTIFICATION_PHOTOGENIFY_ID, mBuilder.build());
     }
 
 }

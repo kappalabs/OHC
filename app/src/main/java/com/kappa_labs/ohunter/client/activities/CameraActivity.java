@@ -1,6 +1,5 @@
 package com.kappa_labs.ohunter.client.activities;
 
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,10 +11,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -28,14 +23,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.client.views.CameraOverlay;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
-import com.kappa_labs.ohunter.lib.net.OHException;
-import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
@@ -45,7 +40,7 @@ import java.io.ByteArrayOutputStream;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener, Utils.OnResponseTaskCompleted {
+public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener {
 
     public static final String TAG = "CameraActivity";
 
@@ -58,21 +53,19 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private ImageView templateImageView;
     private Button shootButton;
-    private TextView numberOfPhotosTextview;
-    private TextView scoreTextview;
-    private ImageView lastPhotoImageview;
-    private FloatingActionButton uploadFab;
+    private TextView numberOfPhotosTextView;
+    private ImageView lastPhotoImageView;
     private FrameLayout previewFrameLayout;
     private FrameLayout limiterTop, limiterLeft, limiterBottom, limiterRight;
 
     private static Bitmap referenceImage, edgesImage;
-    private static String placeID;
-    private static String photoReference;
+    private static Target mTarget;
 
     private int numberOfAttempts = 0;
     private int vLimit, hLimit;
     private boolean photosTaken, photosEvaluated;
 
+    @SuppressWarnings("deprecation")
     private Camera mCamera;
     private CameraOverlay mPreview;
 
@@ -82,21 +75,17 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        lastPhotoImageview = (ImageView) findViewById(R.id.imageView_lastPhoto);
+        lastPhotoImageView = (ImageView) findViewById(R.id.imageView_lastPhoto);
 
         limiterBottom = (FrameLayout) findViewById(R.id.limiter_bottom);
         limiterLeft = (FrameLayout) findViewById(R.id.limiter_left);
         limiterTop = (FrameLayout) findViewById(R.id.limiter_top);
         limiterRight = (FrameLayout) findViewById(R.id.limiter_right);
 
-        numberOfPhotosTextview = (TextView) findViewById(R.id.textView_numberOfPhotos);
-        numberOfPhotosTextview.setText(
+        numberOfPhotosTextView = (TextView) findViewById(R.id.textView_numberOfPhotos);
+        numberOfPhotosTextView.setText(
                 String.format(getResources().getString(R.string.camera_activity_photos_counter),
                 DEFAULT_NUM_ATTEMPTS, getString(R.string.number_sign)));
-
-        scoreTextview = (TextView) findViewById(R.id.textView_score);
-        assert scoreTextview != null;
-        scoreTextview.setVisibility(View.GONE);
 
         shootButton = (Button) findViewById(R.id.button_shoot);
         shootButton.setOnClickListener(new View.OnClickListener() {
@@ -189,17 +178,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             }
         });
 
-        uploadFab = (FloatingActionButton) findViewById(R.id.fab_upload);
-        assert uploadFab != null;
-        uploadFab.setVisibility(View.GONE);
-        uploadFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //TODO: pripojeni k serveru, odeslani dat - pripadne offline ulozeni
-                serverCommunication();
-            }
-        });
-
         /* Show the reference photo edges on top of the photo preview */
         templateImageView = (ImageView) findViewById(R.id.imageView_template);
         Utils.CountEdgesTask edgesTask = Utils.getInstance().
@@ -233,13 +211,14 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      *
      * @return Camera object if available, null if camera is unavailable.
      */
+    @SuppressWarnings("deprecation")
     private static Camera getCameraInstance(){
         Camera c = null;
         try {
             c = Camera.open();
         }
         catch (Exception e){
-            // Camera is not available (in use or does not exist)
+            /* Camera is not available (in use or does not exist) */
         }
         return c;
     }
@@ -247,7 +226,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     private Request makeCompareRequest() {
         Player player = SharedDataManager.getPlayer(this);
         if (player == null) {
-            Log.e(TAG, "serverCommunication(): Player is null in CameraActivity!");
+            Log.e(TAG, "makeCompareRequest(): Player is null in CameraActivity!");
             Toast.makeText(this, getString(R.string.error_camera_player_null), Toast.LENGTH_SHORT).show();
             return null;
         }
@@ -258,10 +237,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo1.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
-        photo1.reference = photoReference;
+        photo1.reference = mTarget.getSelectedPhoto().reference;
 
         /* Similar photos should be stored by now */
-        Photo[] similar = SharedDataManager.getPhotosOfPlace(this, placeID);
+        Photo[] similar = SharedDataManager.getPhotosOfPlace(this, mTarget.getPlaceID());
         if (similar.length == 0) {
             Log.e(TAG, "Making request, but no photo is stored/prepared!");
             Toast.makeText(this, getString(R.string.error_camera_no_photo), Toast.LENGTH_SHORT).show();
@@ -270,76 +249,40 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         return new CompareRequest(player, photo1, similar);
     }
 
-    private void serverCommunication() {
-        Request request = SharedDataManager.getCompareRequestForPlace(this, placeID);
-        if (request == null) {
-            request = makeCompareRequest();
-        }
-        if (request != null) {
-            /* Asynchronously execute and wait for callback when result ready*/
-            Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                    new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
-            responseTask.execute(request);
+    private void storeRequestForEvaluation(Request request) {
+        /* Store the photos for later use */
+        if (SharedDataManager.setCompareRequestForPlace(CameraActivity.this, request, mTarget.getPlaceID())) {
+            SharedDataManager.clearPhotosOfPlace(CameraActivity.this, mTarget.getPlaceID());
+            finish();
+        } else {
+            Log.e(TAG, "cannot write the compare request");
+            Toast.makeText(CameraActivity.this,
+                    getString(R.string.cannot_save_request), Toast.LENGTH_SHORT).show();
         }
     }
 
-    @Override
-    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object _data) {
-        /* Problem on server side */
-        if (ohex != null) {
-            Toast.makeText(CameraActivity.this, getString(R.string.ohex_general) + " " + ohex,
-                    Toast.LENGTH_SHORT).show();
-            Log.e(TAG, getString(R.string.ohex_general) + ohex);
-            return;
-        }
-        /* Problem on client side */
-        if (response == null) {
-            Log.e(TAG, "Problem on client side -> cannot lock the Place yet...");
-            Toast.makeText(CameraActivity.this, getString(R.string.server_unreachable_error),
-                    Toast.LENGTH_SHORT).show();
-            makeOfflineStoreDialog(request);
-            return;
-        }
-        /* Success */
-        Toast.makeText(CameraActivity.this,
-                getString(R.string.similarity_is) + " " + response.similarity, Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "response similarity: " + response.similarity);
-        scoreTextview.setText(String.format("%.1f%%", response.similarity * 100));
-        scoreTextview.setVisibility(View.VISIBLE);
-        photosEvaluated = true;
-    }
-
-    private void makeOfflineStoreDialog(final Request request) {
-        StoreOfflineDialogFragment dialogFragment = new StoreOfflineDialogFragment();
-        dialogFragment.setListener(new NoticeDialogListener() {
-            @Override
-            public void onDialogStoreOfflineClick() {
-                    /* Store the photos for later use */
-                if (SharedDataManager.setCompareRequestForPlace(CameraActivity.this, request, placeID)) {
-                    SharedDataManager.clearPhotosOfPlace(CameraActivity.this, placeID);
-                    finish();
-                } else {
-                    Log.e(TAG, "cannot write the compare request");
-                    Toast.makeText(CameraActivity.this,
-                            getString(R.string.cannot_save_request), Toast.LENGTH_SHORT).show();
+    private void showStoreForEvaluationDialog(final Request request) {
+        Wizard.storeForEvaluationDialog(CameraActivity.this, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        storeRequestForEvaluation(request);
+                    }
+                },
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        /* User can for example take another photo */
+                    }
+                },
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        photosTaken = false;
+                        photosEvaluated = false;
+                        finish();
+                    }
                 }
-            }
-
-            @Override
-            public void onDialogExitClick() {
-                photosTaken = false;
-                photosEvaluated = false;
-                finish();
-            }
-
-            @Override
-            public void onDialogWaitClick() {
-                /* User should turn on mobile data of Wifi now */
-                Toast.makeText(CameraActivity.this, getString(R.string.connect_to_server),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-        dialogFragment.show(getSupportFragmentManager(), null);
+        );
     }
 
     @Override
@@ -415,22 +358,20 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         picture.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         Photo photo = new Photo();
         photo.sImage = new SImage(stream.toByteArray(), picture.getWidth(), picture.getHeight());
-        SharedDataManager.addPhotoOfPlace(this, placeID, photo, ((Long) System.currentTimeMillis()).toString());
+        SharedDataManager.addPhotoOfPlace(this, mTarget.getPlaceID(), photo, ((Long) System.currentTimeMillis()).toString());
 
         /* Update UI information */
-        lastPhotoImageview.setImageBitmap(CameraOverlay.mBitmap);
+        lastPhotoImageView.setImageBitmap(CameraOverlay.mBitmap);
         ++numberOfAttempts;
-        numberOfPhotosTextview.setText(
+        numberOfPhotosTextView.setText(
                 String.format(getResources().getString(R.string.camera_activity_photos_counter),
                         (DEFAULT_NUM_ATTEMPTS - numberOfAttempts), getString(R.string.number_sign)));
         if (numberOfAttempts >= DEFAULT_MIN_ATTEMPTS) {
-            // TODO: zobrazovat fab uz tady?
             photosTaken = true;
-            uploadFab.show();
+//            uploadFab.show();
         }
         if (numberOfAttempts >= DEFAULT_NUM_ATTEMPTS) {
             shootButton.setEnabled(false);
-            uploadFab.show();
         }
     }
 
@@ -456,9 +397,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     @Override
     public void onBackPressed() {
-        // TODO: 20.3.16 mozna sem pridat vice ruznych dialogu informujicich o tom, co mel hrac provest
         if (photosTaken && !photosEvaluated) {
-            makeOfflineStoreDialog(makeCompareRequest());
+            showStoreForEvaluationDialog(makeCompareRequest());
         } else {
             super.onBackPressed();
         }
@@ -470,6 +410,17 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         data.putExtra(PHOTOS_TAKEN_KEY, photosTaken);
         data.putExtra(PHOTOS_EVALUATED_KEY, photosEvaluated);
         setResult(RESULT_OK, data);
+
+        /* Release static references */
+        mTarget = null;
+        if (referenceImage != null) {
+            referenceImage.recycle();
+            referenceImage = null;
+        }
+        if (edgesImage != null) {
+            edgesImage.recycle();
+            edgesImage = null;
+        }
 
         super.finish();
     }
@@ -485,16 +436,13 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     }
 
     /**
-     * Initializes the background template/reference image and Place ID of the place,
-     * that will be photographed. Should be called before starting this activity.
+     * Sets the target that will be photographed. Should be called before starting this activity.
      *
-     * @param templateImage Background template image (will be converted to show edges).
-     * @param placeID Place ID of the target, that is being photographed.
+     * @param target Target which will be photographed.
      */
-    public static void init(Bitmap templateImage, String placeID, String photoReference) {
-        setTemplateImage(templateImage);
-        CameraActivity.placeID = placeID;
-        CameraActivity.photoReference = photoReference;
+    public static void setTarget(Target target) {
+        mTarget = target;
+        setTemplateImage(Utils.toBitmap(target.getSelectedPhoto().sImage));
     }
 
     private static void setTemplateImage(Bitmap templateImage) {
@@ -514,59 +462,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         templateImageView.setImageBitmap(edgesImage);
         templateImageView.setAlpha(DEFAULT_ALPHA / 100.f);
         updateLimits();
-    }
-
-    public static class StoreOfflineDialogFragment extends DialogFragment {
-
-        private NoticeDialogListener mListener;
-
-
-//        public StoreOfflineDialogFragment(NoticeDialogListener mListener) {
-//            this.mListener = mListener;
-//        }
-
-        public void setListener(NoticeDialogListener mListener) {
-            this.mListener = mListener;
-        }
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.dialog_store_offline_title)
-                    .setMessage(R.string.dialog_store_offline_message)
-                    .setPositiveButton(R.string.dialog_store_offline_yes, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            if (mListener != null) {
-                                mListener.onDialogStoreOfflineClick();
-                            }
-                        }
-                    })
-                    .setNeutralButton(R.string.dialog_store_offline_wait, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (mListener != null) {
-                                mListener.onDialogWaitClick();
-                            }
-                        }
-                    })
-                    .setNegativeButton(R.string.dialog_store_offline_exit, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            if (mListener != null) {
-                                mListener.onDialogExitClick();
-                            }
-                        }
-                    });
-            /* Create the AlertDialog object and return it */
-            return builder.create();
-        }
-
-    }
-
-    private interface NoticeDialogListener {
-        void onDialogStoreOfflineClick();
-        void onDialogExitClick();
-        void onDialogWaitClick();
     }
 
 }

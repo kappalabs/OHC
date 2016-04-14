@@ -26,6 +26,7 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
 /**
@@ -151,15 +152,15 @@ public class TargetTileView extends View {
             mTarget.setIsPhotoDrawn(true);
         }
 
-        if (mTarget.getState() == Target.TargetState.UNAVAILABLE) {
+        if (mTarget.getState() == Target.TargetState.UNAVAILABLE && !mTarget.isRotationDrawn()) {
             /* Add mask on the background, so that the text is readable */
-            canvas.drawColor(ContextCompat.getColor(getContext(), R.color.white_shadow));
+            canvas.drawColor(ContextCompat.getColor(getContext(), R.color.shadow_unavailable));
         }
 
         /* Draw text on the opposite side of tile */
         if (mTarget.isRotationDrawn()) {
             /* Add mask on the background, so that the text is readable */
-            canvas.drawColor(ContextCompat.getColor(getContext(), R.color.white_shadow));
+            canvas.drawColor(ContextCompat.getColor(getContext(), R.color.shadow_rotated));
 
             /* Draw the text */
             canvas.save();
@@ -263,7 +264,7 @@ public class TargetTileView extends View {
 
         mPaint.setStrokeWidth(5);
         mPaint.setPathEffect(null);
-        mPaint.setColor(ContextCompat.getColor(getContext(), R.color.black_shadow));
+        mPaint.setColor(ContextCompat.getColor(getContext(), R.color.shadow_frame));
         mPaint.setStyle(Paint.Style.STROKE);
         canvas.drawPath(mPath, mPaint);
     }
@@ -290,12 +291,10 @@ public class TargetTileView extends View {
         switch (mTarget.getState()) {
             case ACCEPTED:
                 return ContextCompat.getColor(getContext(), R.color.state_accepted);
-            case DEFERRED:
-                return ContextCompat.getColor(getContext(), R.color.state_deferred);
+            case OPENED:
+                return ContextCompat.getColor(getContext(), R.color.state_opened);
             case REJECTED:
                 return ContextCompat.getColor(getContext(), R.color.state_rejected);
-            case ACTIVATED:
-                return ContextCompat.getColor(getContext(), R.color.state_activated);
             case COMPLETED:
                 return ContextCompat.getColor(getContext(), R.color.state_completed);
             case LOCKED:
@@ -353,10 +352,9 @@ public class TargetTileView extends View {
             anim.start();
         }
         if (!mTarget.isPhotoDrawn()) {
-            Place place = PlacesManager.getPlace(getContext(), getPlaceID());
-            int index = mTarget.getPhotoIndex();
-            if (place != null && index >= 0 && index < place.getNumberOfPhotos()) {
-                backgroundDrawable = cropBitmap(Utils.toBitmap(place.getPhoto(index).sImage));
+            Photo photo = mTarget.getSelectedPhoto();
+            if (photo != null) {
+                backgroundDrawable = cropBitmap(Utils.toBitmap(photo.sImage));
             }
         }
         /* Score text needs to know the measurements of this view */
