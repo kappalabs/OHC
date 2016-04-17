@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.util.LruCache;
 
@@ -13,6 +12,7 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -47,6 +47,7 @@ public class PlacesManager {
     private int mCounter;
     private static LruCache<String, Place> mPlacesCache;
 //    private static LruCache<String, Bitmap> mPreviewCache;
+    private List<ResponseTask> mTasks;
 
     public PlacesManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mContext = context;
@@ -87,6 +88,7 @@ public class PlacesManager {
 
     public void preparePlaces() {
         mListener.onPreparationStarted();
+        mTasks = new ArrayList<>();
 
         /* Randomize order of the given places */
         Collections.shuffle(placeIDs, new Random(System.nanoTime()));
@@ -118,31 +120,43 @@ public class PlacesManager {
                 continue;
             }
             /* Otherwise retrieve the place from server */
-            Request request = new FillPlacesRequest(mPlayer, new String[]{placeID},
-                    PrepareHuntActivity.preferredDaytime, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            Utils.RetrieveResponseTask responseTask =
-                    Utils.getInstance().new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
-                        @Override
-                        public void onResponseTaskCompleted(Request _request, Response response, OHException ohex, Object _data) {
-                            if (ohex == null && response != null && response.places != null && response.places.length > 0) {
-                                /* Save the result locally */
-                                SharedDataManager.addPlace(mContext, response.places[0]);
-                                /* Let the listener do something with the new place */
-                                mListener.onPlaceReady(response.places[0]);
-//                            } else if (ohex != null) {
-//                                //TODO: zkontroluj ohex zpravu a pripadne opakuj request
-//                            } else {
-//                                //remove
-                            }
-                            if (--mCounter == 0) {
-                                mListener.onPreparationEnded();
-                            }
-//                            Log.d(TAG, "mcounter = "+mCounter);
-                        }
-                    },
-                            null,
-                            -1);
-            responseTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, request);
+            Request request = new FillPlacesRequest(
+                    mPlayer,
+                    new String[]{placeID},
+                    PrepareHuntActivity.preferredDaytime,
+                    DEFAULT_WIDTH,
+                    DEFAULT_HEIGHT
+            );
+            ResponseTask task = new ResponseTask(null, new ResponseTask.OnResponseTaskCompleted() {
+                @Override
+                public void onResponseTaskCompleted(Request request, Response response, OHException ohException, Object data) {
+                    if (ohException == null && response != null && response.places != null && response.places.length > 0) {
+                        /* Save the result locally */
+                        SharedDataManager.addPlace(mContext, response.places[0]);
+                        /* Let the listener do something with the new place */
+                        mListener.onPlaceReady(response.places[0]);
+                    } else //noinspection StatementWithEmptyBody
+                        if (ohException != null) {
+                        //TODO: zkontroluj ohex zpravu a pripadne opakuj request
+                    } else {
+                        //remove
+                    }
+                    if (--mCounter == 0) {
+                        mListener.onPreparationEnded();
+                    }
+                }
+            });
+            task.execute(request);
+            mTasks.add(task);
+        }
+    }
+
+    /**
+     * Cancels all the task downloading the targets.
+     */
+    public void cancelTask() {
+        for (ResponseTask task : mTasks) {
+            task.cancel(true);
         }
     }
 

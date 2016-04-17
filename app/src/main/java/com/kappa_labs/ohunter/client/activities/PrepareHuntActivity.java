@@ -39,8 +39,9 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.utilities.MinMaxInputFilter;
+import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
-import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
@@ -56,7 +57,7 @@ import java.util.Locale;
 
 import layout.HuntOfferFragment;
 
-public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
+public class PrepareHuntActivity extends AppCompatActivity implements ResponseTask.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private static final String TAG = "PrepareHunt";
 
@@ -69,8 +70,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private static final String LONGITUDE_KEY = "longitude_key";
     private static final String RADIUS_KEY = "radius_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
-
-    private static final int RADAR_SEARCH_KEY = 4200;
 
     private static final int DEFAULT_RADIUS = 10;
     private static final int RADIUS_MIN = 1;
@@ -90,7 +89,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     private Spinner mDaytimeSpinner;
 
     public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.UNKNOWN;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,12 +157,9 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
 
                 /* Start radar search to receive list of available places */
                 Request request = new RadarSearchRequest(player, getLatitude(), getLongitude(), getRadius() * 1000);
-
-                Utils.RetrieveResponseTask responseTask =
-                        Utils.getInstance().new RetrieveResponseTask(PrepareHuntActivity.this,
-                                Utils.getServerCommunicationDialog(PrepareHuntActivity.this),
-                                RADAR_SEARCH_KEY);
-                responseTask.execute(request);
+                DialogFragment dialog = Wizard.getServerCommunicationDialog(PrepareHuntActivity.this);
+                ResponseTask task = new ResponseTask(dialog, PrepareHuntActivity.this);
+                task.execute(request);
             }
         });
 
@@ -232,7 +227,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
     }
 
     @Override
-    public void onResponseTaskCompleted(Request _request, Response response, OHException ohex, Object data) {
+    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
             Toast.makeText(PrepareHuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
@@ -252,7 +247,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements Utils.OnRe
         if (response.places != null) {
             Collections.addAll(places, response.places);
         }
-        if (data instanceof Integer && (Integer) data == RADAR_SEARCH_KEY) {
+        if (request instanceof RadarSearchRequest) {
             Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
             List<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {

@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
+import android.support.v4.app.DialogFragment;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
@@ -62,6 +63,7 @@ public class PointsManager {
      * @param points Number of points to add (can be negative to subtract/remove).
      * @return True on success, false on fail, when saving the change.
      */
+    @SuppressWarnings("unused")
     public boolean addPoints(int points) {
         Player player = SharedDataManager.getPlayer(mContext);
         player.setScore(player.getScore() + points);
@@ -83,13 +85,14 @@ public class PointsManager {
     /**
      * Sends the current state of the player to the server database.
      *
+     * @param context Active (currently shown) context.
      * @param listener Listener on the server task, notified when the task is completed.
      */
-    public void updateInDatabase(Utils.OnResponseTaskCompleted listener) {
+    public void updateInDatabase(Context context, ResponseTask.OnResponseTaskCompleted listener) {
         Player player = SharedDataManager.getPlayer(mContext);
         UpdatePlayerRequest request = new UpdatePlayerRequest(player);
-        Utils.RetrieveResponseTask task = Utils.getInstance().new RetrieveResponseTask(listener,
-                Utils.getServerCommunicationDialog(mContext));
+        DialogFragment dialog = Wizard.getServerCommunicationDialog(context);
+        ResponseTask task = new ResponseTask(dialog, listener);
         task.execute(request);
     }
 

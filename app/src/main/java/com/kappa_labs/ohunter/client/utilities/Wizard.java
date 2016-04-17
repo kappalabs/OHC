@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.client.utilities;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,11 +29,12 @@ public class Wizard {
     private static final int NOTIFICATION_PHOTOGENIFY_ID = 0x100;
 
 
-    public static class BasicDialogFragment extends DialogFragment {
+    public static class BasicInfoDialogFragment extends DialogFragment {
 
         private String mTitle, mMessage;
         private String mPositive, mNeutral, mNegative;
         private DialogInterface.OnClickListener mPositiveListener, mNeutralListener, mNegativeListener;
+
 
         public void setText(String title, String message) {
             this.mTitle = title;
@@ -44,7 +46,6 @@ public class Wizard {
             this.mPositiveListener = positiveListener;
         }
 
-        @SuppressWarnings("unused")
         public void setNeutral(String neutral, DialogInterface.OnClickListener neutralListener) {
             this.mNeutral = neutral;
             this.mNeutralListener = neutralListener;
@@ -84,7 +85,39 @@ public class Wizard {
 
     }
 
-    private static void commitFragment(Context context, DialogFragment dialogFragment) {
+    public static class BasicProgressDialogFragment extends DialogFragment {
+
+        private static String mTitle, mMessage;
+
+
+        public void setTexts(String title, String message) {
+            mTitle = title;
+            mMessage = message;
+        }
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final ProgressDialog dialog = ProgressDialog.show(getActivity(), mTitle, mMessage, true);
+            dialog.setCancelable(false);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            setRetainInstance(true);
+
+            return dialog;
+        }
+
+        @Override
+        public void onDestroyView() {
+            /* NOTE: Hack for bug https://code.google.com/p/android/issues/detail?id=17423 */
+            if (getDialog() != null && getRetainInstance()) {
+                getDialog().setDismissMessage(null);
+            }
+            super.onDestroyView();
+        }
+
+    }
+
+    private static void commitFragment(Context context, DialogFragment dialogFragment, String tag) {
         FragmentTransaction transaction = null;
         Activity activity = null;
         if (context instanceof AppCompatActivity) {
@@ -95,8 +128,9 @@ public class Wizard {
             transaction = ((FragmentActivity) context).getSupportFragmentManager().beginTransaction();
         }
         if (transaction != null && !activity.isFinishing() && !activity.isDestroyed()) {
-            transaction.add(dialogFragment, "tag");
-            transaction.commitAllowingStateLoss();
+            transaction.add(dialogFragment, tag)
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .commitAllowingStateLoss();
         }
     }
 
@@ -104,105 +138,151 @@ public class Wizard {
         if (context == null) {
             return null;
         }
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_game_initiated_title),
                 context.getString(R.string.dialog_wizard_game_initiated_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_game_initiated_positive), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "gameInitializedDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment noTargetAvailableDialog(Context context, DialogInterface.OnClickListener positiveListener) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_no_target_title),
                 context.getString(R.string.dialog_wizard_no_target_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_no_target_positive), positiveListener);
         dialogFragment.setCancelable(false);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "noTargetAvailableDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment notEnoughAcceptableDialog(Context context) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_low_acceptable_title),
                 context.getString(R.string.dialog_wizard_low_acceptable_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_low_acceptable_positive), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "notEnoughAcceptableDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment acceptQuestionDialog(Context context, int amount, DialogInterface.OnClickListener positiveListener) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_accept_question_title),
                 String.format(context.getString(R.string.dialog_wizard_accept_question_message), amount));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_accept_question_positive), positiveListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_accept_question_negative), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "acceptQuestionDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment rejectQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_reject_question_title),
                 String.format(context.getString(R.string.dialog_wizard_reject_question_message),
                         context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_reject_question_positive), positiveListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_reject_question_negative), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "rejectQuestionDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment deferQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_defer_question_title),
                 String.format(context.getString(R.string.dialog_wizard_defer_question_message),
                         context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_defer_question_positive), positiveListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_defer_question_negative), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "deferQuestionDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment missingPointsDialog(Context context, int points) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_missing_points_title),
                 String.format(context.getString(R.string.dialog_wizard_missing_points_message),
                         context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_missing_points_positive), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "missingPointsDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment storeForEvaluationDialog(Context context, DialogInterface.OnClickListener positiveListener, DialogInterface.OnClickListener neutralListener, DialogInterface.OnClickListener negativeListener) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_store_compare_title),
                 context.getString(R.string.dialog_wizard_store_compare_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_store_compare_positive), positiveListener);
         dialogFragment.setNeutral(context.getString(R.string.dialog_wizard_store_compare_neutral), neutralListener);
         dialogFragment.setNegative(context.getString(R.string.dialog_wizard_store_compare_negative), negativeListener);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "storeForEvaluationDialogTag");
         return dialogFragment;
     }
 
     public static DialogFragment targetCompletedDialog(Context context) {
-        BasicDialogFragment dialogFragment = new BasicDialogFragment();
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_target_completed_title),
                 context.getString(R.string.dialog_wizard_target_completed_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_target_completed_positive), null);
-        commitFragment(context, dialogFragment);
+        commitFragment(context, dialogFragment, "targetCompletedDialogTag");
         return dialogFragment;
     }
 
+    public static DialogFragment getStandardProgressDialog(Context context, String title, String message) {
+        if (context == null) {
+            return null;
+        }
+        BasicProgressDialogFragment dialogFragment = new BasicProgressDialogFragment();
+        dialogFragment.setTexts(title, message);
+        dialogFragment.setCancelable(false);
+        commitFragment(context, dialogFragment, "getStandardProgressDialogTag");
+        return dialogFragment;
+    }
+
+    public static DialogFragment getServerCommunicationDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
+        return getStandardProgressDialog(context, context.getString(R.string.server_communication),
+                context.getString(R.string.waiting_for_data));
+    }
+
     public static void showPhotogenifiedNotification(Context context) {
+        if (context == null) {
+            return;
+        }
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.ic_camera)

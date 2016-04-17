@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -29,8 +30,8 @@ import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
+import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
-import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
@@ -52,7 +53,7 @@ import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
 
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener, Utils.OnResponseTaskCompleted {
+public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener, ResponseTask.OnResponseTaskCompleted {
 
     public static final String TAG = "HuntActivity";
     public static final String LOCATION_KEY = "location_key";
@@ -159,43 +160,19 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Wizard.rejectQuestionDialog(HuntActivity.this, PointsManager.getRejectCost(),
                         new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialogInterface, int which) {
                                 /* Send information about the rejected target into the database on server */
                                 String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
-                                Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                                        new RetrieveResponseTask(new Utils.OnResponseTaskCompleted() {
-                                    @Override
-                                    public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
-                                        /* Server side problem */
-                                        if (ohex != null) {
-                                            handleOHException(ohex);
-                                            return;
-                                        }
-                                        /* Client side problem */
-                                        if (response == null) {
-                                            handleNullResponse();
-                                            return;
-                                        }
-                                        String placeID = (String) data;
-                                        int cost = PointsManager.getRejectCost();
-                                        Target target = HuntOfferFragment.getTargetByID(placeID);
-                                        if (target != null) {
-                                            target.setRejectLoss(cost);
-                                        }
-                                        HuntOfferFragment.restateTarget(placeID, Target.TargetState.REJECTED);
-                                        SharedDataManager.setPlayer(HuntActivity.this, response.player);
-                                        Log.d(TAG, "Do databaze bylo zapsano zamitnuti mista " + placeID);
-                                        HuntOfferFragment.randomlyOpenTarget();
-                                    }
-                                },
-                                        null
-                                        // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
-                                        /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, placeID);
-                                responseTask.execute(
-                                        new RejectPlaceRequest(SharedDataManager.getPlayer(HuntActivity.this),
-                                                placeID, PointsManager.getRejectCost()));
+                                DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                                ResponseTask task = new ResponseTask(dialog, HuntActivity.this);
+                                task.execute(new RejectPlaceRequest(
+                                        SharedDataManager.getPlayer(HuntActivity.this),
+                                        placeID,
+                                        PointsManager.getRejectCost()
+                                ));
                             }
-                        });
+                        }
+                );
             }
         });
 
@@ -302,7 +279,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         mPointsManager.removePoints(PointsManager.getDeferCost());
 
                         /* Send information about the deferred target into the database on server */
-                        mPointsManager.updateInDatabase(null);
+                        mPointsManager.updateInDatabase(HuntActivity.this, null);
                     }
                 });
             }
@@ -317,35 +294,32 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             public void onClick(View v) {
                 Target selected = HuntOfferFragment.getSelectedTarget();
                 if (selected != null) {
+                    String placeID = selected.getPlaceID();
                     /* Send only selected target for evaluation */
                     Request request = SharedDataManager.getCompareRequestForPlace(
-                            HuntActivity.this, selected.getPlaceID());
+                            HuntActivity.this, placeID);
                     if (request == null) {
                         Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
                         return;
                     }
                     /* Asynchronously execute and wait for callback when result ready */
-                    Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                            new RetrieveResponseTask(HuntActivity.this,
-                            null
-                            // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
-                            /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, selected.getPlaceID());
-                    responseTask.execute(request);
+                    DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                    ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
+                    task.execute(request);
                 } else {
                     /* Send all pending compare requests for evaluation */
-                    Set<String> ids = SharedDataManager.getPendingCompareRequestsIDs(HuntActivity.this);
-                    if (!ids.isEmpty()) {
-                        for (String id : ids) {
-                            Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, id);
+                    Set<String> placeIDs = SharedDataManager.getPendingCompareRequestsIDs(HuntActivity.this);
+                    if (!placeIDs.isEmpty()) {
+                        for (String placeID : placeIDs) {
+                            Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, placeID);
                             if (request == null) {
-                                Log.e(TAG, "Request for place " + id + " is not available, skipping...");
+                                Log.e(TAG, "Request for place " + placeID + " is not available, skipping...");
                                 continue;
                             }
-                            Utils.RetrieveResponseTask responseTask = Utils.getInstance().new RetrieveResponseTask(HuntActivity.this,
-                                    null
-                                    // TODO: 13.4.16 vyresit, pozor na rotaci a ztratu instance!
-                                    /*Utils.getServerCommunicationDialog(HuntActivity.this)*/, id);
-                            responseTask.execute(request);
+                            /* Asynchronously execute and wait for callback when result ready */
+                            DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                            ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
+                            task.execute(request);
                         }
                     } else {
                         Toast.makeText(HuntActivity.this, getString(R.string.no_pending_evaluation),
@@ -400,6 +374,12 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (mGoogleApiClient.isConnected()) {
             startLocationUpdates();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        HuntOfferFragment.cancelDownloadTasks();
     }
 
     protected void onStart() {
@@ -677,7 +657,20 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             return;
         }
         /* Success */
-        if (data instanceof String && request instanceof CompareRequest) {
+        if (request instanceof RejectPlaceRequest) {
+            String placeID = ((RejectPlaceRequest) request).getPlaceID();
+            int cost = ((RejectPlaceRequest) request).getLoss();
+            Target target = HuntOfferFragment.getTargetByID(placeID);
+            if (target == null) {
+                Log.e(TAG, "Rejected target with ID " + placeID + " could not be found in offer!");
+            } else {
+                target.setRejectLoss(cost);
+                HuntOfferFragment.restateTarget(target, Target.TargetState.REJECTED);
+            }
+            SharedDataManager.setPlayer(HuntActivity.this, response.player);
+            Log.d(TAG, "Rejected target was written to the database. Target ID: " + placeID);
+            HuntOfferFragment.randomlyOpenTarget();
+        } else if (data instanceof String && request instanceof CompareRequest) {
             /* Request to evaluate similarity successfully finished */
             String placeID = (String) data;
             String photoReference = ((CompareRequest) request).getReferencePhoto().reference;
@@ -696,16 +689,19 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             int similarityGain = mPointsManager.getTargetSimilarityGain(response.similarity);
             Log.d(TAG, "discoveryGain = " + discoveryGain + ", similarityGain = " + similarityGain);
 
-            /* Now send information about the completed target into the database on server */
-            Utils.RetrieveResponseTask responseTask = Utils.getInstance().
-                    new RetrieveResponseTask(HuntActivity.this,
-                    null
-                    // TODO: 13.4.16 je-li dialog nutny, je potrebne to vyresit jinak, rotace zpusobi ztratu instance...
-                    /* Utils.getServerCommunicationDialog(HuntActivity.this)*/);
-            responseTask.execute(
-                    new CompletePlaceRequest(SharedDataManager.getPlayer(this), placeID, photoReference, discoveryGain, similarityGain));
+            Request completeRequest = new CompletePlaceRequest(
+                    SharedDataManager.getPlayer(this),
+                    placeID,
+                    photoReference,
+                    discoveryGain,
+                    similarityGain
+            );
+            if (mHuntOfferFragment != null) {
+                DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
+                task.execute(completeRequest);
+            }
             // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
-            Log.d(TAG, "Byla spocitana podobnost mista " + placeID);
         } else if (request instanceof  CompletePlaceRequest) {
             /* Request to complete the evaluated target successfully finished (stored in database) */
             String placeID = ((CompletePlaceRequest) request).getPlaceID();
@@ -723,16 +719,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             SharedDataManager.setPlayer(this, response.player);
             Wizard.targetCompletedDialog(this);
             Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
-        } else if (data instanceof String && request instanceof RejectPlaceRequest) {
-            String placeID = (String) data;
-            int cost = PointsManager.getRejectCost();
-            Target target = HuntOfferFragment.getTargetByID(placeID);
-            if (target != null) {
-                target.setRejectLoss(cost);
-            }
-            HuntOfferFragment.restateTarget(placeID, Target.TargetState.REJECTED);
-            SharedDataManager.setPlayer(this, response.player);
-            Log.d(TAG, "Do databaze bylo zapsano zamitnuti mista " + placeID);
         }
     }
 

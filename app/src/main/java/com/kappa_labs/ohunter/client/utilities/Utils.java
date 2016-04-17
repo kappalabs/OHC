@@ -1,30 +1,16 @@
 package com.kappa_labs.ohunter.client.utilities;
 
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.SImage;
-import com.kappa_labs.ohunter.lib.net.OHException;
-import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
@@ -170,171 +156,13 @@ public class Utils {
         void onBitmapReady(Bitmap bitmap, Object data);
     }
 
-    public class RetrieveResponseTask extends AsyncTask<Request, Void, Response> {
-
-        private OHException ohException;
-        private OnResponseTaskCompleted mListener;
-        private ProgressDialogFragment mProgressDialog;
-        private Object mData;
-        private Request mRequest;
-
-
-        /**
-         * Create a new task to retrieve data from server.
-         *
-         * @param caller The caller, that will be notified, can be null.
-         * @param progressDialog Reference to dialog, which will be closed after this task.
-         */
-        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialogFragment progressDialog) {
-            this.mListener = caller;
-            this.mProgressDialog = progressDialog;
-        }
-
-        /**
-         * Create a new task to retrieve data from server.
-         *
-         * @param caller The caller, that will be notified, can be null.
-         * @param progressDialog Reference to dialog, which will be closed after this task.
-         * @param data Data object that will be returned on callback, when this task is completed.
-         */
-        public RetrieveResponseTask(OnResponseTaskCompleted caller, ProgressDialogFragment progressDialog, Object data) {
-            this.mListener = caller;
-            this.mProgressDialog = progressDialog;
-            this.mData = data;
-        }
-
-        @Override
-        protected Response doInBackground(Request... params) {
-            try {
-                mRequest = params[0];
-                return getServerResponse(mRequest);
-            } catch (OHException e) {
-                ohException = e;
-                return null;
-            }
-        }
-
-        protected void onPostExecute(Response response) {
-            if (mListener != null) {
-                mListener.onResponseTaskCompleted(mRequest, response, ohException, mData);
-            }
-            if (mProgressDialog != null) {
-                mProgressDialog.dismissAllowingStateLoss();
-            }
-        }
-    }
-
-    public interface OnResponseTaskCompleted {
-        void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data);
-    }
-
-    public static class ProgressDialogFragment extends DialogFragment {
-
-        private static String mTitle, mMessage;
-
-        public void setTexts(String title, String message) {
-            mTitle = title;
-            mMessage = message;
-        }
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final ProgressDialog dialog = ProgressDialog.show(getActivity(), mTitle, mMessage, true);
-            dialog.setCancelable(false);
-//            dialog.setIndeterminate(true);
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-
-            return dialog;
-        }
-    }
-
-    public static ProgressDialogFragment getStandardDialog(Context context, String title, String message) {
-        ProgressDialogFragment dialog = new ProgressDialogFragment();
-        dialog.setTexts(title, message);
-        dialog.setCancelable(false);
-        if (context instanceof AppCompatActivity) {
-            final AppCompatActivity activity = (AppCompatActivity) context;
-
-            FragmentTransaction transaction = activity.getSupportFragmentManager().beginTransaction();
-            transaction.add(dialog, "waiting");
-            transaction.commitAllowingStateLoss();
-        } else {
-            Log.e(TAG, "Cannot show standard dialog, context is not AppCompat Activity!");
-            return null;
-        }
-        return dialog;
-    }
-
-    public static ProgressDialogFragment getServerCommunicationDialog(Context context) {
-        return getStandardDialog(context, context.getString(R.string.server_communication),
-                context.getString(R.string.waiting_for_data));
-    }
-
-    public static Response getServerResponse(Request request) throws OHException {
-        /* Check if server address is set */
-        if (mAddress == null || mPort == 0) {
-            throw new RuntimeException("Utils must have server set before any communication!");
-        }
-
-        Log.d(TAG, "getServerResponse(): asking server [" + mAddress + ":" + mPort + "]\n -> request info: " + request);
-        Response response = null;
-        Socket server = null;
-        try {
-            server = new Socket();
-            int mTimeout = DEFAULT_TIMEOUT;
-            server.connect(new InetSocketAddress(mAddress, mPort), mTimeout);
-            ObjectOutputStream oos = null;
-            ObjectInputStream ois = null;
-            try {
-                oos = new ObjectOutputStream(server.getOutputStream());
-                oos.writeObject(request);
-                oos.flush();
-                Log.d(TAG, "Data odeslana, cekam na odpoved...");
-
-                ois = new ObjectInputStream(server.getInputStream());
-                Object obj = ois.readObject();
-                try {
-                    response = (Response) obj;
-                } catch (ClassCastException ex) {
-                    if (obj instanceof OHException) {
-                        throw (OHException) obj;
-                    } else {
-                        Log.e(TAG, "Unknown type of response object from the server!");
-                    }
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                Log.e(TAG, "Error when communicating with server: " + e);
-            } finally {
-                if (oos != null) {
-                    oos.close();
-                }
-                if (ois != null) {
-                    ois.close();
-                }
-            }
-        } catch (IOException ex) {
-            Log.e(TAG, "Error when connecting to server: " + ex);
-        } finally {
-            if (server != null) {
-                try {
-                    server.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "Error when closing with server: " + e);
-                }
-            }
-        }
-
-        return response;
-    }
-
     public class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
 
-        private ProgressDialogFragment mDialog;
+        private DialogFragment mDialog;
         private Bitmap mBitmap;
         private OnEdgesTaskCompleted mListener;
 
-        public CountEdgesTask(OnEdgesTaskCompleted caller, ProgressDialogFragment dialog, Bitmap original) {
+        public CountEdgesTask(OnEdgesTaskCompleted caller, DialogFragment dialog, Bitmap original) {
             mDialog = dialog;
             mBitmap = original;
             mListener = caller;

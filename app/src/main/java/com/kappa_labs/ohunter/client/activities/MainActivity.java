@@ -16,6 +16,7 @@ import android.widget.TextView;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
+import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
@@ -262,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!requestingPoints) {
                     requestingPoints = true;
                     /* Update the value in the server database if possible */
-                    mPointsManager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
+                    mPointsManager.updateInDatabase(MainActivity.this, new ResponseTask.OnResponseTaskCompleted() {
                         @Override
                         public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
                             /* It's ok if the request was not successful, the update will be done later */

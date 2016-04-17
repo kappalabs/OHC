@@ -14,18 +14,18 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
 import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
+import com.kappa_labs.ohunter.client.adapters.TileAdapter;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
-import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.client.views.TargetTileView;
-import com.kappa_labs.ohunter.client.adapters.TileAdapter;
-import com.kappa_labs.ohunter.client.utilities.Utils;
-import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -58,6 +58,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static int selectedIndex = -1;
     private static boolean loadingTargets;
+    private static PlacesManager manager;
 
 
     public HuntOfferFragment() {
@@ -190,7 +191,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (target != null) {
             mListener.onTargetChanged(target);
             mListener.onItemSelected(target.getState());
-        } else {
+        } else if (!loadingTargets) {
             mListener.onItemUnselected();
         }
     }
@@ -198,7 +199,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private void initTargets() {
         /* This class will prepare the places - load from local files or retrieve them from Internet */
         final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
-        PlacesManager manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
+        manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
             @Override
             public void onPreparationStarted() {
                 fetchingProgressBar.setVisibility(View.VISIBLE);
@@ -208,6 +209,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             public void onPreparationEnded() {
                 loadingTargets = false;
                 fetchingProgressBar.setVisibility(View.GONE);
+                if (mListener != null) {
+                    mListener.onItemUnselected();
+                }
 
                 /* No target is available */
                 if (targets.isEmpty()) {
@@ -223,7 +227,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 /* Remove points from the player for starting a new area (hunt) */
                 PointsManager manager = MainActivity.getPointsManager();
                 manager.removePoints(manager.getBeginAreaCost());
-                manager.updateInDatabase(new Utils.OnResponseTaskCompleted() {
+                manager.updateInDatabase(getContext(), new ResponseTask.OnResponseTaskCompleted() {
                     @Override
                     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
                         if (ohex != null) {
@@ -287,6 +291,17 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             mAdapter.notifyDataSetChanged();
             loadingTargets = false;
             fetchingProgressBar.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Cancels all the target download tasks.
+     */
+    public static void cancelDownloadTasks() {
+        if (manager != null && loadingTargets) {
+            manager.cancelTask();
+            loadingTargets = false;
+            manager = null;
         }
     }
 
@@ -444,7 +459,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @param state The new state to set.
      * @return True on success, false on fail.
      */
-    private static boolean restateTarget(Target target, Target.TargetState state) {
+    public static boolean restateTarget(Target target, Target.TargetState state) {
         boolean isOk;
         isOk = target != null && target.changeState(state);
         updateSelection();
@@ -497,6 +512,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onPageSelected() {
         mAdapter.notifyDataSetChanged();
+        if (!loadingTargets) {
+            fetchingProgressBar.setVisibility(View.GONE);
+        }
         if (mListener == null) {
             return;
         }

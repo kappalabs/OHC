@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -16,8 +17,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -33,14 +36,14 @@ import java.util.regex.Pattern;
 /**
  * A login screen that offers login & registration via nickname & password.
  */
-public class LoginActivity extends AppCompatActivity implements Utils.OnResponseTaskCompleted {
+public class LoginActivity extends AppCompatActivity implements ResponseTask.OnResponseTaskCompleted {
 
     public static final String TAG = "LoginActivity";
 
     /**
-     * Keep track of the login task to ensure we can cancel it if requested.
+     * Keep track of the login task to ensure we run it only once.
      */
-    private Utils.RetrieveResponseTask mAuthTask = null;
+    private boolean mAuthTask;
 
     /* UI references */
     private AutoCompleteTextView mNicknameAutoTextView;
@@ -165,7 +168,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
+        if (mAuthTask) {
             return;
         }
 
@@ -186,9 +189,10 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
             Request request = new LoginRequest(nickname, Utils.getDigest(password));
 
             /* Asynchronously execute and wait for callback when result ready */
-            mAuthTask = Utils.getInstance().
-                    new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
-            mAuthTask.execute(request);
+            DialogFragment dialog = Wizard.getServerCommunicationDialog(LoginActivity.this);
+            ResponseTask task = new ResponseTask(dialog, LoginActivity.this);
+            task.execute(request);
+            mAuthTask = true;
         }
     }
 
@@ -198,7 +202,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
      * errors are presented and no actual login attempt is made.
      */
     private void attemptRegister() {
-        if (mAuthTask != null) {
+        if (mAuthTask) {
             return;
         }
 
@@ -219,9 +223,10 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
             Request request = new RegisterRequest(nickname, Utils.getDigest(password));
 
             /* Asynchronously execute and wait for callback when result ready */
-            mAuthTask = Utils.getInstance().
-                    new RetrieveResponseTask(this, Utils.getServerCommunicationDialog(this));
-            mAuthTask.execute(request);
+            DialogFragment dialog = Wizard.getServerCommunicationDialog(LoginActivity.this);
+            ResponseTask task = new ResponseTask(dialog, LoginActivity.this);
+            task.execute(request);
+            mAuthTask = true;
         }
     }
 
@@ -246,7 +251,7 @@ public class LoginActivity extends AppCompatActivity implements Utils.OnResponse
 
     @Override
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object _data) {
-        mAuthTask = null;
+        mAuthTask = false;
 
         /* Handle the error */
         if (ohex != null) {

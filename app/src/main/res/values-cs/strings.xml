@@ -95,7 +95,7 @@
     <string name="dialog_wizard_game_initiated_title">Hra je připravena</string>
     <string name="dialog_wizard_game_initiated_positive">Rozumím</string>
     <string name="dialog_wizard_no_target_message">Zkus zvětšit poloměr nebo vyber jinou pozici.</string>
-    <string name="dialog_wizard_no_target_positive">Pokračovat</string>
+    <string name="dialog_wizard_no_target_positive">Rozumím</string>
     <string name="dialog_wizard_no_target_title">Není dostupný žádný cíl</string>
     <string name="dialog_wizard_accept_question_message">Pouze omezený počet cílů je možné přijmout (%1$1d zbývá). Chceš pokračovat?</string>
     <string name="dialog_wizard_accept_question_negative">Ne</string>
