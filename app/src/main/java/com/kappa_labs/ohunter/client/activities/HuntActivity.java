@@ -1,5 +1,6 @@
 package com.kappa_labs.ohunter.client.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -67,8 +68,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
      */
     public static final int DEFAULT_RADIUS = 150;
     private static final int MAKE_PHOTO_REQUEST = 0x01;
-//    private static final int PERMISSIONS_REQUEST_CHECK_SETTINGS = 0x01;
-//    private static final int PERMISSIONS_REQUEST_LOCATION = 0x02;
+    private static final int PERMISSIONS_LOCATION_ON_CONNECTED = 0x01;
+    private static final int PERMISSIONS_LOCATION_START_UPDATES = 0x02;
 
     public static List<String> radarPlaceIDs = new ArrayList<>(0);
     public static Activity hunt;
@@ -445,15 +446,17 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onConnected(Bundle bundle) {
+        /* Connected to Google Play services */
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-//                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-//                //TODO: vytvorit dialog s vysvetlenim duvodu pozadavku
-//            } else {
-//                ActivityCompat.requestPermissions(getActivity(),
-//                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-//                        PERMISSIONS_REQUEST_LOCATION);
-//            }
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Wizard.locationPermissionDialog(this);
+            } else {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSIONS_LOCATION_ON_CONNECTED
+                );
+            }
             return;
         }
         Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -474,16 +477,34 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Wizard.locationPermissionDialog(this);
+            } else {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSIONS_LOCATION_START_UPDATES
+                );
+            }
             return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_LOCATION_ON_CONNECTED:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    onConnected(null);
+                }
+                break;
+            case PERMISSIONS_LOCATION_START_UPDATES:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startLocationUpdates();
+                }
+                break;
+        }
     }
 
     private void stopLocationUpdates() {

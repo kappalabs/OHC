@@ -131,4 +131,7 @@
     <string name="dialog_wizard_target_completed_message">Body byly započteny. Nyní můžeš přijmout jeden nový cíl.</string>
     <string name="dialog_wizard_target_completed_positive">Rozumím</string>
     <string name="dialog_wizard_target_completed_title">Cíl splněn</string>
+    <string name="dialog_wizard_location_permission_message">Hra vyžaduje sledování pozice hráče k plnění cílů.</string>
+    <string name="dialog_wizard_location_permission_positive">Rozumím</string>
+    <string name="dialog_wizard_location_permission_title">Povolení získání pozice</string>
 </resources>

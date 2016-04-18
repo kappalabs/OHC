@@ -260,6 +260,19 @@ public class Wizard {
         return dialogFragment;
     }
 
+    public static DialogFragment locationPermissionDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_location_permission_title),
+                context.getString(R.string.dialog_wizard_location_permission_message));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_location_permission_positive), null);
+        commitFragment(context, dialogFragment, "locationPermissionDialogTag");
+        return dialogFragment;
+    }
+
     public static DialogFragment getStandardProgressDialog(Context context, String title, String message) {
         if (context == null) {
             return null;

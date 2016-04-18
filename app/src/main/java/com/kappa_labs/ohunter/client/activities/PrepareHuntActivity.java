@@ -1,5 +1,6 @@
 package com.kappa_labs.ohunter.client.activities;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -61,15 +62,13 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     private static final String TAG = "PrepareHunt";
 
-    private GoogleMap map;
-    private GoogleApiClient mGoogleApiClient;
-    /* Active zone of the activated target */
-    private Circle mCircle;
-
     private static final String LATITUDE_KEY = "latitude_key";
     private static final String LONGITUDE_KEY = "longitude_key";
     private static final String RADIUS_KEY = "radius_key";
     private static final String DAYTIME_SPINNER_KEY = "daytime_spinner_key";
+
+    private static final int PERMISSIONS_LOCATION_ON_CONNECTED = 0x01;
+    private static final int PERMISSIONS_LOCATION_MAP_READY = 0x02;
 
     private static final int DEFAULT_RADIUS = 10;
     private static final int RADIUS_MIN = 1;
@@ -88,7 +87,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
     private EditText mRadiusEditText;
     private Spinner mDaytimeSpinner;
 
+    private GoogleMap map;
+    private GoogleApiClient mGoogleApiClient;
+    private Circle mCircle;
+
     public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.UNKNOWN;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -316,15 +320,17 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        // Connected to Google Play services!
+        /* Connected to Google Play services */
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Wizard.locationPermissionDialog(this);
+            } else {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSIONS_LOCATION_ON_CONNECTED
+                );
+            }
             return;
         }
         Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -353,6 +359,22 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
         }
 
         setNewArea(mLastLocation.getLatitude(), mLastLocation.getLongitude(), getRadius());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_LOCATION_ON_CONNECTED:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    onConnected(null);
+                }
+                break;
+            case PERMISSIONS_LOCATION_MAP_READY:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    onMapReady(map);
+                }
+                break;
+        }
     }
 
     private void setNewArea(double latitude, double longitude, double radius) {
@@ -391,13 +413,13 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     /* Creates a dialog for an error message */
     private void showErrorDialog(int errorCode) {
-        // Create a fragment for the error dialog
+        /* Create a fragment for the error dialog */
         ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
-        // Pass the error that should be displayed
+        /* Pass the error that should be displayed */
         Bundle args = new Bundle();
         args.putInt(DIALOG_ERROR, errorCode);
         dialogFragment.setArguments(args);
-        dialogFragment.show(getSupportFragmentManager(), "errordialog");
+        dialogFragment.show(getSupportFragmentManager(), "errorDialog");
     }
 
     /* Called from ErrorDialogFragment when the dialog is dismissed. */
@@ -407,10 +429,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
-        // This callback is important for handling errors that
-        // may occur while attempting to connect with Google.
-        //
-        // More about this in the 'Handle Connection Failures' section.
         if (mResolvingError) {
             /* Already attempting to resolve an error */
             return;
@@ -420,23 +438,22 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
                 mResolvingError = true;
                 result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
             } catch (IntentSender.SendIntentException e) {
-                // There was an error with the resolution intent. Try again.
+                /* There was an error with the resolution intent. Try again. */
                 mGoogleApiClient.connect();
             }
         } else {
-            // Show dialog using GoogleApiAvailability.getErrorDialog()
+            /* Show dialog using GoogleApiAvailability.getErrorDialog() */
             showErrorDialog(result.getErrorCode());
             mResolvingError = true;
         }
     }
 
-    /* Pote co se aplikace vrati z fragmentu zpet - problem s pozadovanou API funkci byl vyresen */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_RESOLVE_ERROR) {
             mResolvingError = false;
             if (resultCode == RESULT_OK) {
-                // Make sure the app is not already connected or attempting to connect
+                /* Make sure the app is not already connected or attempting to connect */
                 if (!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()) {
                     mGoogleApiClient.connect();
                 }
@@ -488,26 +505,31 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
             }
         });
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Wizard.locationPermissionDialog(this);
+            } else {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSIONS_LOCATION_MAP_READY
+                );
+            }
             return;
         }
         map.setMyLocationEnabled(true);
     }
 
-    /* A fragment to display an error dialog */
+    /**
+     *  A fragment to display an error dialog
+     */
     public static class ErrorDialogFragment extends DialogFragment {
+
         public ErrorDialogFragment() { }
 
         @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Get the error code and retrieve the appropriate dialog
+            /* Get the error code and retrieve the appropriate dialog */
             int errorCode = this.getArguments().getInt(DIALOG_ERROR);
             return GoogleApiAvailability.getInstance().getErrorDialog(
                     this.getActivity(), errorCode, REQUEST_RESOLVE_ERROR);
@@ -517,6 +539,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
         public void onDismiss(DialogInterface dialog) {
             ((PrepareHuntActivity) getActivity()).onDialogDismissed();
         }
+
     }
 
 }
