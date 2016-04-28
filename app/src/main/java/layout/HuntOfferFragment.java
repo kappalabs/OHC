@@ -373,6 +373,47 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Selects a given target in the offer page if the target exists in the offer.
+     *
+     * @param selectedTarget The target to be selected.
+     */
+    public static void setSelectedTarget(Target selectedTarget) {
+        int position = 0;
+        for (int i = 0; i < targets.size(); i++) {
+            if (targets.get(i) == selectedTarget) {
+                position = i;
+                break;
+            }
+        }
+        if (selectedIndex == position) {
+            /* Unselect */
+            selectedTarget.setHighlighted(false);
+            mAdapter.notifyDataSetChanged();
+
+            selectedIndex = -1;
+
+            /* Notify the listener */
+            if (mListener != null) {
+                mListener.onItemUnselected();
+            }
+        } else {
+            /* Select the tile */
+            selectedIndex = position;
+            for (Target iTile : targets) {
+                iTile.setHighlighted(false);
+            }
+            mAdapter.notifyDataSetChanged();
+            selectedTarget.setHighlighted(true);
+
+            /* Notify the listener */
+            if (mListener != null) {
+                mListener.onTargetChanged(selectedTarget);
+                mListener.onItemSelected(selectedTarget.getState());
+            }
+        }
+    }
+
+    /**
      * Gets the Place ID of currently selected target.
      *
      * @return The Place ID of currently selected target.

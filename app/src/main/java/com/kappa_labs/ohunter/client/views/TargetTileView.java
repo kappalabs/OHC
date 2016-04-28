@@ -24,7 +24,6 @@ import android.view.ViewTreeObserver;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.PlacesManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
@@ -216,7 +215,7 @@ public class TargetTileView extends View {
         int height = canvas.getHeight();
         int twoThirds = (int)((double) width / 3 * 2);
 
-        int color = stateToColor();
+        int color = getState().getColor(getContext());
         int darker = darkenColor(color);
 
         /* Draw the triangle in corner */
@@ -285,25 +284,6 @@ public class TargetTileView extends View {
         mPaint.setColor(ContextCompat.getColor(getContext(), R.color.state_chosen));
         mPaint.setStyle(Paint.Style.STROKE);
         canvas.drawPath(mPath, mPaint);
-    }
-
-    private int stateToColor() {
-        switch (mTarget.getState()) {
-            case ACCEPTED:
-                return ContextCompat.getColor(getContext(), R.color.state_accepted);
-            case OPENED:
-                return ContextCompat.getColor(getContext(), R.color.state_opened);
-            case REJECTED:
-                return ContextCompat.getColor(getContext(), R.color.state_rejected);
-            case COMPLETED:
-                return ContextCompat.getColor(getContext(), R.color.state_completed);
-            case LOCKED:
-                return ContextCompat.getColor(getContext(), R.color.state_locked);
-            case PHOTOGENIC:
-                return ContextCompat.getColor(getContext(), R.color.state_photogenic);
-            default:
-                return Color.WHITE;
-        }
     }
 
     /**

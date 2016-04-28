@@ -1,18 +1,18 @@
 <resources>
 
     <color name="black_overlay">#66000000</color>
-    <color name="kappa_blue">#0066FF</color>
-    <color name="dark_pink">#9900CC</color>
+    <color name="kappa_blue">#FF0066FF</color>
+    <color name="dark_pink">#FF9900CC</color>
     <color name="limiter_overlay">#7FDF6868</color>
     <color name="tile_background">@color/my_primary_light</color>
     <color name="black">#000000</color>
 
-    <color name="state_accepted">#26CC14</color>
-    <color name="state_rejected">#FF3219</color>
+    <color name="state_accepted">#FF26CC14</color>
+    <color name="state_rejected">#FFFF3219</color>
     <color name="state_completed">@color/kappa_blue</color>
     <color name="state_locked">@color/dark_pink</color>
-    <color name="state_photogenic">#FFEA00</color>
-    <color name="state_opened">#797B7F</color>
+    <color name="state_photogenic">#FFFFEA00</color>
+    <color name="state_opened">#FF797B7F</color>
 
     <color name="shadow_frame">#7f000000</color>
     <color name="shadow_unavailable">#8fffffff</color>

@@ -1,8 +1,6 @@
 package com.kappa_labs.ohunter.client.activities;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -14,27 +12,22 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
-import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
-import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 
 /**
- * Holds main game menu and takes care of user login prompt.
+ * Holds main game menu and basic information about the current game and player.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -102,23 +95,8 @@ public class MainActivity extends AppCompatActivity {
         mStatisticsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO: statistiky
-                //DEBUG: pouze test image...
-                Bitmap b_ = BitmapFactory.decodeResource(getResources(), R.drawable.img);
-                double min = Math.min(400. / b_.getWidth(), 240. / b_.getHeight());
-                Bitmap picture = Bitmap.createScaledBitmap(b_, (int)(b_.getWidth() * min), (int)(b_.getHeight() * min), true);
-                b_.recycle();
-                Place place = new Place();
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                picture.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                Photo photo = new Photo();
-                photo.sImage = new SImage(stream.toByteArray(), picture.getWidth(), picture.getHeight());
-                photo.reference = "testPhotoReference";
-                place.addPhoto(photo);
-                place.setID("testPlaceID");
-                CameraActivity.setTarget(new Target(place));
                 Intent i = new Intent();
-                i.setClass(MainActivity.this, CameraActivity.class);
+                i.setClass(MainActivity.this, StatisticsActivity.class);
                 startActivity(i);
             }
         });

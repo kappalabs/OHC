@@ -1,7 +1,11 @@
 package com.kappa_labs.ohunter.client.entities;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -18,6 +22,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * Represents a state of target.
      */
     public enum TargetState {
+
         PHOTOGENIC(70),
         ACCEPTED(60),
         LOCKED(50),
@@ -46,6 +51,31 @@ public class Target extends Place implements Serializable, Comparable<Target> {
                 return -1;
             }
             return 0;
+        }
+
+        /**
+         * Gets the color to visualize this state.
+         *
+         * @param context Context of the caller to access the resources.
+         * @return The color representing this state.
+         */
+        public int getColor(Context context) {
+            switch (this) {
+                case PHOTOGENIC:
+                    return ContextCompat.getColor(context, R.color.state_photogenic);
+                case ACCEPTED:
+                    return ContextCompat.getColor(context, R.color.state_accepted);
+                case LOCKED:
+                    return ContextCompat.getColor(context, R.color.state_locked);
+                case OPENED:
+                    return ContextCompat.getColor(context, R.color.state_opened);
+                case COMPLETED:
+                    return ContextCompat.getColor(context, R.color.state_completed);
+                case REJECTED:
+                    return ContextCompat.getColor(context, R.color.state_rejected);
+                default:
+                    return Color.WHITE;
+            }
         }
 
         /**

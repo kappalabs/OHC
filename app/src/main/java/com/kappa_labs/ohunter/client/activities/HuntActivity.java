@@ -53,7 +53,9 @@ import layout.HuntActionFragment;
 import layout.HuntOfferFragment;
 import layout.HuntPlaceFragment;
 
-
+/**
+ * Activity holding the main game content consisting of three fragments.
+ */
 public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener, ResponseTask.OnResponseTaskCompleted {
 
     public static final String TAG = "HuntActivity";

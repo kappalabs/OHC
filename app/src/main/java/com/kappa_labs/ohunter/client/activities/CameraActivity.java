@@ -37,8 +37,9 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 import java.io.ByteArrayOutputStream;
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
+ * Full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
+ * Provides taking photos of targets, camera preview is shown on the screen.
  */
 public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener {
 

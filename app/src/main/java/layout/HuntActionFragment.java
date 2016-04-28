@@ -2,7 +2,13 @@ package layout;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -24,13 +30,13 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
+import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
 
-import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
-import com.kappa_labs.ohunter.client.R;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,7 +46,7 @@ import java.util.Locale;
  * Use the {@link HuntActionFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HuntActionFragment extends Fragment implements OnMapReadyCallback, PageChangeAdapter {
+public class HuntActionFragment extends Fragment implements OnMapReadyCallback, PageChangeAdapter, GoogleMap.OnMarkerClickListener {
 
     private static boolean targetReady;
     private static boolean zoomInvalidated = true;
@@ -53,7 +59,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     private static Marker playerMarker;
     private static Target target;
     private static List<Marker> targetMarks = new ArrayList<>();
-    private static List<Target> targets = new ArrayList<>();
+    private static HashMap<Marker, Target> markerTargetHashMap = new HashMap<>();
 
     private TextView targetLatitudeTextView;
     private TextView playerLatitudeTextView;
@@ -127,9 +133,10 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
+        map.setOnMarkerClickListener(this);
         map.getUiSettings().setZoomControlsEnabled(true);
         zoomInvalidated = true;
-        zoomToPlace();
+        update();
         /* The fine location should be granted by HuntActivity, which needs the same permission */
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -145,16 +152,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             updateInformation();
             updatePlayerPin();
         }
-        // TODO: 31.3.16 zoptimalizovat
-        List<Target> targets = HuntOfferFragment.getTargets();
-        List<Target> filter = new ArrayList<>();
-        for (Target target : targets) {
-            if (target.getState() == Target.TargetState.ACCEPTED) {
-                filter.add(target);
-            }
-        }
-        HuntActionFragment.targets = filter;
-            updateTargetMarks();
+        updateTargetMarks();
     }
 
     private void zoomToPlace() {
@@ -176,10 +174,10 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
                 .fillColor(Color.argb(80, 0, 0, 255));
         mCircle = map.addCircle(co);
 
-        /* Add special marker for the position of the target */
-        map.addMarker(new MarkerOptions()
-                .position(new LatLng(target.latitude, target.longitude))
-                .title(target.getName()));
+//        /* Add special marker for the position of the target */
+//        map.addMarker(new MarkerOptions()
+//                .position(new LatLng(target.latitude, target.longitude))
+//                .title(target.getName()));
 
         /* Move camera to the Place's position */
         float zoom = (float) (10f - Math.log(HuntActivity.DEFAULT_RADIUS / 10000f) / Math.log(2f));
@@ -256,13 +254,37 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
         targetMarks.clear();
         /* Add new marks */
-        for (Target target : targets) {
+        markerTargetHashMap.clear();
+        for (Target target : HuntOfferFragment.getTargets()) {
             MarkerOptions options = new MarkerOptions()
                     .position(new LatLng(target.latitude, target.longitude))
                     .title(target.getName())
-                    .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.ic_menu_compass));
-            targetMarks.add(map.addMarker(options));
+                    .icon(BitmapDescriptorFactory.fromBitmap(changeBitmapColor(
+                            BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_compass),
+                            target.getState().getColor(getContext()))
+                    ));
+            Marker targetMark = map.addMarker(options);
+            targetMarks.add(targetMark);
+            markerTargetHashMap.put(targetMark, target);
         }
+    }
+
+    private Bitmap changeBitmapColor(Bitmap sourceBitmap, int color) {
+        Bitmap resultBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0,
+                sourceBitmap.getWidth(), sourceBitmap.getHeight());
+        Bitmap mutableResult = resultBitmap;
+        if (!resultBitmap.isMutable()) {
+            mutableResult = resultBitmap.copy(Bitmap.Config.ARGB_8888, true);
+            resultBitmap.recycle();
+        }
+        Paint p = new Paint();
+        ColorFilter filter = new LightingColorFilter(color, 0);
+        p.setColorFilter(filter);
+
+        Canvas canvas = new Canvas(mutableResult);
+        canvas.drawBitmap(mutableResult, 0, 0, p);
+
+        return mutableResult;
     }
 
     /**
@@ -289,7 +311,21 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             targetReady = false;
         }
         infoInvalidated = true;
-        zoomInvalidated = true;
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        Target target = markerTargetHashMap.get(marker);
+        if (target == null) {
+            return false;
+        }
+        if (HuntOfferFragment.getSelectedTarget() != target) {
+            HuntOfferFragment.setSelectedTarget(target);
+            changeTarget(target);
+            zoomInvalidated = true;
+            update();
+        }
+        return false;
     }
 
 }

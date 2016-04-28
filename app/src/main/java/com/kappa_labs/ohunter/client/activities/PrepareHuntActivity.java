@@ -58,6 +58,9 @@ import java.util.Locale;
 
 import layout.HuntOfferFragment;
 
+/**
+ * Activity to prepare a new hunt with interactive map and inputs to specify the hunt area.
+ */
 public class PrepareHuntActivity extends AppCompatActivity implements ResponseTask.OnResponseTaskCompleted, ConnectionCallbacks, OnConnectionFailedListener, TextWatcher, OnMapReadyCallback {
 
     private static final String TAG = "PrepareHunt";

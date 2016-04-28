@@ -29,6 +29,7 @@
     <string name="error_camera_no_photo">You have to take a picture!</string>
     <string name="error_not_enough_points">You don\'t have enough points for this.</string>
     <string name="error_missing_points">You are missing %1$s.</string>
+    <string name="error_cannot_read_players">The list of players is not available.</string>
     <string name="camera_activity_photos_counter" translatable="false">%1$d%2$s</string>
     <string name="server_address_template" translatable="false">192.168.0.1:4242</string>
     <string name="similarity_is">Similarity is %1$.1f%%</string>

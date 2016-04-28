@@ -1,8 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
+    dexOptions {
+        incremental true;
+        maxProcessCount = 4;
+        javaMaxHeapSize = 3g;
+    }
+
     compileSdkVersion 23
     buildToolsVersion '23.0.2'
+
     defaultConfig {
         applicationId 'com.kappa_labs.ohunter.client'
         minSdkVersion 22
