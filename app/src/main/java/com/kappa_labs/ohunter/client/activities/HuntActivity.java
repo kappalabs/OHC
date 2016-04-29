@@ -153,8 +153,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         rejectFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /* Reject only if player has enough points */
-                if (!mPointsManager.canReject()) {
+                final Target selected = HuntOfferFragment.getSelectedTarget();
+                /* Reject only if player has enough points and target is selected */
+                if (!mPointsManager.canReject() || selected == null) {
                     int points = mPointsManager.countMissingPoints(PointsManager.getRejectCost());
                     Wizard.missingPointsDialog(HuntActivity.this, points);
                     return;
@@ -165,7 +166,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                             @Override
                             public void onClick(DialogInterface dialogInterface, int which) {
                                 /* Send information about the rejected target into the database on server */
-                                String placeID = HuntOfferFragment.getSelectedTargetPlaceID();
+                                String placeID = selected.getPlaceID();
                                 DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
                                 ResponseTask task = new ResponseTask(dialog, HuntActivity.this);
                                 task.execute(new RejectPlaceRequest(
@@ -686,13 +687,17 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             Target target = HuntOfferFragment.getTargetByID(placeID);
             if (target == null) {
                 Log.e(TAG, "Rejected target with ID " + placeID + " could not be found in offer!");
+                return;
             } else {
+                /* Only rejected opened targets can open new ones */
+                if (target.getState() == Target.TargetState.OPENED) {
+                    HuntOfferFragment.randomlyOpenTarget();
+                }
                 target.setRejectLoss(cost);
                 HuntOfferFragment.restateTarget(target, Target.TargetState.REJECTED);
             }
             SharedDataManager.setPlayer(HuntActivity.this, response.player);
             Log.d(TAG, "Rejected target was written to the database. Target ID: " + placeID);
-            HuntOfferFragment.randomlyOpenTarget();
         } else if (data instanceof String && request instanceof CompareRequest) {
             /* Request to evaluate similarity successfully finished */
             String placeID = (String) data;
