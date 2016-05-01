@@ -319,8 +319,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
         }
         int numOpened = 0;
+        Collections.shuffle(unavailables);
         while (numOpened < unavailables.size() && numOpened < amount) {
-            Collections.shuffle(unavailables);
             unavailables.get(numOpened++).openUp();
         }
         return numOpened;

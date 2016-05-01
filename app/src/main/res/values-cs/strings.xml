@@ -123,11 +123,14 @@
     <string name="dialog_wizard_store_compare_neutral">Zpět</string>
     <string name="dialog_wizard_store_compare_positive">Ano</string>
     <string name="dialog_wizard_store_compare_title">Připravit k vyhodnocení?</string>
-    <string name="dialog_wizard_target_completed_message">Body byly započteny. Nyní můžeš přijmout jeden nový cíl.</string>
+    <string name="dialog_wizard_target_completed_message">Body byly započteny.</string>
     <string name="dialog_wizard_target_completed_positive">Rozumím</string>
     <string name="dialog_wizard_target_completed_title">Cíl splněn</string>
     <string name="dialog_wizard_location_permission_message">Hra vyžaduje sledování pozice hráče k plnění cílů.</string>
     <string name="dialog_wizard_location_permission_positive">Rozumím</string>
     <string name="dialog_wizard_location_permission_title">Povolení získání pozice</string>
     <string name="error_cannot_read_players">Seznam hráčů není dostupný</string>
+    <string name="dialog_wizard_target_locked_message">Nyní můžeš přijmout jeden nový cíl.</string>
+    <string name="dialog_wizard_target_locked_positive">Rozumím</string>
+    <string name="dialog_wizard_target_locked_title">Cíl uzamčen</string>
 </resources>

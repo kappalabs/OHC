@@ -154,8 +154,12 @@
     <string name="dialog_wizard_store_compare_neutral">Cancel</string>
     <string name="dialog_wizard_store_compare_negative">No</string>
 
+    <string name="dialog_wizard_target_locked_title">Target locked</string>
+    <string name="dialog_wizard_target_locked_message">You can now accept one new target.</string>
+    <string name="dialog_wizard_target_locked_positive">OK</string>
+
     <string name="dialog_wizard_target_completed_title">Target completed</string>
-    <string name="dialog_wizard_target_completed_message">Acquired points were stored. You can now accept one new target.</string>
+    <string name="dialog_wizard_target_completed_message">Acquired points were stored.</string>
     <string name="dialog_wizard_target_completed_positive">OK</string>
 
     <string name="dialog_wizard_location_permission_title">Location Permission Required</string>

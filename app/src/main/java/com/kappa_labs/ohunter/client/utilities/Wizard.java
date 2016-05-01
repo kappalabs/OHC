@@ -247,6 +247,19 @@ public class Wizard {
         return dialogFragment;
     }
 
+    public static DialogFragment targetLockedDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_target_locked_title),
+                context.getString(R.string.dialog_wizard_target_locked_message));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_target_locked_positive), null);
+        commitFragment(context, dialogFragment, "targetLockedDialogTag");
+        return dialogFragment;
+    }
+
     public static DialogFragment targetCompletedDialog(Context context) {
         if (context == null) {
             return null;

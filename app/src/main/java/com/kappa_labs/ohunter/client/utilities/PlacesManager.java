@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.client.utilities;
 import android.content.Context;
 import android.util.Log;
 import android.util.LruCache;
+import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
 import com.kappa_labs.ohunter.lib.entities.Place;
@@ -38,16 +39,21 @@ public class PlacesManager {
      * target is completed.
      */
     public static final int DEFAULT_INCREMENT_ACCEPTABLE = 1;
+    /**
+     * Desired number of targets, which should be downloaded.
+     */
+    public static final int DESIRED_NUMBER_OF_TARGETS = 30;
 
     private Context mContext;
     private PlacesManagerListener mListener;
     private Player mPlayer;
     private List<String> placeIDs;
-    /* Counts the number of pending tasks */
-    private int mCounter;
+    private int availableCount;
+    private int retrievedCount;
     private static LruCache<String, Place> mPlacesCache;
 //    private static LruCache<String, Bitmap> mPreviewCache;
     private List<ResponseTask> mTasks;
+
 
     public PlacesManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mContext = context;
@@ -86,6 +92,9 @@ public class PlacesManager {
 //        };
     }
 
+    /**
+     * Start downloading targets from the server.
+     */
     public void preparePlaces() {
         mListener.onPreparationStarted();
         mTasks = new ArrayList<>();
@@ -93,62 +102,55 @@ public class PlacesManager {
         /* Randomize order of the given places */
         Collections.shuffle(placeIDs, new Random(System.nanoTime()));
 
-        //TODO: nejak vyresit, asynctask ma pouze frontu pouze 128 pozadavku
-        // redukce poctu mist
-        while (placeIDs.size() > 30) {
-            placeIDs.remove(0);
-        }
+        retrievedCount = 0;
+        availableCount = placeIDs.size();
+        Log.d(TAG, "Available number of targets for download is " + availableCount + ".");
 
-        mCounter = placeIDs.size();
-        Log.d(TAG, "mam " + mCounter + " mist k tasknuti");
+        prepareNextPlace();
+    }
 
-        /* No Places are available */
-        if (mCounter == 0) {
+    private void prepareNextPlace() {
+        /* No more available targets */
+        if (availableCount-- == 0 || retrievedCount >= DESIRED_NUMBER_OF_TARGETS) {
             mListener.onPreparationEnded();
             return;
         }
-
         Place place;
-        for (String placeID : placeIDs) {
-            /* Check if place can be loaded from local file */
-            if ((place = SharedDataManager.getPlace(mContext, placeID)) != null) {
-                mListener.onPlaceReady(place);
-                if (--mCounter == 0) {
-                    mListener.onPreparationEnded();
-                }
-//                Log.d(TAG, "mcounter = "+mCounter);
-                continue;
+        String placeID = placeIDs.get(availableCount);
+        /* Check if place can be loaded from local file */
+        if ((place = SharedDataManager.getPlace(mContext, placeID)) != null) {
+            mListener.onPlaceReady(place);
+            if (--availableCount == 0) {
+                mListener.onPreparationEnded();
             }
-            /* Otherwise retrieve the place from server */
-            Request request = new FillPlacesRequest(
-                    mPlayer,
-                    new String[]{placeID},
-                    PrepareHuntActivity.preferredDaytime,
-                    DEFAULT_WIDTH,
-                    DEFAULT_HEIGHT
-            );
-            ResponseTask task = new ResponseTask(null, new ResponseTask.OnResponseTaskCompleted() {
-                @Override
-                public void onResponseTaskCompleted(Request request, Response response, OHException ohException, Object data) {
-                    if (ohException == null && response != null && response.places != null && response.places.length > 0) {
-                        /* Save the result locally */
-                        SharedDataManager.addPlace(mContext, response.places[0]);
-                        /* Let the listener do something with the new place */
-                        mListener.onPlaceReady(response.places[0]);
-                    } else //noinspection StatementWithEmptyBody
-                        if (ohException != null) {
-                        //TODO: zkontroluj ohex zpravu a pripadne opakuj request
-                    } else {
-                        //remove
-                    }
-                    if (--mCounter == 0) {
-                        mListener.onPreparationEnded();
-                    }
-                }
-            });
-            task.execute(request);
-            mTasks.add(task);
+            return;
         }
+        /* Otherwise retrieve the place from server */
+        Request request = new FillPlacesRequest(
+                mPlayer,
+                new String[]{placeID},
+                PrepareHuntActivity.preferredDaytime,
+                DEFAULT_WIDTH,
+                DEFAULT_HEIGHT
+        );
+        ResponseTask task = new ResponseTask(null, this, new ResponseTask.OnResponseTaskCompleted() {
+            @Override
+            public void onResponseTaskCompleted(Request request, Response response, OHException ohException, Object data) {
+                if (ohException == null && response != null && response.places != null && response.places.length > 0) {
+                    /* Save the result locally */
+                    SharedDataManager.addPlace(mContext, response.places[0]);
+                    /* Let the listener do something with the new place */
+                    mListener.onPlaceReady(response.places[0]);
+                    retrievedCount++;
+                } else if (ohException != null) {
+                    Log.e(TAG, ohException.getMessage());
+                    Toast.makeText(mContext, ohException.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+                ((PlacesManager) data).prepareNextPlace();
+            }
+        });
+        task.execute(request);
+        mTasks.add(task);
     }
 
     /**

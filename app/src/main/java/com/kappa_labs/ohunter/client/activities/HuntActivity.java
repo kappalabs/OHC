@@ -435,16 +435,24 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Log.d(TAG, "camera result ok...");
                 if (data != null) {
                     if (data.getBooleanExtra(CameraActivity.PHOTOS_TAKEN_KEY, false)) {
-                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.LOCKED);
                         Log.d(TAG, "camera result: bylo vyfoceno misto");
+                        handlePhotoTaken();
                     }
-                    if (data.getBooleanExtra(CameraActivity.PHOTOS_EVALUATED_KEY, false)) {
-                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
-                        Log.d(TAG, "camera result: bylo vyfoceno a vyhodnoceno misto");
-                    }
+                    // TODO: 30.4.16 zmena stavu v kamere bude pripadne vyuzivat metodu zde pro snadnost
+//                    if (data.getBooleanExtra(CameraActivity.PHOTOS_EVALUATED_KEY, false)) {
+//                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
+//                        Log.d(TAG, "camera result: bylo vyfoceno a vyhodnoceno misto");
+//                    }
                 }
             }
         }
+    }
+
+    private void handlePhotoTaken() {
+        HuntOfferFragment.restateSelectedTarget(Target.TargetState.LOCKED);
+        SharedDataManager.addNumAcceptable(this, PlacesManager.DEFAULT_INCREMENT_ACCEPTABLE);
+        HuntOfferFragment.randomlyOpenTargets(PlacesManager.DEFAULT_NUM_OPENED);
+        Wizard.targetLockedDialog(this);
     }
 
     @Override
@@ -730,7 +738,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 task.execute(completeRequest);
             }
             // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
-        } else if (request instanceof  CompletePlaceRequest) {
+        } else if (request instanceof CompletePlaceRequest) {
             /* Request to complete the evaluated target successfully finished (stored in database) */
             String placeID = ((CompletePlaceRequest) request).getPlaceID();
             int discoveryGain = ((CompletePlaceRequest) request).getDiscoveryGain();
@@ -742,8 +750,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
             SharedDataManager.removeCompareRequestForPlace(this, placeID);
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
-            SharedDataManager.addNumAcceptable(this, PlacesManager.DEFAULT_INCREMENT_ACCEPTABLE);
-            HuntOfferFragment.randomlyOpenTargets(PlacesManager.DEFAULT_NUM_OPENED);
             SharedDataManager.setPlayer(this, response.player);
             Wizard.targetCompletedDialog(this);
             Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
