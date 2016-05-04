@@ -1,12 +1,14 @@
 package com.kappa_labs.ohunter.client.utilities;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.util.LruCache;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
-import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -50,7 +52,7 @@ public class PlacesManager {
     private List<String> placeIDs;
     private int availableCount;
     private int retrievedCount;
-    private static LruCache<String, Place> mPlacesCache;
+    private static LruCache<String, Target> mTargetsCache;
 //    private static LruCache<String, Bitmap> mPreviewCache;
     private List<ResponseTask> mTasks;
 
@@ -66,8 +68,8 @@ public class PlacesManager {
 
     private  static void initMemoryCache() {
         /* Clear the cache */
-        if (mPlacesCache != null) {
-            mPlacesCache.evictAll();
+        if (mTargetsCache != null) {
+            mTargetsCache.evictAll();
         }
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
@@ -77,11 +79,11 @@ public class PlacesManager {
 
         Log.d(TAG, "available max memory = " + maxMemory + "; cacheSize = " + cacheSize);
 
-        mPlacesCache = new LruCache<String, Place>(cacheSize) {
+        mTargetsCache = new LruCache<String, Target>(cacheSize) {
             @Override
-            protected int sizeOf(String key, Place value) {
+            protected int sizeOf(String key, Target target) {
                 /* Every place stores some number of photos, these are the most memory intensive objects */
-                return DEFAULT_HEIGHT * DEFAULT_WIDTH * 4 / 1024 * value.getNumberOfPhotos();
+                return DEFAULT_HEIGHT * DEFAULT_WIDTH * 4 / 1024 * target.getNumberOfPhotos();
             }
         };
 //        mPreviewCache = new LruCache<String, Bitmap>(cacheSize) {
@@ -115,11 +117,11 @@ public class PlacesManager {
             mListener.onPreparationEnded();
             return;
         }
-        Place place;
+        Target target;
         String placeID = placeIDs.get(availableCount);
         /* Check if place can be loaded from local file */
-        if ((place = SharedDataManager.getPlace(mContext, placeID)) != null) {
-            mListener.onPlaceReady(place);
+        if ((target = SharedDataManager.getTarget(mContext, placeID)) != null) {
+            mListener.onPlaceReady(target);
             if (--availableCount == 0) {
                 mListener.onPreparationEnded();
             }
@@ -137,10 +139,17 @@ public class PlacesManager {
             @Override
             public void onResponseTaskCompleted(Request request, Response response, OHException ohException, Object data) {
                 if (ohException == null && response != null && response.places != null && response.places.length > 0) {
+                    Bitmap icon = BitmapFactory.decodeResource(mContext.getResources(), android.R.drawable.ic_menu_compass);
+                    Bitmap mutableIcon = icon;
+                    if (!icon.isMutable()) {
+                        mutableIcon = icon.copy(Bitmap.Config.ARGB_8888, true);
+                    }
+                    /* Create Target object from retrieved Place */
+                    Target retTarget = new Target(response.places[0], mutableIcon);
                     /* Save the result locally */
-                    SharedDataManager.addPlace(mContext, response.places[0]);
+                    SharedDataManager.addTarget(mContext, retTarget);
                     /* Let the listener do something with the new place */
-                    mListener.onPlaceReady(response.places[0]);
+                    mListener.onPlaceReady(retTarget);
                     retrievedCount++;
                 } else if (ohException != null) {
                     Log.e(TAG, ohException.getMessage());
@@ -163,28 +172,28 @@ public class PlacesManager {
     }
 
     /**
-     * Gets the place object for given placeID. Places are cached, if possible.
-     * If placeID is null, return null, otherwise get the Place from cache or local file.
+     * Gets the Target object for given placeID. Targets are cached, if possible.
+     * If placeID is null, return null, otherwise get the Target from cache or local file.
      *
      * @param context Context of the caller.
      * @param placeID Place ID of the place to retrieve.
-     * @return The place for given Place ID or null if not available or ID is null.
+     * @return The target for given Place ID or null if not available or ID is null.
      */
-    public static Place getPlace(Context context, String placeID) {
+    public static Target getTarget(Context context, String placeID) {
         if (placeID == null) {
             return null;
         }
-        if (mPlacesCache == null) {
+        if (mTargetsCache == null) {
             initMemoryCache();
         }
-        Place place = mPlacesCache.get(placeID);
-        if (place == null) {
-            place = SharedDataManager.getPlace(context, placeID);
-            if (place != null) {
-                mPlacesCache.put(placeID, place);
+        Target target = mTargetsCache.get(placeID);
+        if (target == null) {
+            target = SharedDataManager.getTarget(context, placeID);
+            if (target != null) {
+                mTargetsCache.put(placeID, target);
             }
         }
-        return place;
+        return target;
     }
 
     //TODO: nebude se muset nacitat cele misto, pouze jedna preview fotka
@@ -195,7 +204,7 @@ public class PlacesManager {
 //        Bitmap bitmap = mPreviewCache.get(view.getPlaceID());
 //        if (bitmap == null) {
 //            Log.d(TAG, "ctu ze souboru, potom nactu do LRU...");
-//            Place place = SharedDataManager.getPlace(context, view.getPlaceID());
+//            Place place = SharedDataManager.getTarget(context, view.getPlaceID());
 //
 //            if (place != null && place.getNumberOfPhotos() > 0) {
 //                BitmapWorkerTask task = new BitmapWorkerTask(view);
@@ -252,6 +261,6 @@ public class PlacesManager {
     public interface PlacesManagerListener {
         void onPreparationStarted();
         void onPreparationEnded();
-        void onPlaceReady(Place place);
+        void onPlaceReady(Target target);
     }
 }

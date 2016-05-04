@@ -186,6 +186,7 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
             /* Release the previous picture */
             if (mBitmap != null) {
                 mBitmap.recycle();
+                mBitmap = null;
             }
             /* Retrieve the new picture */
             mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);

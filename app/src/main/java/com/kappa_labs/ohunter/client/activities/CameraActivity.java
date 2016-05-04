@@ -61,9 +61,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private static Bitmap referenceImage, edgesImage;
     private static Target mTarget;
+    private static int rightRotations;
 
     private int numberOfAttempts = 0;
-    private int vLimit, hLimit;
+    private double vLimit, hLimit;
     private boolean photosTaken, photosEvaluated;
 
     @SuppressWarnings("deprecation")
@@ -105,6 +106,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                     return;
                 }
 
+                rightRotations = (rightRotations + 3) % 4;
+
                 Matrix matrix = new Matrix();
                 matrix.postRotate(-90);
 
@@ -126,6 +129,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 if (edgesImage == null) {
                     return;
                 }
+
+                rightRotations = (rightRotations + 1) % 4;
 
                 Matrix matrix = new Matrix();
                 matrix.postRotate(90);
@@ -252,8 +257,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private void storeRequestForEvaluation(Request request) {
         /* Store the photos for later use */
-        if (SharedDataManager.setCompareRequestForPlace(CameraActivity.this, request, mTarget.getPlaceID())) {
-            SharedDataManager.clearPhotosOfPlace(CameraActivity.this, mTarget.getPlaceID());
+        if (SharedDataManager.setCompareRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
+            SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
             finish();
         } else {
             Log.e(TAG, "cannot write the compare request");
@@ -314,28 +319,28 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         double hRatio = (double) edgesImage.getHeight() / height;
         if (wRatio > hRatio) {
             /* Show the vertical stripes, hide horizontals */
-            vLimit = (int)(height - edgesImage.getHeight() / wRatio);
+            vLimit = height - edgesImage.getHeight() / wRatio;
             hLimit = 0;
         } else {
             /* Show the horizontal stripes, hide verticals */
-            hLimit = (int)(width - edgesImage.getWidth() / hRatio);
+            hLimit = width - edgesImage.getWidth() / hRatio;
             vLimit = 0;
         }
 
         ViewGroup.LayoutParams params;
         /* Draw the horizontal stripes */
         params = limiterLeft.getLayoutParams();
-        params.width = hLimit / 2;
+        params.width = (int) (hLimit / 2);
         limiterLeft.setLayoutParams(params);
         params = limiterRight.getLayoutParams();
-        params.width = hLimit / 2;
+        params.width = (int) (hLimit / 2);
         limiterRight.setLayoutParams(params);
         /* Draw the vertical stripes */
         params = limiterTop.getLayoutParams();
-        params.height = vLimit / 2;
+        params.height = (int) (vLimit / 2);
         limiterTop.setLayoutParams(params);
         params = limiterBottom.getLayoutParams();
-        params.height = vLimit / 2;
+        params.height = (int) (vLimit / 2);
         limiterBottom.setLayoutParams(params);
     }
 
@@ -344,8 +349,14 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         if (photo == null) {
             return null;
         }
-        return Bitmap.createBitmap(photo,
-                hLimit / 2, vLimit / 2, photo.getWidth() - hLimit, photo.getHeight() - vLimit);
+        /* Rotate the photo the way reference photo is rotated */
+        Matrix matrix = new Matrix();
+        matrix.postRotate(-90 * rightRotations);
+        Bitmap cropped = Bitmap.createBitmap(photo, (int) (hLimit / 2), (int) (vLimit / 2),
+                photo.getWidth() - (int) hLimit, photo.getHeight() - (int) vLimit, matrix, true);
+        CameraOverlay.mBitmap.recycle();
+        CameraOverlay.mBitmap = null;
+        return cropped;
     }
 
     @Override
@@ -359,10 +370,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         picture.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         Photo photo = new Photo();
         photo.sImage = new SImage(stream.toByteArray(), picture.getWidth(), picture.getHeight());
-        SharedDataManager.addPhotoOfPlace(this, mTarget.getPlaceID(), photo, ((Long) System.currentTimeMillis()).toString());
+        SharedDataManager.addPhotoOfTarget(this, mTarget.getPlaceID(), photo, ((Long) System.currentTimeMillis()).toString());
 
         /* Update UI information */
-        lastPhotoImageView.setImageBitmap(CameraOverlay.mBitmap);
+        lastPhotoImageView.setImageBitmap(picture);
         ++numberOfAttempts;
         numberOfPhotosTextView.setText(
                 String.format(getResources().getString(R.string.camera_activity_photos_counter),
@@ -441,7 +452,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      *
      * @param target Target which will be photographed.
      */
-    public static void setTarget(Target target) {
+    public static void initCamera(Target target) {
+        rightRotations = 0;
         mTarget = target;
         setTemplateImage(Utils.toBitmap(target.getSelectedPhoto().sImage));
     }

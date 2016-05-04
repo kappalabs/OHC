@@ -58,6 +58,20 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
+     * Initiates private fields for a new game.
+     */
+    public static void initNewHunt() {
+        placeID = null;
+        numberOfPhotos = 0;
+        daytimeTexts = null;
+        photoBitmaps = null;
+        infoList = null;
+        maxHeightRatio = 0;
+        dataInvalidated = true;
+        selectedPhotoIndex = -1;
+    }
+
+    /**
      * Create a new instance of this fragment.
      *
      * @return A new instance of this fragment.
@@ -256,8 +270,6 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             numberOfPhotos = 0;
             photoBitmaps = null;
             daytimeTexts = null;
-
-            dataInvalidated = true;
         } else if (place != null && !Objects.equals(place.getID(), placeID)) {
             placeID = place.getID();
             maxHeightRatio = 0;
@@ -298,9 +310,8 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 infoList.add(info);
             }
             Collections.sort(infoList);
-
-            dataInvalidated = true;
         }
+        dataInvalidated = true;
     }
 
     private static class BitmapReferencer {

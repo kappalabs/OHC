@@ -56,8 +56,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import layout.HuntOfferFragment;
-
 /**
  * Activity to prepare a new hunt with interactive map and inputs to specify the hunt area.
  */
@@ -160,7 +158,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
                 /* Reset the states for new hunt */
                 SharedDataManager.initNewHunt(PrepareHuntActivity.this, false, System.currentTimeMillis());
                 SharedDataManager.removeTargets(PrepareHuntActivity.this);
-                HuntOfferFragment.clearTargets();
+                HuntActivity.initNewHunt();
 
                 /* Start radar search to receive list of available places */
                 Request request = new RadarSearchRequest(player, getLatitude(), getLongitude(), getRadius() * 1000);

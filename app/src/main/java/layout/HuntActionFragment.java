@@ -1,14 +1,9 @@
 package layout;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.LightingColorFilter;
-import android.graphics.Paint;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -34,6 +29,7 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,6 +78,19 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         return new HuntActionFragment();
     }
 
+    /**
+     * Initiates private fields for a new game.
+     */
+    public static void initNewHunt() {
+        targetReady = false;
+        zoomInvalidated = true;
+        infoInvalidated = true;
+        playerMarker = null;
+        target = null;
+        targetMarks.clear();
+        markerTargetHashMap.clear();
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,6 +121,13 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             fragment = SupportMapFragment.newInstance();
             fm.beginTransaction().replace(R.id.map_layout, fragment).commit();
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        /* Resolves problems with rotation */
+        setRetainInstance(true);
     }
 
     @Override
@@ -244,7 +260,10 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
     }
 
-    private void updateTargetMarks() {
+    /**
+     * Reloads marks of targets on the interactive map from current targets in offer page.
+     */
+    public void updateTargetMarks() {
         if (map == null) {
             return;
         }
@@ -259,32 +278,12 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
             MarkerOptions options = new MarkerOptions()
                     .position(new LatLng(target.latitude, target.longitude))
                     .title(target.getName())
-                    .icon(BitmapDescriptorFactory.fromBitmap(changeBitmapColor(
-                            BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_compass),
-                            target.getState().getColor(getContext()))
-                    ));
+                    .icon(BitmapDescriptorFactory.fromBitmap(Utils.changeBitmapColor(
+                            target.getIcon(), target.getState().getColor(getContext()))));
             Marker targetMark = map.addMarker(options);
             targetMarks.add(targetMark);
             markerTargetHashMap.put(targetMark, target);
         }
-    }
-
-    private Bitmap changeBitmapColor(Bitmap sourceBitmap, int color) {
-        Bitmap resultBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0,
-                sourceBitmap.getWidth(), sourceBitmap.getHeight());
-        Bitmap mutableResult = resultBitmap;
-        if (!resultBitmap.isMutable()) {
-            mutableResult = resultBitmap.copy(Bitmap.Config.ARGB_8888, true);
-            resultBitmap.recycle();
-        }
-        Paint p = new Paint();
-        ColorFilter filter = new LightingColorFilter(color, 0);
-        p.setColorFilter(filter);
-
-        Canvas canvas = new Canvas(mutableResult);
-        canvas.drawBitmap(mutableResult, 0, 0, p);
-
-        return mutableResult;
     }
 
     /**

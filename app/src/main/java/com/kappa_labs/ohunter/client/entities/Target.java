@@ -1,6 +1,8 @@
 package com.kappa_labs.ohunter.client.entities;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -9,6 +11,10 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
@@ -60,6 +66,9 @@ public class Target extends Place implements Serializable, Comparable<Target> {
          * @return The color representing this state.
          */
         public int getColor(Context context) {
+            if (context == null) {
+                return Color.WHITE;
+            }
             switch (this) {
                 case PHOTOGENIC:
                     return ContextCompat.getColor(context, R.color.state_photogenic);
@@ -143,6 +152,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     private int discoveryGain, similarityGain;
     private int rejectLoss;
     private boolean isStateInvalidated;
+    private transient Bitmap icon;
 
 
     /**
@@ -150,16 +160,23 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      *
      * @param place The place that is the base of this target.
      */
-    public Target(Place place) {
-        initTarget(place);
+    public Target(Place place, Bitmap icon) {
+        initTarget(place, icon);
     }
 
-    public void initTarget(Place place) {
+    /**
+     * Initiates new Target object from given Place and icon.
+     *
+     * @param place Place that will be extended to Target.
+     * @param icon Icon representing the target.
+     */
+    public void initTarget(Place place, Bitmap icon) {
         this.longitude = place.longitude;
         this.latitude = place.latitude;
         this.gfields = place.getGfields();
         // TODO: 31.3.16 fotky spis loadovat externe, neukladat je tady
         this.photos = place.getPhotos();
+        this.icon = icon;
     }
 
     /**
@@ -510,6 +527,34 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      */
     public void setIsStateInvalidated(boolean isStateInvalidated) {
         this.isStateInvalidated = isStateInvalidated;
+    }
+
+    /**
+     * Gets the icon representing this target.
+     *
+     * @return The icon representing this target.
+     */
+    public Bitmap getIcon() {
+        return icon;
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+
+        if (icon != null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            icon.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            out.writeObject(stream.toByteArray());
+        }
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+
+        byte[] bytes = (byte[]) ois.readObject();
+        if (bytes != null) {
+            icon = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }
     }
 
 }

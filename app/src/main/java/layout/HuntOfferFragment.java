@@ -26,7 +26,6 @@ import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.client.views.TargetTileView;
-import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
@@ -63,6 +62,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     public HuntOfferFragment() {
         /* Required empty public constructor */
+    }
+
+    /**
+     * Initiates private fields for a new game.
+     */
+    public static void initNewHunt() {
+        targets.clear();
     }
 
     /**
@@ -166,8 +172,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                         /* Notify the listener and request to show the next page (with place information) */
                         if (mListener != null) {
-//                            mListener.onTargetChanged(tile.getPlace());
-//                            mListener.onTargetChanged(PlacesManager.getPlace(getContext(), tile.getPlaceID()));
                             mListener.onTargetChanged(tile.getTarget());
                         }
                     }
@@ -269,11 +273,14 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
 
             @Override
-            public void onPlaceReady(Place place) {
-                targets.add(new Target(place));
+            public void onPlaceReady(Target target) {
+                targets.add(target);
                 SharedDataManager.saveTargets(getContext(), targets.toArray(_targets));
 //                SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
                 mAdapter.notifyDataSetChanged();
+                if (mListener != null) {
+                    mListener.onTargetAdded();
+                }
             }
         }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
         /* Do not download data again if the game is already running */
@@ -351,13 +358,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public static void saveTargets(Context context) {
         SharedDataManager.saveTargets(context, targets.toArray(new Target[targets.size()]));
-    }
-
-    /**
-     * Clear the list containing targets.
-     */
-    public static void clearTargets() {
-        targets.clear();
     }
 
     /**
@@ -607,6 +607,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      */
     public interface OnFragmentInteractionListener {
         void onTargetChanged(Target target);
+        void onTargetAdded();
         void onItemSelected(Target.TargetState targetState);
         void onRequestNextPage();
         void onItemUnselected();

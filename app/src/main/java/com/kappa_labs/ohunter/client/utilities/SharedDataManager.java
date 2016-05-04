@@ -54,11 +54,11 @@ public class SharedDataManager {
     private static final String NUM_ACCEPTABLE_KEY = "num_acceptable";
 
     private static final String PHOTO_PREFIX = "photo_";
-    private static final String PLACE_PREFIX = "place_";
+    private static final String TARGET_PREFIX = "target_";
 
-    private static final String PLACE_SHARED_DATA_FILENAME = "place_preferences_";
+    private static final String TARGET_SHARED_DATA_FILENAME = "target_preferences_";
     private static final String PLAYER_FILENAME = "player";
-    private static final String PLACE_FILENAME = "place";
+    private static final String TARGET_FILENAME = "place";
     private static final String TARGETS_FILENAME = "targets";
     private static final String COMPARE_REQUEST_FILENAME = "compare_request";
 
@@ -84,11 +84,11 @@ public class SharedDataManager {
      * Gets SharedPreferences specific for given place ID.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the place.
+     * @param placeID Place ID of the target.
      * @return The SharedPreferences specific for given place ID.
      */
-    private static SharedPreferences getPreferencesForPlace(Context context, String placeID) {
-        return context.getSharedPreferences(PLACE_SHARED_DATA_FILENAME + placeID, Context.MODE_PRIVATE);
+    private static SharedPreferences getPreferencesForTarget(Context context, String placeID) {
+        return context.getSharedPreferences(TARGET_SHARED_DATA_FILENAME + placeID, Context.MODE_PRIVATE);
     }
 
     private static boolean writeObject(Context context, Object object, String filename, String directory) {
@@ -471,13 +471,13 @@ public class SharedDataManager {
     }
 
     /**
-     * Converts place ID to name of directory, where data for this place should be stored.
+     * Converts place ID to name of directory, where data for this target should be stored.
      *
      * @param placeID Place ID to convert.
      * @return The place ID converted to name of directory.
      */
-    private static String getDirectoryForPlace(String placeID) {
-        return PLACE_PREFIX + placeID;
+    private static String getDirectoryForTarget(String placeID) {
+        return TARGET_PREFIX + placeID;
     }
 
     /**
@@ -491,33 +491,33 @@ public class SharedDataManager {
     }
 
     /**
-     * Loads a place for given Place ID from local file.
+     * Loads a target for given Place ID from local file.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the place to load.
-     * @return The loaded Place if possible, null otherwise.
+     * @param placeID Place ID of the target to load.
+     * @return The loaded Target if possible, null otherwise.
      */
-    public static Place getPlace(Context context, String placeID) {
+    public static Target getTarget(Context context, String placeID) {
         if (placeID == null) {
             return null;
         }
         /* Otherwise try to read the object from file */
-        Object object = readObject(context, PLACE_FILENAME, getDirectoryForPlace(placeID));
+        Object object = readObject(context, TARGET_FILENAME, getDirectoryForTarget(placeID));
         if (object != null && object instanceof Place) {
-            return (Place) object;
+            return (Target) object;
         }
         return null;
     }
 
     /**
-     * Creates a new directory for given place and stores the place into it for later use.
+     * Creates a new directory for given target and stores the target into it for later use.
      *
      * @param context Context of the caller.
-     * @param place Place to store (serialize) for later use.
+     * @param target Target to store (serialize) for later use.
      * @return True on success, false on fail.
      */
-    public static boolean addPlace(Context context, Place place) {
-        return writeObject(context, place, PLACE_FILENAME, getDirectoryForPlace(place.getID()));
+    public static boolean addTarget(Context context, Target target) {
+        return writeObject(context, target, TARGET_FILENAME, getDirectoryForTarget(target.getID()));
     }
 
     /**
@@ -531,32 +531,32 @@ public class SharedDataManager {
         List<String> placeDirNames = new ArrayList<>();
         /* Locate the directories containing the target files */
         for (String fileName : fileList) {
-            if (fileName.startsWith(PLACE_PREFIX)) {
+            if (fileName.startsWith(TARGET_PREFIX)) {
                 placeDirNames.add(fileName);
             }
         }
         /* Remove the located directories of cached targets */
         for (String dirName : placeDirNames) {
             removeDirectory(context, dirName);
-            String placeID = dirName.substring(PLACE_PREFIX.length());
-            getPreferencesForPlace(context, placeID).edit().clear().commit();
+            String placeID = dirName.substring(TARGET_PREFIX.length());
+            getPreferencesForTarget(context, placeID).edit().clear().commit();
         }
     }
 
     /**
-     * Associates given photo object with place specified by its Place ID, stores it locally.
+     * Associates given photo object with target specified by its Place ID, stores it locally.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of associated place.
+     * @param placeID Place ID of associated target.
      * @param photo Photo to be stored (serialized).
      * @param photoID Unique name of the photo.
      * @return True on success, false on fail.
      */
-    public static boolean addPhotoOfPlace(Context context, String placeID, Photo photo, String photoID) {
+    public static boolean addPhotoOfTarget(Context context, String placeID, Photo photo, String photoID) {
         /* Save the photo */
-        boolean isOk = writeObject(context, photo, getFilenameForPhoto(photoID), getDirectoryForPlace(placeID));
+        boolean isOk = writeObject(context, photo, getFilenameForPhoto(photoID), getDirectoryForTarget(placeID));
         /* Save the location of the new photo */
-        SharedPreferences preferences = getPreferencesForPlace(context, placeID);
+        SharedPreferences preferences = getPreferencesForTarget(context, placeID);
         Set<String> set = preferences.getStringSet(PHOTOS_SET_KEY, new HashSet<String>());
         set.add(getFilenameForPhoto(photoID));
         preferences.edit().putStringSet(PHOTOS_SET_KEY, set).apply();
@@ -573,14 +573,14 @@ public class SharedDataManager {
      */
     public static Photo[] getPhotosOfPlace(Context context, String placeID) {
         /* Retrieve location of all photos for given place ID */
-        SharedPreferences preferences = getPreferencesForPlace(context, placeID);
+        SharedPreferences preferences = getPreferencesForTarget(context, placeID);
         Set<String> photoNames = new HashSet<>();
         photoNames = preferences.getStringSet(PHOTOS_SET_KEY, photoNames);
 
         /* Read the photos from those locations */
         List<Photo> photos = new ArrayList<>();
         for (String photoName : photoNames) {
-            Object object = readObject(context, photoName, getDirectoryForPlace(placeID));
+            Object object = readObject(context, photoName, getDirectoryForTarget(placeID));
             if (object != null && object instanceof Photo) {
                 photos.add((Photo) object);
             }
@@ -589,15 +589,15 @@ public class SharedDataManager {
     }
 
     /**
-     * Stores the request to compare photos locally. Only one compare request can be stored for one place.
+     * Stores the request to compare photos locally. Only one compare request can be stored for one target.
      *
      * @param context Context of the caller.
      * @param request Request that will be stored.
-     * @param placeID Place ID of the place for which the request was made.
+     * @param placeID Place ID of the target for which the request was made.
      * @return True on success, false on fail.
      */
-    public static boolean setCompareRequestForPlace(Context context, Request request, String placeID) {
-        boolean isOk = writeObject(context, request, COMPARE_REQUEST_FILENAME, getDirectoryForPlace(placeID));
+    public static boolean setCompareRequestForTarget(Context context, Request request, String placeID) {
+        boolean isOk = writeObject(context, request, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
         requests.add(placeID);
         getSharedPreferences(context).edit().putStringSet(REQUESTS_SET_KEY, requests).apply();
@@ -606,14 +606,14 @@ public class SharedDataManager {
     }
 
     /**
-     * Gets the request to compare photos for place specified by given Place ID.
+     * Gets the request to compare photos for target specified by given Place ID.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the place, of which the compare request is requested.
+     * @param placeID Place ID of the target, of which the compare request is requested.
      * @return The compare request if exists, null otherwise or on error.
      */
-    public static Request getCompareRequestForPlace(Context context, String placeID) {
-        Object object = readObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForPlace(placeID));
+    public static Request getCompareRequestForTarget(Context context, String placeID) {
+        Object object = readObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
         if (object != null && object instanceof Request) {
             return (Request) object;
         }
@@ -621,14 +621,14 @@ public class SharedDataManager {
     }
 
     /**
-     * Removes the request object for the place specified by its ID from local files.
+     * Removes the request object for the target specified by its ID from local files.
      *
      * @param context Context of the caller.
-     * @param placeID The Place ID of the place, that the request is associated to.
+     * @param placeID The Place ID of the target, that the request is associated to.
      */
-    public static void removeCompareRequestForPlace(Context context, String placeID) {
+    public static void removeCompareRequestForTarget(Context context, String placeID) {
         /* Delete the request object */
-        removeObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForPlace(placeID));
+        removeObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
         /* Remove the request from list of all pending requests */
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
         requests.remove(placeID);
@@ -636,10 +636,10 @@ public class SharedDataManager {
     }
 
     /**
-     * Returns place IDs of places with pending compare requests for current hunt.
+     * Returns place IDs of targets with pending compare requests for current hunt.
      *
      * @param context Context of the caller.
-     * @return Place IDs of places with pending compare requests for current hunt.
+     * @return Place IDs of targets with pending compare requests for current hunt.
      */
     public static Set<String> getPendingCompareRequestsIDs(Context context) {
         return getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
@@ -655,20 +655,20 @@ public class SharedDataManager {
     }
 
     /**
-     * Removes all photos associated to the place specified by given Place ID.
+     * Removes all photos associated to the target specified by given Place ID.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the place whose photos will be removed.
+     * @param placeID Place ID of the target whose photos will be removed.
      */
-    public static void clearPhotosOfPlace(Context context, String placeID) {
+    public static void clearPhotosOfTarget(Context context, String placeID) {
         /* Retrieve location of all photos for given place ID */
-        SharedPreferences preferences = getPreferencesForPlace(context, placeID);
+        SharedPreferences preferences = getPreferencesForTarget(context, placeID);
         Set<String> photoNames = new HashSet<>();
         photoNames = preferences.getStringSet(PHOTOS_SET_KEY, photoNames);
 
         /* Remove those photo files */
         for (String photoName : photoNames) {
-            removeObject(context, photoName, getDirectoryForPlace(placeID));
+            removeObject(context, photoName, getDirectoryForTarget(placeID));
         }
         /* Remove the list of photos from preferences of this place */
         preferences.edit().remove(PHOTOS_SET_KEY).apply();

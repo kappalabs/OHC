@@ -5,10 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import com.kappa_labs.ohunter.client.views.TargetTileView;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.PlacesManager;
-import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.client.views.TargetTileView;
 
 import java.util.List;
 
@@ -66,9 +65,9 @@ public class TileAdapter extends BaseAdapter {
     }
 
     private void loadPlace(TargetTileView targetTileView) {
-        Place place;
-        if ((place = PlacesManager.getPlace(mContext, targetTileView.getPlaceID())) != null) {
-            targetTileView.setPlace(place);
+        Target target;
+        if ((target = PlacesManager.getTarget(mContext, targetTileView.getPlaceID())) != null) {
+            targetTileView.setPlace(target);
         }
     }
 

@@ -26,7 +26,6 @@ import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
 
 /**
  * Tile view to show basic information about one target. Shows its state by color, basic information
@@ -400,13 +399,13 @@ public class TargetTileView extends View {
         mTarget.setIsStateInvalidated(true);
     }
 
-    public void setPlace(Place place) {
+    public void setPlace(Target target) {
         /* Change the place only when it's necessary */
-        if (place == null) {
+        if (target == null) {
             return;
         }
-        mTarget.initTarget(place);
-        if (place.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
+        mTarget.initTarget(target, target.getIcon());
+        if (target.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
 //            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
 //            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
 //                @Override
@@ -421,11 +420,11 @@ public class TargetTileView extends View {
 ////            PlacesManager.getPreview(getContext(), this);
 
             this.backgroundDrawable =
-                    cropBitmap(Utils.toBitmap(place.getPhoto(mTarget.getPhotoIndex()).sImage));
+                    cropBitmap(Utils.toBitmap(target.getPhoto(mTarget.getPhotoIndex()).sImage));
         }
-        this.nameString = place.getGField("name");
-        this.addressString = place.getGField("formatted_address");
-        this.photosString = place.getNumberOfPhotos() + "";
+        this.nameString = target.getGField("name");
+        this.addressString = target.getGField("formatted_address");
+        this.photosString = target.getNumberOfPhotos() + "";
 
         /* Texts need to know the measurements of the view */
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {

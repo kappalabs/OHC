@@ -3,6 +3,10 @@ package com.kappa_labs.ohunter.client.utilities;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -280,6 +284,31 @@ public class Utils {
             formatter.format("%02x", b);
         }
         return formatter.toString();
+    }
+
+    /**
+     * Changes color of given bitmap to specified value.
+     *
+     * @param sourceBitmap The bitmap to be colored.
+     * @param color The RGB color of color filter.
+     * @return The colored bitmap.
+     */
+    public static Bitmap changeBitmapColor(Bitmap sourceBitmap, int color) {
+        Bitmap resultBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0,
+                sourceBitmap.getWidth(), sourceBitmap.getHeight());
+        Bitmap mutableResult = resultBitmap;
+        if (!resultBitmap.isMutable()) {
+            mutableResult = resultBitmap.copy(Bitmap.Config.ARGB_8888, true);
+//            resultBitmap.recycle();
+        }
+        Paint p = new Paint();
+        ColorFilter filter = new LightingColorFilter(color, 0);
+        p.setColorFilter(filter);
+
+        Canvas canvas = new Canvas(mutableResult);
+        canvas.drawBitmap(mutableResult, 0, 0, p);
+
+        return mutableResult;
     }
 
 }

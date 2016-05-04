@@ -250,7 +250,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     return;
                 }
                 /* Start the camera activity */
-                CameraActivity.setTarget(selected);
+                CameraActivity.initCamera(selected);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
@@ -300,7 +300,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 if (selected != null) {
                     String placeID = selected.getPlaceID();
                     /* Send only selected target for evaluation */
-                    Request request = SharedDataManager.getCompareRequestForPlace(
+                    Request request = SharedDataManager.getCompareRequestForTarget(
                             HuntActivity.this, placeID);
                     if (request == null) {
                         Log.e(TAG, "Wrong state of target! This target should be evaluated or not locked.");
@@ -315,7 +315,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     Set<String> placeIDs = SharedDataManager.getPendingCompareRequestsIDs(HuntActivity.this);
                     if (!placeIDs.isEmpty()) {
                         for (String placeID : placeIDs) {
-                            Request request = SharedDataManager.getCompareRequestForPlace(HuntActivity.this, placeID);
+                            Request request = SharedDataManager.getCompareRequestForTarget(HuntActivity.this, placeID);
                             if (request == null) {
                                 Log.e(TAG, "Request for place " + placeID + " is not available, skipping...");
                                 continue;
@@ -349,6 +349,15 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Create an instance of GoogleAPIClient */
         buildGoogleApiClient();
+    }
+
+    /**
+     * Prepares the activity for a new game, must be called before starting this activity
+     */
+    public static void initNewHunt() {
+        HuntOfferFragment.initNewHunt();
+        HuntPlaceFragment.initNewHunt();
+        HuntActionFragment.initNewHunt();
     }
 
     /**
@@ -420,7 +429,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Send the selected place to children pages */
         String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
-        Place selected = SharedDataManager.getPlace(this, selectedID);
+        Place selected = SharedDataManager.getTarget(this, selectedID);
         Target selectedTarget = HuntOfferFragment.getSelectedTarget();
         if (selected != null) {
             HuntPlaceFragment.changePlace(this, selected);
@@ -600,6 +609,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         HuntActionFragment.changeTarget(target);
     }
 
+    @Override
+    public void onTargetAdded() {
+        if (mHuntActionFragment != null) {
+            mHuntActionFragment.updateTargetMarks();
+        }
+    }
+
     private void resolveButtonStates(Target.TargetState state) {
         resolveButtonState(acceptFab, state.canAccept());
         resolveButtonState(openUpFab, state.canOpenUp());
@@ -623,6 +639,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
             rotateFab.show();
             sortFab.hide();
+        }
+        if (mHuntActionFragment != null) {
+            mHuntActionFragment.updateTargetMarks();
         }
     }
 
@@ -748,7 +767,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 target.setDiscoveryGain(discoveryGain);
                 target.setSimilarityGain(similarityGain);
             }
-            SharedDataManager.removeCompareRequestForPlace(this, placeID);
+            SharedDataManager.removeCompareRequestForTarget(this, placeID);
             HuntOfferFragment.restateTarget(placeID, Target.TargetState.COMPLETED);
             SharedDataManager.setPlayer(this, response.player);
             Wizard.targetCompletedDialog(this);
