@@ -417,7 +417,7 @@ public class TargetTileView extends View {
 //            bitmapTask.execute(place.getPhoto(0).sImage);
 //            this.backgroundDrawable = getResources().getDrawable(R.color.my_primary_light, null);
 //
-////            PlacesManager.getPreview(getContext(), this);
+//            TargetsManager.getPreview(getContext(), this);
 
             this.backgroundDrawable =
                     cropBitmap(Utils.toBitmap(target.getPhoto(mTarget.getPhotoIndex()).sImage));

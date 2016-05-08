@@ -29,7 +29,7 @@ import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.PlacesManager;
+import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
@@ -459,8 +459,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     private void handlePhotoTaken() {
         HuntOfferFragment.restateSelectedTarget(Target.TargetState.LOCKED);
-        SharedDataManager.addNumAcceptable(this, PlacesManager.DEFAULT_INCREMENT_ACCEPTABLE);
-        HuntOfferFragment.randomlyOpenTargets(PlacesManager.DEFAULT_NUM_OPENED);
+        SharedDataManager.addNumAcceptable(this, TargetsManager.DEFAULT_INCREMENT_ACCEPTABLE);
+        HuntOfferFragment.randomlyOpenTargets(TargetsManager.DEFAULT_NUM_OPENED);
         Wizard.targetLockedDialog(this);
     }
 

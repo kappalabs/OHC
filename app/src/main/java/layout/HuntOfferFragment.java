@@ -20,7 +20,7 @@ import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.PlacesManager;
+import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
@@ -57,7 +57,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private static int selectedIndex = -1;
     private static boolean loadingTargets;
-    private static PlacesManager manager;
+    private static TargetsManager manager;
 
 
     public HuntOfferFragment() {
@@ -68,6 +68,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * Initiates private fields for a new game.
      */
     public static void initNewHunt() {
+        selectedIndex = -1;
+        loadingTargets = false;
+        manager = null;
         targets.clear();
     }
 
@@ -201,9 +204,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     }
 
     private void initTargets() {
-        /* This class will prepare the places - load from local files or retrieve them from Internet */
+        /* This class will prepare the places - load from local files or retrieve them from server */
         final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
-        manager = new PlacesManager(getContext(), new PlacesManager.PlacesManagerListener() {
+        manager = new TargetsManager(getContext(), new TargetsManager.PlacesManagerListener() {
             @Override
             public void onPreparationStarted() {
                 fetchingProgressBar.setVisibility(View.VISIBLE);
@@ -285,7 +288,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
         /* Do not download data again if the game is already running */
         if (!SharedDataManager.isHuntReady(getContext())) {
-            manager.preparePlaces();
+            manager.prepareTargets();
         } else {
             Target[] loaded = SharedDataManager.loadTargets(getContext());
             if (loaded != null) {

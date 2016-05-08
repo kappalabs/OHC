@@ -15,10 +15,10 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.R;
-import com.kappa_labs.ohunter.client.utilities.Utils;
+import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.PlaceInfo;
+import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -126,6 +126,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             public void onGlobalLayout() {
                 dataInvalidated = true;
                 update();
+                mPhotoSeekBar.invalidate();
+                mPhotoCounterTextView.invalidate();
+                mPhotoInfoTextView.invalidate();
                 view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
         });
@@ -135,10 +138,12 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
     @Override
     public void onPageSelected() {
-        if (dataInvalidated && mPhotoImageView != null) {
+//        if (dataInvalidated && mPhotoImageView != null) {
+        if (mPhotoInfoTextView != null) {
             mPhotoImageView.setImageDrawable(null);
-            update();
         }
+            update();
+//        }
     }
 
     /**
@@ -190,9 +195,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * Update information on this fragment if it's invalidated (i.e. after calling changeTarget()).
      */
     public void update() {
-        if (!dataInvalidated) {
-            return;
-        }
+//        if (!dataInvalidated) {
+//            return;
+//        }
 
         /* Set size of the image view */
         if (mPhotoImageView != null) {

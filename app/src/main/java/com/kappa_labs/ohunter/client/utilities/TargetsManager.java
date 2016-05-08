@@ -24,10 +24,9 @@ import java.util.Random;
  * Class for managing download and access to places. Places are cached to support faster access.
  * Download is done by asynchronous tasks for better UI smoothness.
  */
-// TODO: 13.4.16 prepracovat na targetmanager se vsemi targety nabidky zde
-public class PlacesManager {
+public class TargetsManager {
 
-    private static final String TAG = "PlacesManager";
+    private static final String TAG = "TargetsManager";
 
     public static final int DEFAULT_WIDTH = 320;
     public static final int DEFAULT_HEIGHT = 200;
@@ -57,7 +56,7 @@ public class PlacesManager {
     private List<ResponseTask> mTasks;
 
 
-    public PlacesManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
+    public TargetsManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mContext = context;
         this.mListener = listener;
         this.mPlayer = player;
@@ -66,7 +65,7 @@ public class PlacesManager {
         initMemoryCache();
     }
 
-    private  static void initMemoryCache() {
+    private static void initMemoryCache() {
         /* Clear the cache */
         if (mTargetsCache != null) {
             mTargetsCache.evictAll();
@@ -97,7 +96,7 @@ public class PlacesManager {
     /**
      * Start downloading targets from the server.
      */
-    public void preparePlaces() {
+    public void prepareTargets() {
         mListener.onPreparationStarted();
         mTasks = new ArrayList<>();
 
@@ -155,7 +154,7 @@ public class PlacesManager {
                     Log.e(TAG, ohException.getMessage());
                     Toast.makeText(mContext, ohException.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-                ((PlacesManager) data).prepareNextPlace();
+                ((TargetsManager) data).prepareNextPlace();
             }
         });
         task.execute(request);

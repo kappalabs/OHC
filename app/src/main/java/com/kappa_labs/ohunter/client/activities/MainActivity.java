@@ -87,7 +87,9 @@ public class MainActivity extends AppCompatActivity {
         huntHistoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: 12.4.16 historie (hlavne posledniho) lovu
+                Intent i = new Intent();
+                i.setClass(MainActivity.this, HistoryActivity.class);
+                startActivity(i);
             }
         });
         Button mStatisticsButton = (Button) findViewById(R.id.button_statistics);
@@ -217,7 +219,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onTimeIsUp() {
+        Log.d(TAG, "time's up");
         /* Reset the states for new hunt */
+        HuntActivity.initNewHunt();
         SharedDataManager.initNewHunt(this, false, 0);
         mContinueHuntButton.setVisibility(View.GONE);
         timeTextView.setVisibility(View.GONE);
@@ -228,8 +232,10 @@ public class MainActivity extends AppCompatActivity {
         checkPoints();
         /* Remove cached previous targets */
         SharedDataManager.removeTargets(MainActivity.this);
-        //TODO: zobrazit nejake vysledky
-        Log.d(TAG, "time's up");
+        /* Show results of the hunt */
+        Intent i = new Intent();
+        i.setClass(MainActivity.this, HistoryActivity.class);
+        startActivity(i);
     }
 
     private void checkPoints() {
