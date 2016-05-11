@@ -20,15 +20,15 @@ import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.client.views.TargetTileView;
 import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -230,6 +230,9 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     });
                     return;
                 }
+
+                /* Increase the number of hunts */
+                SharedDataManager.increaseHuntNumber(getContext());
 
                 /* Remove points from the player for starting a new area (hunt) */
                 PointsManager manager = MainActivity.getPointsManager();

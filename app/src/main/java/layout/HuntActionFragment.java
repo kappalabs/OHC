@@ -279,7 +279,8 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
                     .position(new LatLng(target.latitude, target.longitude))
                     .title(target.getName())
                     .icon(BitmapDescriptorFactory.fromBitmap(Utils.changeBitmapColor(
-                            target.getIcon(), target.getState().getColor(getContext()))));
+                            target.getIcon(), target.getState().getColor(getContext()))))
+                    .anchor(0.5f, 0.5f);
             Marker targetMark = map.addMarker(options);
             targetMarks.add(targetMark);
             markerTargetHashMap.put(targetMark, target);

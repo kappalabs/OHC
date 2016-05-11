@@ -10,7 +10,7 @@ import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.net.Request;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +43,7 @@ public class SharedDataManager {
 
     private static final String HUNT_READY_KEY = "hunt_ready";
     private static final String START_TIME_KEY = "start_time";
+    private static final String HUNT_NUMBER_KEY = "hunt_number";
     private static final String PHOTOS_SET_KEY = "photos_set";
     private static final String REQUESTS_SET_KEY = "requests_set";
     private static final String LAST_NICKNAME_KEY = "last_nickname";
@@ -396,6 +397,33 @@ public class SharedDataManager {
         return startTime;
     }
 
+    /**
+     * Gets the number of hunts from shared preferences.
+     *
+     * @param context Context of the caller.
+     * @return The number of hunts from shared preferences.
+     */
+    public static int getHuntNumber(Context context) {
+        return getSharedPreferences(context).getInt(HUNT_NUMBER_KEY, 0);
+    }
+
+    /**
+     * Increases the value storing the number of hunts by one.
+     *
+     * @param context Context of the caller.
+     */
+    public static void increaseHuntNumber(Context context) {
+        int huntNumber = getHuntNumber(context);
+        getSharedPreferences(context).edit().putInt(HUNT_NUMBER_KEY, huntNumber + 1).commit();
+    }
+
+    /**
+     * Initializes the start time, clears the pending requests and prepares the shared values for new hunt.
+     *
+     * @param context Context of the caller.
+     * @param ready Specifies if the huntReady boolean. If the hunt is ready to start immediately.
+     * @param time Time of start of the new hunt.
+     */
     public static synchronized void initNewHunt(Context context, boolean ready, long time) {
         setStartTime(context, time);
         clearPendingRequests(context);
@@ -406,6 +434,12 @@ public class SharedDataManager {
         }
     }
 
+    /**
+     * Gets the value of huntReady boolean.
+     *
+     * @param context Context of the caller.
+     * @return If the hunt is ready to start immediately.
+     */
     public static boolean isHuntReady(Context context) {
         if (huntReady == null) {
             huntReady = getSharedPreferences(context).getBoolean(HUNT_READY_KEY, false);

@@ -29,19 +29,19 @@ import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
+import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
-import com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest;
+import com.kappa_labs.ohunter.lib.requests.CompleteTargetRequest;
 import com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest;
-import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -744,12 +744,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             int similarityGain = mPointsManager.getTargetSimilarityGain(response.similarity);
             Log.d(TAG, "discoveryGain = " + discoveryGain + ", similarityGain = " + similarityGain);
 
-            Request completeRequest = new CompletePlaceRequest(
+            Request completeRequest = new CompleteTargetRequest(
                     SharedDataManager.getPlayer(this),
                     placeID,
                     photoReference,
                     discoveryGain,
-                    similarityGain
+                    similarityGain,
+                    SharedDataManager.getHuntNumber(HuntActivity.this)
             );
             if (mHuntOfferFragment != null) {
                 DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
@@ -757,11 +758,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 task.execute(completeRequest);
             }
             // TODO: 22.3.16 pokud se nepovede complete na serveru, smazat lokalni comparerequest, ulozit si vysledek a provest complete znovu
-        } else if (request instanceof CompletePlaceRequest) {
+        } else if (request instanceof CompleteTargetRequest) {
             /* Request to complete the evaluated target successfully finished (stored in database) */
-            String placeID = ((CompletePlaceRequest) request).getPlaceID();
-            int discoveryGain = ((CompletePlaceRequest) request).getDiscoveryGain();
-            int similarityGain = ((CompletePlaceRequest) request).getSimilarityGain();
+            String placeID = ((CompleteTargetRequest) request).getPlaceID();
+            int discoveryGain = ((CompleteTargetRequest) request).getDiscoveryGain();
+            int similarityGain = ((CompleteTargetRequest) request).getSimilarityGain();
             Target target = HuntOfferFragment.getTargetByID(placeID);
             if (target != null) {
                 target.setDiscoveryGain(discoveryGain);

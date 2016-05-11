@@ -31,8 +31,8 @@ import com.kappa_labs.ohunter.client.views.CameraOverlay;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
-import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.io.ByteArrayOutputStream;
 

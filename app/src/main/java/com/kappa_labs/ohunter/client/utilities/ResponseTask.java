@@ -5,8 +5,8 @@ import android.support.v4.app.DialogFragment;
 import android.util.Log;
 
 import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
