@@ -61,7 +61,7 @@ public class SharedDataManager {
     private static final String PLAYER_FILENAME = "player";
     private static final String TARGET_FILENAME = "place";
     private static final String TARGETS_FILENAME = "targets";
-    private static final String COMPARE_REQUEST_FILENAME = "compare_request";
+    private static final String REQUEST_FILENAME = "request";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
@@ -413,8 +413,8 @@ public class SharedDataManager {
      * @param context Context of the caller.
      */
     public static void increaseHuntNumber(Context context) {
-        int huntNumber = getHuntNumber(context);
-        getSharedPreferences(context).edit().putInt(HUNT_NUMBER_KEY, huntNumber + 1).commit();
+        int huntNumber = getHuntNumber(context) + 1;
+        getSharedPreferences(context).edit().putInt(HUNT_NUMBER_KEY, huntNumber).commit();
     }
 
     /**
@@ -623,15 +623,15 @@ public class SharedDataManager {
     }
 
     /**
-     * Stores the request to compare photos locally. Only one compare request can be stored for one target.
+     * Stores the request associated with target. Only one request can be stored for one target.
      *
      * @param context Context of the caller.
      * @param request Request that will be stored.
      * @param placeID Place ID of the target for which the request was made.
      * @return True on success, false on fail.
      */
-    public static boolean setCompareRequestForTarget(Context context, Request request, String placeID) {
-        boolean isOk = writeObject(context, request, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
+    public static boolean setRequestForTarget(Context context, Request request, String placeID) {
+        boolean isOk = writeObject(context, request, REQUEST_FILENAME, getDirectoryForTarget(placeID));
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
         requests.add(placeID);
         getSharedPreferences(context).edit().putStringSet(REQUESTS_SET_KEY, requests).apply();
@@ -640,14 +640,14 @@ public class SharedDataManager {
     }
 
     /**
-     * Gets the request to compare photos for target specified by given Place ID.
+     * Gets the request associated with target specified by given Place ID.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the target, of which the compare request is requested.
-     * @return The compare request if exists, null otherwise or on error.
+     * @param placeID Place ID of the target, for which the request is requested.
+     * @return The request if exists, null otherwise or on error.
      */
-    public static Request getCompareRequestForTarget(Context context, String placeID) {
-        Object object = readObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
+    public static Request getRequestForTarget(Context context, String placeID) {
+        Object object = readObject(context, REQUEST_FILENAME, getDirectoryForTarget(placeID));
         if (object != null && object instanceof Request) {
             return (Request) object;
         }
@@ -660,9 +660,9 @@ public class SharedDataManager {
      * @param context Context of the caller.
      * @param placeID The Place ID of the target, that the request is associated to.
      */
-    public static void removeCompareRequestForTarget(Context context, String placeID) {
+    public static void removeRequestForTarget(Context context, String placeID) {
         /* Delete the request object */
-        removeObject(context, COMPARE_REQUEST_FILENAME, getDirectoryForTarget(placeID));
+        removeObject(context, REQUEST_FILENAME, getDirectoryForTarget(placeID));
         /* Remove the request from list of all pending requests */
         Set<String> requests = getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
         requests.remove(placeID);
@@ -670,12 +670,12 @@ public class SharedDataManager {
     }
 
     /**
-     * Returns place IDs of targets with pending compare requests for current hunt.
+     * Returns place IDs of targets with pending requests for current hunt.
      *
      * @param context Context of the caller.
-     * @return Place IDs of targets with pending compare requests for current hunt.
+     * @return Place IDs of targets with pending requests for current hunt.
      */
-    public static Set<String> getPendingCompareRequestsIDs(Context context) {
+    public static Set<String> getPendingRequestsIDs(Context context) {
         return getSharedPreferences(context).getStringSet(REQUESTS_SET_KEY, new HashSet<String>());
     }
 

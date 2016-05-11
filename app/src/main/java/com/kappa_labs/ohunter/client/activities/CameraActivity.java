@@ -257,7 +257,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private void storeRequestForEvaluation(Request request) {
         /* Store the photos for later use */
-        if (SharedDataManager.setCompareRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
+        if (SharedDataManager.setRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
             SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
             finish();
         } else {
