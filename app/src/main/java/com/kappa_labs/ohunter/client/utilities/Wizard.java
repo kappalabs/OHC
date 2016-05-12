@@ -28,6 +28,8 @@ public class Wizard {
 
     private static final int NOTIFICATION_PHOTOGENIFY_ID = 0x100;
 
+    private static DialogFragment targetCompletedDialog;
+
 
     public static class BasicInfoDialogFragment extends DialogFragment {
 
@@ -264,12 +266,16 @@ public class Wizard {
         if (context == null) {
             return null;
         }
+        if (targetCompletedDialog != null) {
+            targetCompletedDialog.dismissAllowingStateLoss();
+        }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_target_completed_title),
                 context.getString(R.string.dialog_wizard_target_completed_message));
         dialogFragment.setPositive(context.getString(R.string.dialog_wizard_target_completed_positive), null);
         commitFragment(context, dialogFragment, "targetCompletedDialogTag");
+        targetCompletedDialog = dialogFragment;
         return dialogFragment;
     }
 
