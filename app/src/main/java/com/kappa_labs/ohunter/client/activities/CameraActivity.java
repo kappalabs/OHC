@@ -31,10 +31,10 @@ import com.kappa_labs.ohunter.client.views.CameraOverlay;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.entities.SImage;
-import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 /**
  * Full-screen activity that shows and hides the system UI (i.e.
@@ -229,7 +229,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         return c;
     }
 
-    private Request makeCompareRequest() {
+    private CompareRequest makeCompareRequest() {
         Player player = SharedDataManager.getPlayer(this);
         if (player == null) {
             Log.e(TAG, "makeCompareRequest(): Player is null in CameraActivity!");
@@ -255,9 +255,13 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         return new CompareRequest(player, photo1, similar);
     }
 
-    private void storeRequestForEvaluation(Request request) {
+    private void storeRequestForEvaluation(CompareRequest request) {
         /* Store the photos for later use */
         if (SharedDataManager.setRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
+            mTarget.setHuntNumber(SharedDataManager.getHuntNumber(CameraActivity.this));
+            mTarget.removePhotos();
+            mTarget.addPhotos(Arrays.asList(request.getSimilarPhotos()));
+            SharedDataManager.addRequestToHistory(CameraActivity.this, mTarget.getPlaceID(), request);
             SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
             finish();
         } else {
@@ -267,7 +271,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         }
     }
 
-    private void showStoreForEvaluationDialog(final Request request) {
+    private void showStoreForEvaluationDialog(final CompareRequest request) {
         Wizard.storeForEvaluationDialog(CameraActivity.this, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

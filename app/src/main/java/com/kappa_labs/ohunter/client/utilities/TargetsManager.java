@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.util.LruCache;
 import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
@@ -18,7 +17,10 @@ import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+
+import layout.HuntOfferFragment;
 
 /**
  * Class for managing download and access to places. Places are cached to support faster access.
@@ -51,7 +53,7 @@ public class TargetsManager {
     private List<String> placeIDs;
     private int availableCount;
     private int preparedCount;
-    private static LruCache<String, Target> mTargetsCache;
+//    private static LruCache<String, Target> mTargetsCache;
 //    private static LruCache<String, Bitmap> mPreviewCache;
     private List<ResponseTask> mTasks;
 
@@ -66,10 +68,10 @@ public class TargetsManager {
     }
 
     private static void initMemoryCache() {
-        /* Clear the cache */
-        if (mTargetsCache != null) {
-            mTargetsCache.evictAll();
-        }
+//        /* Clear the cache */
+//        if (mTargetsCache != null) {
+//            mTargetsCache.evictAll();
+//        }
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 
@@ -78,13 +80,13 @@ public class TargetsManager {
 
         Log.d(TAG, "available max memory = " + maxMemory + "; cacheSize = " + cacheSize);
 
-        mTargetsCache = new LruCache<String, Target>(cacheSize) {
-            @Override
-            protected int sizeOf(String key, Target target) {
-                /* Every place stores some number of photos, these are the most memory intensive objects */
-                return DEFAULT_HEIGHT * DEFAULT_WIDTH * 4 / 1024 * target.getNumberOfPhotos();
-            }
-        };
+//        mTargetsCache = new LruCache<String, Target>(cacheSize) {
+//            @Override
+//            protected int sizeOf(String key, Target target) {
+//                /* Every place stores some number of photos, these are the most memory intensive objects */
+//                return DEFAULT_HEIGHT * DEFAULT_WIDTH * 4 / 1024 * target.getNumberOfPhotos();
+//            }
+//        };
 //        mPreviewCache = new LruCache<String, Bitmap>(cacheSize) {
 //            @Override
 //            protected int sizeOf(String key, Bitmap value) {
@@ -182,17 +184,22 @@ public class TargetsManager {
         if (placeID == null) {
             return null;
         }
-        if (mTargetsCache == null) {
-            initMemoryCache();
-        }
-        Target target = mTargetsCache.get(placeID);
-        if (target == null) {
-            target = SharedDataManager.getTarget(context, placeID);
-            if (target != null) {
-                mTargetsCache.put(placeID, target);
+//        if (mTargetsCache == null) {
+//            initMemoryCache();
+//        }
+//        Target target = mTargetsCache.get(placeID);
+//        if (target == null) {
+//            target = SharedDataManager.getTarget(context, placeID);
+//            if (target != null) {
+//                mTargetsCache.put(placeID, target);
+//            }
+//        }
+        for (Target target : HuntOfferFragment.getTargets()) {
+            if (Objects.equals(target.getPlaceID(), placeID)) {
+                return target;
             }
         }
-        return target;
+        return null;
     }
 
     /**

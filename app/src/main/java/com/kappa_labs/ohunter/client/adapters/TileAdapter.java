@@ -58,7 +58,8 @@ public class TileAdapter extends BaseAdapter {
         }
 
         targetTileView.setTarget(mTargets.get(position));
-        loadPlace(targetTileView);
+//        loadPlace(targetTileView);
+        targetTileView.setPlace(mTargets.get(position));
         targetTileView.update();
 
         return targetTileView;

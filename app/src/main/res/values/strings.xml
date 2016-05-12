@@ -5,6 +5,8 @@
     <string name="title_activity_camera">Camera</string>
     <string name="title_activity_prepare_hunt">Prepare Hunt</string>
     <string name="title_activity_hunt">O-Hunt</string>
+    <string name="title_activity_history">History</string>
+    <string name="title_activity_statistics">Statistics</string>
     <string name="title_fragment_offer">Offer</string>
     <string name="title_fragment_info">Target details</string>
     <string name="title_fragment_hunt">O-Hunt</string>
@@ -233,4 +235,6 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="statics_label_discovery">Points for discovery</string>
+    <string name="statistics_label_similarity">Points for similarity</string>
 </resources>

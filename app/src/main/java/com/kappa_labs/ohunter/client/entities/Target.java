@@ -150,6 +150,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     private int photoIndex;
     private boolean isPhotoDrawn;
     private int discoveryGain, similarityGain;
+    private int huntNumber;
     private int rejectLoss;
     private boolean isStateInvalidated;
     private transient Bitmap icon;
@@ -360,6 +361,14 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     }
 
     /**
+     * Removes all the photos of this target. Sets the selected photo index to zero.
+     */
+    public void removePhotos() {
+        photos.clear();
+        photoIndex = 0;
+    }
+
+    /**
      * Checks if the given photo index is in valid bounds.
      *
      * @param index Index of the photo to be checked.
@@ -536,6 +545,24 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      */
     public Bitmap getIcon() {
         return icon;
+    }
+
+    /**
+     * Gets the number of hunt in which this target was completed.
+     *
+     * @return The number of hunt in which this target was completed.
+     */
+    public int getHuntNumber() {
+        return huntNumber;
+    }
+
+    /**
+     * Sets the number of hunt in which this target was completed.
+     *
+     * @param huntNumber The number of hunt in which this target was completed.
+     */
+    public void setHuntNumber(int huntNumber) {
+        this.huntNumber = huntNumber;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

@@ -35,7 +35,6 @@ import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.TargetsManager;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -434,11 +433,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         }
 
         /* Send the selected place to children pages */
-        String selectedID = HuntOfferFragment.getSelectedTargetPlaceID();
-        Place selected = SharedDataManager.getTarget(this, selectedID);
         Target selectedTarget = HuntOfferFragment.getSelectedTarget();
-        if (selected != null) {
-            HuntPlaceFragment.changePlace(this, selected);
+        if (selectedTarget != null) {
+            HuntPlaceFragment.changePlace(this, selectedTarget);
             HuntActionFragment.changeTarget(selectedTarget);
         }
     }
@@ -453,11 +450,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         Log.d(TAG, "camera result: bylo vyfoceno misto");
                         handlePhotoTaken();
                     }
-                    // TODO: 30.4.16 zmena stavu v kamere bude pripadne vyuzivat metodu zde pro snadnost
-//                    if (data.getBooleanExtra(CameraActivity.PHOTOS_EVALUATED_KEY, false)) {
-//                        HuntOfferFragment.restateSelectedTarget(Target.TargetState.COMPLETED);
-//                        Log.d(TAG, "camera result: bylo vyfoceno a vyhodnoceno misto");
-//                    }
                 }
             }
         }
@@ -470,6 +462,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         }
         SharedDataManager.addNumAcceptable(this, TargetsManager.DEFAULT_INCREMENT_ACCEPTABLE);
         HuntOfferFragment.randomlyOpenTargets(TargetsManager.DEFAULT_NUM_OPENED);
+        Target target = HuntOfferFragment.getSelectedTarget();
+        HuntPlaceFragment.changePlace(this, target);
+        HuntActionFragment.changeTarget(target);
+        SharedDataManager.addTargetToHistory(this, target);
         Wizard.targetLockedDialog(this);
     }
 
@@ -592,28 +588,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             Wizard.showPhotogenifiedNotification(this);
         }
     }
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.menu_hunt, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
 
     @Override
     public void onTargetChanged(Target target) {
@@ -775,6 +749,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
             /* If the complete result fails, compare is not going to be done again */
             SharedDataManager.setRequestForTarget(this, completeRequest, placeID);
+
+            /* Add target to the history of completed ones */
+            target.setState(Target.TargetState.LOCKED);
+            SharedDataManager.addTargetToHistory(this, target);
+            SharedDataManager.addRequestToHistory(this, placeID, null);
         } else if (request instanceof CompleteTargetRequest) {
             /* Request to complete the evaluated target successfully finished (stored in database) */
             String placeID = ((CompleteTargetRequest) request).getPlaceID();
@@ -791,8 +770,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 mHuntActionFragment.updateTargetMarks();
             }
             SharedDataManager.setPlayer(this, response.player);
+            if (target != null) {
+                target.setState(Target.TargetState.COMPLETED);
+            }
+            SharedDataManager.addTargetToHistory(this, target);
+            SharedDataManager.addRequestToHistory(this, placeID, null);
             Wizard.targetCompletedDialog(this);
-            Log.d(TAG, "Do databaze bylo zapsano splneni mista " + placeID);
+            Log.d(TAG, "Completion of target " + placeID + " was written to database.");
         }
     }
 

@@ -102,6 +102,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         } else {
             offerGridView.setNumColumns(SharedDataManager.getOfferColumnsLandscape(getContext()));
         }
+        offerGridView.setScrollbarFadingEnabled(true);
+        offerGridView.setVerticalScrollBarEnabled(true);
 
         if (mAdapter == null) {
             mAdapter = new TileAdapter(getContext(), targets);
@@ -247,7 +249,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                             return;
                         }
                         if (response == null) {
-                            // TODO: 27.3.16 zkusit znovu, nebo vratit na predchozi aktivitu
                             Log.e(TAG, "Problem on client side when starting a new area");
                             Toast.makeText(getContext(), getString(R.string.server_unreachable_error),
                                     Toast.LENGTH_SHORT).show();
@@ -417,19 +418,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 mListener.onItemSelected(selectedTarget.getState());
             }
         }
-    }
-
-    /**
-     * Gets the Place ID of currently selected target.
-     *
-     * @return The Place ID of currently selected target.
-     */
-    public static String getSelectedTargetPlaceID() {
-        Target target = getSelectedTarget();
-        if (target != null) {
-            return target.getPlaceID();
-        }
-        return null;
     }
 
     /**

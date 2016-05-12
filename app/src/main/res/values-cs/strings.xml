@@ -133,4 +133,8 @@
     <string name="dialog_wizard_target_locked_message">Nyní můžeš přijmout jeden nový cíl.</string>
     <string name="dialog_wizard_target_locked_positive">Rozumím</string>
     <string name="dialog_wizard_target_locked_title">Cíl uzamčen</string>
+    <string name="title_activity_history">Historie</string>
+    <string name="title_activity_statistics">Statistiky</string>
+    <string name="statics_label_discovery">Body za objevení</string>
+    <string name="statistics_label_similarity">Body za podobnost</string>
 </resources>

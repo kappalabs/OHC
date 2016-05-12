@@ -107,6 +107,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         distanceTextView = (TextView) view.findViewById(R.id.textView_distance);
 
         infoInvalidated = true;
+        zoomInvalidated = true;
         update();
 
         return view;
@@ -126,8 +127,6 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        /* Resolves problems with rotation */
-        setRetainInstance(true);
     }
 
     @Override
@@ -321,6 +320,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
         if (HuntOfferFragment.getSelectedTarget() != target) {
             HuntOfferFragment.setSelectedTarget(target);
+            HuntPlaceFragment.changePlace(getContext(), target);
             changeTarget(target);
             zoomInvalidated = true;
             update();

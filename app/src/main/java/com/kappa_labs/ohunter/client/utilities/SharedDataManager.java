@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -56,12 +58,16 @@ public class SharedDataManager {
 
     private static final String PHOTO_PREFIX = "photo_";
     private static final String TARGET_PREFIX = "target_";
+    private static final String HISTORY_TARGET_PREFIX = "history_target_";
+    private static final String HISTORY_REQUEST_PREFIX = "history_request_";
 
     private static final String TARGET_SHARED_DATA_FILENAME = "target_preferences_";
     private static final String PLAYER_FILENAME = "player";
-    private static final String TARGET_FILENAME = "place";
+    private static final String TARGET_FILENAME = "target";
     private static final String TARGETS_FILENAME = "targets";
     private static final String REQUEST_FILENAME = "request";
+
+    private static final String HISTORY_DIRECTORY = "history";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
@@ -575,6 +581,15 @@ public class SharedDataManager {
             String placeID = dirName.substring(TARGET_PREFIX.length());
             getPreferencesForTarget(context, placeID).edit().clear().commit();
         }
+        /* Remove their shared preferences */
+        File dir = new File(context.getFilesDir().getParent() + "/shared_prefs/");
+        String[] children = dir.list();
+        for (String aChildren : children) {
+            if (aChildren.startsWith(TARGET_SHARED_DATA_FILENAME)) {
+                //noinspection ResultOfMethodCallIgnored
+                new File(dir, aChildren).delete();
+            }
+        }
     }
 
     /**
@@ -596,6 +611,72 @@ public class SharedDataManager {
         preferences.edit().putStringSet(PHOTOS_SET_KEY, set).apply();
 
         return isOk;
+    }
+
+    /**
+     * Adds given target to the history of completed or locked targets.
+     *
+     * @param context Context of the caller.
+     * @param target Completed or locked target.
+     */
+    public static void addTargetToHistory(Context context, Target target) {
+        writeObject(context, target, HISTORY_TARGET_PREFIX + target.getPlaceID(), HISTORY_DIRECTORY);
+    }
+
+    /**
+     * Adds given request to the history and associates it with a given target.
+     *
+     * @param context Context of the caller.
+     * @param placeID The place ID of a target, which the request is associated to.
+     * @param request Request available for this target, null if the target should not have any requests
+     */
+    public static void addRequestToHistory(Context context, String placeID, Request request) {
+        if (request != null) {
+            writeObject(context, request, HISTORY_REQUEST_PREFIX + placeID, HISTORY_DIRECTORY);
+        } else {
+            removeObject(context, HISTORY_REQUEST_PREFIX + placeID, HISTORY_DIRECTORY);
+        }
+    }
+
+    /**
+     * Gets all the targets saved in history.
+     *
+     * @param context Context of the caller.
+     * @return All the targets saved in history.
+     */
+    public static List<Target> getTargetsFromHistory(Context context) {
+        List<Target> targets = new ArrayList<>();
+        File dir = new File(context.getFilesDir() + "/" + HISTORY_DIRECTORY);
+        String[] files = dir.list();
+        if (files != null) {
+            for (String file : files) {
+                if (file.startsWith(HISTORY_TARGET_PREFIX)) {
+                    targets.add((Target) readObject(context, file, HISTORY_DIRECTORY));
+                }
+            }
+        }
+        return targets;
+    }
+
+    /**
+     * Gets all requests from the history with Place ID of the target they belong to as a key.
+     *
+     * @param context Context of the caller.
+     * @return All requests from the history with Place ID of the target they belong to as a key.
+     */
+    public static Map<String, Request> getRequestsFromHistory(Context context) {
+        Map<String, Request> requests = new HashMap<>();
+        File dir = new File(context.getFilesDir() + "/" + HISTORY_DIRECTORY);
+        String[] files = dir.list();
+        if (files != null) {
+            for (String file : files) {
+                if (file.startsWith(HISTORY_REQUEST_PREFIX)) {
+                    String placeID = file.substring(HISTORY_REQUEST_PREFIX.length());
+                    requests.put(placeID, (Request) readObject(context, file, HISTORY_DIRECTORY));
+                }
+            }
+        }
+        return requests;
     }
 
     /**

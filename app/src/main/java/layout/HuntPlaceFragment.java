@@ -18,14 +18,13 @@ import android.widget.TextView;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.PlaceInfo;
+import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Place;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -138,12 +137,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
 
     @Override
     public void onPageSelected() {
-//        if (dataInvalidated && mPhotoImageView != null) {
-        if (mPhotoInfoTextView != null) {
+        if (dataInvalidated && mPhotoImageView != null) {
             mPhotoImageView.setImageDrawable(null);
-        }
             update();
-//        }
+        }
     }
 
     /**
@@ -174,30 +171,12 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Gets the reference to selected bitmap for active target.
-     *
-     * @return The reference to selected bitmap for active target.
-     */
-    public Bitmap getSelectedBitmap() {
-        return getBitmapAt(selectedPhotoIndex);
-    }
-
-    /**
-     * Gets the index of currently selected image.
-     *
-     * @return The index of currently selected image.
-     */
-    public static int getSelectedPhotoIndex() {
-        return selectedPhotoIndex;
-    }
-
-    /**
      * Update information on this fragment if it's invalidated (i.e. after calling changeTarget()).
      */
     public void update() {
-//        if (!dataInvalidated) {
-//            return;
-//        }
+        if (!dataInvalidated) {
+            return;
+        }
 
         /* Set size of the image view */
         if (mPhotoImageView != null) {
@@ -244,16 +223,20 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         }
 
         /* Show selected photo */
-        if (numberOfPhotos > 0) {
+        if (numberOfPhotos > 0 && selectedPhotoIndex < numberOfPhotos) {
             /* If no image is visible, add the first one and reset the progress bar position to 0 */
             if (mPhotoImageView != null && mPhotoImageView.getDrawable() == null) {
                 mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
-                mPhotoImageView.setImageBitmap(photoBitmaps[0]);
-                mPhotoSeekBar.setProgress(0);
-                mPhotoInfoTextView.setText(daytimeTexts[0]);
+                float step = (float) mPhotoSeekBar.getMax() / numberOfPhotos;
+                int progress = (int) Math.floor(selectedPhotoIndex * step + step / 2);
+                mPhotoImageView.setImageBitmap(photoBitmaps[selectedPhotoIndex]);
+                mPhotoSeekBar.setProgress(progress);
+                mPhotoInfoTextView.setText(daytimeTexts[selectedPhotoIndex]);
                 mPhotoCounterTextView.setText(String.format(
                         getResources().getString(R.string.place_fragment_photo_counter),
-                        1, numberOfPhotos));
+                        selectedPhotoIndex + 1,
+                        numberOfPhotos)
+                );
             }
         }
 
@@ -261,30 +244,31 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     }
 
     /**
-     * Sets information on this fragment to match given place. Passing null will clear the page.
-     * Invalidates the fragment data, to draw changes, call update().
+     * Sets information on this fragment to match given target. Passing null will clear the page.
+     * Invalidates the fragment data, to draw changes (call update()).
      *
      * @param context Context of the caller.
-     * @param place Information from this place object will be used.
+     * @param target Information from this target object will be used.
      */
-    public static void changePlace(Context context, Place place) {
+    public static void changePlace(Context context, Target target) {
         /* Update information only when the place changes */
-        if (place == null && placeID != null) {
+        if (target == null && placeID != null) {
             placeID = null;
             maxHeightRatio = 0;
             numberOfPhotos = 0;
             photoBitmaps = null;
             daytimeTexts = null;
-        } else if (place != null && !Objects.equals(place.getID(), placeID)) {
-            placeID = place.getID();
+        } else if (target != null/* && !Objects.equals(place.getID(), placeID)*/) {
+            placeID = target.getPlaceID();
             maxHeightRatio = 0;
-            numberOfPhotos = place.getNumberOfPhotos();
+            numberOfPhotos = target.getNumberOfPhotos();
+            selectedPhotoIndex = target.getPhotoIndex();
             photoBitmaps = new Bitmap[numberOfPhotos];
             daytimeTexts = new String[numberOfPhotos];
 
             /* Initialize data for photos */
             for (int i = 0; i < numberOfPhotos; i++) {
-                Photo photo = place.getPhoto(i);
+                Photo photo = target.getPhoto(i);
                 Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
                     @Override
                     public void onBitmapReady(Bitmap bitmap, Object data) {
@@ -307,11 +291,11 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 }
             }
 
-            /* Initialize data for place */
+            /* Initialize data about the target */
             infoList = new ArrayList<>();
-            Set<String> keySet = place.getGfields().keySet();
+            Set<String> keySet = target.getGfields().keySet();
             for (String key : keySet) {
-                PlaceInfo info = PlaceInfo.buildPlaceInfo(context, key, place.getGField(key));
+                PlaceInfo info = PlaceInfo.buildPlaceInfo(context, key, target.getGField(key));
                 infoList.add(info);
             }
             Collections.sort(infoList);

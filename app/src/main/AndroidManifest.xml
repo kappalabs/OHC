@@ -81,8 +81,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.kappa_labs.ohunter.client.activities.MainActivity" />
         </activity>
-        <activity android:name=".activities.StatisticsActivity" />
-        <activity android:name=".activities.HistoryActivity" />
+        <activity
+            android:name=".activities.StatisticsActivity"
+            android:label="@string/title_activity_statistics"
+            android:theme="@style/AppTheme.ActionBar" />
+        <activity
+            android:name=".activities.HistoryActivity"
+            android:label="@string/title_activity_history"
+            android:theme="@style/AppTheme.ActionBar" />
     </application>
 
 </manifest>
