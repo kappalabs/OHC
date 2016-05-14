@@ -683,10 +683,10 @@ public class SharedDataManager {
      * Retrieves all photos saved as associated with given place ID.
      *
      * @param context Context of the caller.
-     * @param placeID Place ID of the place, that has the associated photos.
+     * @param placeID Place ID of the target, that has the associated photos.
      * @return All the photos saved as associated with given place ID.
      */
-    public static Photo[] getPhotosOfPlace(Context context, String placeID) {
+    public static Photo[] getPhotosOfTarget(Context context, String placeID) {
         /* Retrieve location of all photos for given place ID */
         SharedPreferences preferences = getPreferencesForTarget(context, placeID);
         Set<String> photoNames = new HashSet<>();

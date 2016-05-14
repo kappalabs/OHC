@@ -246,7 +246,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         photo1.reference = mTarget.getSelectedPhoto().reference;
 
         /* Similar photos should be stored by now */
-        Photo[] similar = SharedDataManager.getPhotosOfPlace(this, mTarget.getPlaceID());
+        Photo[] similar = SharedDataManager.getPhotosOfTarget(this, mTarget.getPlaceID());
         if (similar.length == 0) {
             Log.e(TAG, "Making request, but no photo is stored/prepared!");
             Toast.makeText(this, getString(R.string.error_camera_no_photo), Toast.LENGTH_SHORT).show();
@@ -289,6 +289,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                     public void onClick(DialogInterface dialog, int which) {
                         photosTaken = false;
                         photosEvaluated = false;
+                        SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
                         finish();
                     }
                 }
@@ -353,11 +354,25 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         if (photo == null) {
             return null;
         }
+        updateLimits();
         /* Rotate the photo the way reference photo is rotated */
         Matrix matrix = new Matrix();
         matrix.postRotate(-90 * rightRotations);
-        Bitmap cropped = Bitmap.createBitmap(photo, (int) (hLimit / 2), (int) (vLimit / 2),
-                photo.getWidth() - (int) hLimit, photo.getHeight() - (int) vLimit, matrix, true);
+        /* Count the limits for this photo */
+        double wRatio = (double) edgesImage.getWidth() / photo.getWidth();
+        double hRatio = (double) edgesImage.getHeight() / photo.getHeight();
+        double horizontalLimit, verticalLimit;
+        if (wRatio > hRatio) {
+            /* Show the vertical stripes, hide horizontals */
+            verticalLimit = photo.getHeight() - edgesImage.getHeight() / wRatio;
+            horizontalLimit = 0;
+        } else {
+            /* Show the horizontal stripes, hide verticals */
+            horizontalLimit = photo.getWidth() - edgesImage.getWidth() / hRatio;
+            verticalLimit = 0;
+        }
+        Bitmap cropped = Bitmap.createBitmap(photo, (int) (horizontalLimit / 2), (int) (verticalLimit / 2),
+                edgesImage.getWidth(), edgesImage.getHeight(), matrix, true);
         CameraOverlay.mBitmap.recycle();
         CameraOverlay.mBitmap = null;
         return cropped;

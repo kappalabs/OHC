@@ -30,8 +30,8 @@ public class TargetsManager {
 
     private static final String TAG = "TargetsManager";
 
-    public static final int DEFAULT_WIDTH = 320;
-    public static final int DEFAULT_HEIGHT = 200;
+    public static final int DEFAULT_WIDTH = 480;
+    public static final int DEFAULT_HEIGHT = 320;
 
     /**
      * Default number of targets to be opened when a target is completed.
