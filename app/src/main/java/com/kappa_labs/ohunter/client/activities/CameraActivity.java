@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
@@ -61,10 +62,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private static Bitmap referenceImage, edgesImage;
     private static Target mTarget;
+    private static String mPhotoReference;
     private static int rightRotations;
 
     private int numberOfAttempts = 0;
-    private double vLimit, hLimit;
     private boolean photosTaken, photosEvaluated;
 
     @SuppressWarnings("deprecation")
@@ -109,7 +110,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 rightRotations = (rightRotations + 3) % 4;
 
                 Matrix matrix = new Matrix();
-                matrix.postRotate(-90);
+                matrix.postRotate(90);
 
                 Bitmap rotatedBitmap = Bitmap.createBitmap(edgesImage, 0, 0,
                         edgesImage.getWidth(), edgesImage.getHeight(), matrix, true);
@@ -133,7 +134,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                 rightRotations = (rightRotations + 1) % 4;
 
                 Matrix matrix = new Matrix();
-                matrix.postRotate(90);
+                matrix.postRotate(-90);
 
                 Bitmap rotatedBitmap = Bitmap.createBitmap(edgesImage, 0, 0,
                         edgesImage.getWidth(), edgesImage.getHeight(), matrix, true);
@@ -243,7 +244,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         b.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         photo1.sImage = new SImage(stream.toByteArray(), b.getWidth(), b.getHeight());
-        photo1.reference = mTarget.getSelectedPhoto().reference;
+        photo1.reference = mPhotoReference;
 
         /* Similar photos should be stored by now */
         Photo[] similar = SharedDataManager.getPhotosOfTarget(this, mTarget.getPlaceID());
@@ -259,8 +260,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         /* Store the photos for later use */
         if (SharedDataManager.setRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
             mTarget.setHuntNumber(SharedDataManager.getHuntNumber(CameraActivity.this));
+            PhotosManager.connect(this);
             mTarget.removePhotos();
             mTarget.addPhotos(Arrays.asList(request.getSimilarPhotos()));
+            PhotosManager.disconnect(CameraActivity.this);
             SharedDataManager.addRequestToHistory(CameraActivity.this, mTarget.getPlaceID(), request);
             SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
             finish();
@@ -322,6 +325,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         int height = previewFrameLayout.getHeight();
         double wRatio = (double) edgesImage.getWidth() / width;
         double hRatio = (double) edgesImage.getHeight() / height;
+        double hLimit, vLimit;
         if (wRatio > hRatio) {
             /* Show the vertical stripes, hide horizontals */
             vLimit = height - edgesImage.getHeight() / wRatio;
@@ -357,7 +361,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         updateLimits();
         /* Rotate the photo the way reference photo is rotated */
         Matrix matrix = new Matrix();
-        matrix.postRotate(-90 * rightRotations);
+        matrix.postRotate(90 * rightRotations);
         /* Count the limits for this photo */
         double wRatio = (double) edgesImage.getWidth() / photo.getWidth();
         double hRatio = (double) edgesImage.getHeight() / photo.getHeight();
@@ -371,8 +375,13 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
             horizontalLimit = photo.getWidth() - edgesImage.getWidth() / hRatio;
             verticalLimit = 0;
         }
-        Bitmap cropped = Bitmap.createBitmap(photo, (int) (horizontalLimit / 2), (int) (verticalLimit / 2),
-                edgesImage.getWidth(), edgesImage.getHeight(), matrix, true);
+        Bitmap cropped = Bitmap.createBitmap(
+                photo,
+                (int) (horizontalLimit / 2), (int) (verticalLimit / 2),
+                (int) (photo.getWidth() - horizontalLimit), (int) (photo.getHeight() - verticalLimit),
+                matrix,
+                true
+        );
         CameraOverlay.mBitmap.recycle();
         CameraOverlay.mBitmap = null;
         return cropped;
@@ -399,7 +408,6 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
                         (DEFAULT_NUM_ATTEMPTS - numberOfAttempts), getString(R.string.number_sign)));
         if (numberOfAttempts >= DEFAULT_MIN_ATTEMPTS) {
             photosTaken = true;
-//            uploadFab.show();
         }
         if (numberOfAttempts >= DEFAULT_NUM_ATTEMPTS) {
             shootButton.setEnabled(false);
@@ -444,11 +452,11 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
         /* Release static references */
         mTarget = null;
-        if (referenceImage != null) {
+        if (referenceImage != null && !referenceImage.isRecycled()) {
             referenceImage.recycle();
             referenceImage = null;
         }
-        if (edgesImage != null) {
+        if (edgesImage != null && !edgesImage.isRecycled()) {
             edgesImage.recycle();
             edgesImage = null;
         }
@@ -471,21 +479,22 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      *
      * @param target Target which will be photographed.
      */
-    public static void initCamera(Target target) {
+    public static void initCamera(Target target, String reference) {
         rightRotations = 0;
         mTarget = target;
+        mPhotoReference = reference;
         setTemplateImage(Utils.toBitmap(target.getSelectedPhoto().sImage));
     }
 
     private static void setTemplateImage(Bitmap templateImage) {
-        if (referenceImage != null) {
+        if (referenceImage != null && !referenceImage.isRecycled()) {
             referenceImage.recycle();
         }
-        if (edgesImage != null) {
+        if (edgesImage != null && !edgesImage.isRecycled()) {
             edgesImage.recycle();
             edgesImage = null;
         }
-        referenceImage = templateImage;
+        referenceImage = templateImage.copy(templateImage.getConfig(), true);
     }
 
     @Override

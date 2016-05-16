@@ -266,7 +266,7 @@ public class Wizard {
         if (context == null) {
             return null;
         }
-        if (targetCompletedDialog != null) {
+        if (targetCompletedDialog != null && targetCompletedDialog.isVisible()) {
             targetCompletedDialog.dismissAllowingStateLoss();
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();

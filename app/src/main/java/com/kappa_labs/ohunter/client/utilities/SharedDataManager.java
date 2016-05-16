@@ -68,6 +68,7 @@ public class SharedDataManager {
     private static final String REQUEST_FILENAME = "request";
 
     private static final String HISTORY_DIRECTORY = "history";
+    private final static String TARGET_PHOTOS_DIRECTORY = "target_photos";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
@@ -639,6 +640,48 @@ public class SharedDataManager {
     }
 
     /**
+     * Gets photo of target from cached file in internal memory.
+     *
+     * @param context Context of the caller.
+     * @param placeID Place ID of the target whose photo should be returned.
+     * @param index Index of the photo to return.
+     * @return The photo of target from cached file in internal memory.
+     */
+    public static Photo getTargetPhoto(Context context, String placeID, int index) {
+        return (Photo) readObject(context, placeID + "_" + index, TARGET_PHOTOS_DIRECTORY);
+    }
+
+    /**
+     * Saves given photo to cache in internal memory.
+     *
+     * @param context Context of the caller.
+     * @param placeID Place ID of the target whose photo should be saved.
+     * @param index Index identifying the photo.
+     * @param photo The photo to save.
+     */
+    public static void saveTargetPhoto(Context context, String placeID, int index, Photo photo) {
+        writeObject(context, photo, placeID + "_" + index, TARGET_PHOTOS_DIRECTORY);
+    }
+
+    /**
+     * Removes all target photos of target specified by its place ID.
+     *
+     * @param context Context of the caller.
+     * @param placeID Place ID of the target whose photos should be removed.
+     */
+    public static void removeTargetPhotos(Context context, String placeID) {
+        File dir = new File(context.getFilesDir() + "/" + TARGET_PHOTOS_DIRECTORY);
+        String[] files = dir.list();
+        if (files != null) {
+            for (String file : files) {
+                if (file.startsWith(placeID + "_")) {
+                    removeObject(context, file, TARGET_PHOTOS_DIRECTORY);
+                }
+            }
+        }
+    }
+
+    /**
      * Gets all the targets saved in history.
      *
      * @param context Context of the caller.
@@ -651,7 +694,10 @@ public class SharedDataManager {
         if (files != null) {
             for (String file : files) {
                 if (file.startsWith(HISTORY_TARGET_PREFIX)) {
-                    targets.add((Target) readObject(context, file, HISTORY_DIRECTORY));
+                    Target target = (Target) readObject(context, file, HISTORY_DIRECTORY);
+                    if (target != null) {
+                        targets.add(target);
+                    }
                 }
             }
         }

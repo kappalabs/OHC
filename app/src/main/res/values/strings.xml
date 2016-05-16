@@ -237,4 +237,7 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="statics_label_discovery">Points for discovery</string>
     <string name="statistics_label_similarity">Points for similarity</string>
+    <string name="info_application_name">Application Name</string>
+    <string name="info_version">Version</string>
+    <string name="info_version_name">Version Name</string>
 </resources>

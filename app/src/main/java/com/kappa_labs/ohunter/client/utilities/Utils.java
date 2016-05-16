@@ -205,40 +205,80 @@ public class Utils {
         int width = blurredOrig.getWidth();
         int height = blurredOrig.getHeight();
         Bitmap edges = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int[][] grays = new int[width][height];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                grays[i][j] = -1;
+            }
+        }
+        int[] bins = new int[256];
+        int binsCount = 0;
 
+        int max = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                int souc1 = 0, souc2 = 0, souc3 = 0, souc4 = 0;
-                int souc5 = 0, souc6 = 0, souc7 = 0, souc8 = 0;
-                int poc = 0;
+                int rSum1 = 0, rSum2 = 0, rSum3 = 0, rSum4 = 0;
+                int dSum1 = 0, dSum2 = 0, dSum3 = 0, dSum4 = 0;
                 for (int i = -1; i <= 1; i++) {
                     for (int j = -1; j <= 1; j++) {
                         int xi = x + i, yj = y + j;
                         if (xi >= 0 && xi < width && yj >= 0 && yj < height) {
-                            // NOTE: pozor, pokud neni v obrazku zelena slozka...!
-                            int gray = (blurredOrig.getPixel(xi, yj) >> 8) & 0xFF;
-                            souc1 += gray * SOBEL_ROW[i + 1][j + 1];
-                            souc2 += gray * SOBEL_DIAG[i + 1][j + 1];
-                            souc3 += gray * SOBEL_ROW[1 - i][1 - j];
-                            souc4 += gray * SOBEL_DIAG[1 - i][1 - j];
-                            souc5 += gray * SOBEL_ROW[1 - i][j + 1];
-                            souc6 += gray * SOBEL_DIAG[1 - i][j + 1];
-                            souc7 += gray * SOBEL_ROW[i + 1][1 - j];
-                            souc8 += gray * SOBEL_DIAG[i + 1][1 - j];
-                            poc++;
+                            int gray = grays[xi][yj];
+                            if (gray < 0) {
+                                gray = rgb2gray(blurredOrig.getPixel(xi, yj));
+                                grays[xi][yj] = gray;
+                            }
+                            rSum1 += gray * SOBEL_ROW[i + 1][j + 1];
+                            dSum1 += gray * SOBEL_DIAG[i + 1][j + 1];
+                            rSum2 += gray * SOBEL_ROW[1 - i][1 - j];
+                            dSum2 += gray * SOBEL_DIAG[1 - i][1 - j];
+                            rSum3 += gray * SOBEL_ROW[1 - i][j + 1];
+                            dSum3 += gray * SOBEL_DIAG[1 - i][j + 1];
+                            rSum4 += gray * SOBEL_ROW[i + 1][1 - j];
+                            dSum4 += gray * SOBEL_DIAG[i + 1][1 - j];
                         }
                     }
                 }
-                int myGray = 0xff - Math.max(souc1, Math.max(souc2, Math.max(souc3, Math.max(souc4,
-                        Math.max(souc5, Math.max(souc6, Math.max(souc7, souc8))))))) / poc;
-                // NOTE: alfa slozka je vynasobena 4 pro zvyrazneni
-                int newPixel = ((0xff - myGray) << 26) | (myGray << 16) | (myGray << 8) | myGray;
+                int myGray = (Math.max(rSum1, Math.max(dSum1, Math.max(rSum2, Math.max(dSum2,
+                        Math.max(rSum3, Math.max(dSum3, Math.max(rSum4, dSum4)))))))) & 0xFF;
+                if (myGray > max) {
+                    max = myGray;
+                }
+                if (myGray > 0) {
+                    bins[myGray]++;
+                    binsCount++;
+                }
+                int newPixel = (myGray << 24) | 0x00FFFFFF;
                 edges.setPixel(x, y, newPixel);
             }
         }
         blurredOrig.recycle();
 
+        /* Find good gray cut value and remove pixels with intensity smaller than this cut */
+        int currentCount = 0;
+        int grayCut = 0;
+        int countCut = (int) (binsCount * 8.0 / 10.0);
+        for (int i = 0; i < max; i++) {
+            currentCount += bins[i];
+            if (currentCount >= countCut) {
+                grayCut = i;
+                break;
+            }
+        }
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int pixel = edges.getPixel(x, y);
+                if (((pixel >> 24) & 0xFF) < grayCut) {
+                    edges.setPixel(x, y, 0x00FFFFFF);
+                }
+            }
+        }
+
         return edges;
+    }
+
+    private static int rgb2gray(int color) {
+        return (int) (0.21 * ((color >> 16) & 0xFF) + 0.72 * ((color >> 8) & 0xFF) + 0.07 * (color & 0xFF));
     }
 
     /**

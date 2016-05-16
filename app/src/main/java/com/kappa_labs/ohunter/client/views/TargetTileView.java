@@ -35,6 +35,8 @@ public class TargetTileView extends View {
 
 //    private static final String TAG = "PlaceTileView";
 
+    private static final int MAX_PREVIEW_SIZE = 256;
+
     private String nameTitleString = getResources().getString(R.string.name_label);
     private String nameString;
     private String addressTitleString = getResources().getString(R.string.address_label);
@@ -144,7 +146,7 @@ public class TargetTileView extends View {
         super.onDraw(canvas);
 
         /* Draw image on background */
-        if (backgroundDrawable != null) {
+        if (backgroundDrawable != null && !((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
             backgroundDrawable.setBounds(0, 0, getWidth(), getHeight());
             backgroundDrawable.draw(canvas);
             mTarget.setIsPhotoDrawn(true);
@@ -331,10 +333,7 @@ public class TargetTileView extends View {
             anim.start();
         }
         if (!mTarget.isPhotoDrawn()) {
-            Photo photo = mTarget.getSelectedPhoto();
-            if (photo != null) {
-                backgroundDrawable = cropBitmap(Utils.toBitmap(photo.sImage));
-            }
+            backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
         }
         /* Score text needs to know the measurements of this view */
         if (mTarget.isStateInvalidated()) {
@@ -404,23 +403,8 @@ public class TargetTileView extends View {
         if (target == null) {
             return;
         }
-        mTarget.initTarget(target, target.getIcon());
         if (target.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
-//            //TODO: vyresit to pres asynctask aby nedochazelo k zasekavani UI pri prochazeni nabidky
-//            Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
-//                @Override
-//                public void onBitmapReady(Bitmap bitmap) {
-//                    backgroundDrawable = cropBitmap(bitmap);
-//                    invalidate();
-//                }
-//            });
-//            bitmapTask.execute(place.getPhoto(0).sImage);
-//            this.backgroundDrawable = getResources().getDrawable(R.color.my_primary_light, null);
-//
-//            TargetsManager.getPreview(getContext(), this);
-
-            this.backgroundDrawable =
-                    cropBitmap(Utils.toBitmap(target.getPhoto(mTarget.getPhotoIndex()).sImage));
+            this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
         }
         this.nameString = target.getGField("name");
         this.addressString = target.getGField("formatted_address");
@@ -442,6 +426,23 @@ public class TargetTileView extends View {
         invalidate();
     }
 
+    private BitmapDrawable getCroppedSelected(Photo photo) {
+        if (photo == null) {
+            return null;
+        }
+        Bitmap selected = mTarget.getSelectedPhotoPreview();
+        if (selected == null || selected.isRecycled()) {
+            Bitmap photoBitmap = Utils.toBitmap(photo.sImage);
+            Bitmap cropped = cropBitmap(photoBitmap);
+            if (photoBitmap != cropped && photoBitmap != null && !photoBitmap.isRecycled()) {
+                photoBitmap.recycle();
+            }
+            mTarget.setSelectedPhoto(cropped);
+            selected = cropped;
+        }
+        return new BitmapDrawable(getResources(), selected);
+    }
+
     /**
      * Crop the image so that the center is aligned to the tile center and no background is visible.
      * Preserve size ratio.
@@ -449,18 +450,23 @@ public class TargetTileView extends View {
      * @param bitmap The bitmap to crop.
      * @return Drawable witch preserved size ratio that is cropped and fills rectangle.
      */
-    private Drawable cropBitmap(Bitmap bitmap) {
+    private Bitmap cropBitmap(Bitmap bitmap) {
         Bitmap cropped;
-        if (bitmap.getWidth() >= bitmap.getHeight()){
+        if (bitmap.getWidth() >= bitmap.getHeight()) {
             cropped = Bitmap.createBitmap(bitmap, bitmap.getWidth() / 2 - bitmap.getHeight() / 2, 0,
                     bitmap.getHeight(), bitmap.getHeight()
             );
-        } else{
+        } else {
             cropped = Bitmap.createBitmap(bitmap, 0, bitmap.getHeight() / 2 - bitmap.getWidth() / 2,
                     bitmap.getWidth(), bitmap.getWidth()
             );
         }
-        return new BitmapDrawable(getResources(), cropped);
+        Bitmap resized = Bitmap.createScaledBitmap(cropped, MAX_PREVIEW_SIZE, MAX_PREVIEW_SIZE, true);
+        if (cropped != resized && !cropped.isRecycled()) {
+            cropped.recycle();
+        }
+
+        return resized;
     }
 
     /**

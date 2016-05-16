@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Request;
@@ -17,10 +18,7 @@ import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
-
-import layout.HuntOfferFragment;
 
 /**
  * Class for managing download and access to places. Places are cached to support faster access.
@@ -53,46 +51,22 @@ public class TargetsManager {
     private List<String> placeIDs;
     private int availableCount;
     private int preparedCount;
-//    private static LruCache<String, Target> mTargetsCache;
-//    private static LruCache<String, Bitmap> mPreviewCache;
     private List<ResponseTask> mTasks;
 
 
+    /**
+     * Creates a new manager to retrieve targets from the server.
+     *
+     * @param context Context of the caller.
+     * @param listener The listener on this manager.
+     * @param player Player requesting the targets.
+     * @param placeIDs Place IDs of targets available for download.
+     */
     public TargetsManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mContext = context;
         this.mListener = listener;
         this.mPlayer = player;
         this.placeIDs = placeIDs;
-
-        initMemoryCache();
-    }
-
-    private static void initMemoryCache() {
-//        /* Clear the cache */
-//        if (mTargetsCache != null) {
-//            mTargetsCache.evictAll();
-//        }
-
-        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-        /* Use specified part of the available memory just for this memory cache */
-        final int cacheSize = maxMemory / 4;
-
-        Log.d(TAG, "available max memory = " + maxMemory + "; cacheSize = " + cacheSize);
-
-//        mTargetsCache = new LruCache<String, Target>(cacheSize) {
-//            @Override
-//            protected int sizeOf(String key, Target target) {
-//                /* Every place stores some number of photos, these are the most memory intensive objects */
-//                return DEFAULT_HEIGHT * DEFAULT_WIDTH * 4 / 1024 * target.getNumberOfPhotos();
-//            }
-//        };
-//        mPreviewCache = new LruCache<String, Bitmap>(cacheSize) {
-//            @Override
-//            protected int sizeOf(String key, Bitmap value) {
-//                return super.sizeOf(key, value);
-//            }
-//        };
     }
 
     /**
@@ -146,9 +120,11 @@ public class TargetsManager {
                         mutableIcon = icon.copy(Bitmap.Config.ARGB_8888, true);
                     }
                     /* Create Target object from retrieved Place */
-                    Target retTarget = new Target(response.places[0], mutableIcon);
+                    Place retPlace = response.places[0];
+                    Target retTarget = new Target(retPlace, mutableIcon);
                     /* Save the result locally */
                     SharedDataManager.addTarget(mContext, retTarget);
+                    PhotosManager.addPhotosOfTarget(retPlace.getID(), retPlace.getPhotos());
                     /* Let the listener do something with the new place */
                     mListener.onPlaceReady(retTarget);
                     preparedCount++;
@@ -173,33 +149,10 @@ public class TargetsManager {
     }
 
     /**
-     * Gets the Target object for given placeID. Targets are cached, if possible.
-     * If placeID is null, return null, otherwise get the Target from cache or local file.
-     *
-     * @param context Context of the caller.
-     * @param placeID Place ID of the place to retrieve.
-     * @return The target for given Place ID or null if not available or ID is null.
+     * Removes context from this object.
      */
-    public static Target getTarget(Context context, String placeID) {
-        if (placeID == null) {
-            return null;
-        }
-//        if (mTargetsCache == null) {
-//            initMemoryCache();
-//        }
-//        Target target = mTargetsCache.get(placeID);
-//        if (target == null) {
-//            target = SharedDataManager.getTarget(context, placeID);
-//            if (target != null) {
-//                mTargetsCache.put(placeID, target);
-//            }
-//        }
-        for (Target target : HuntOfferFragment.getTargets()) {
-            if (Objects.equals(target.getPlaceID(), placeID)) {
-                return target;
-            }
-        }
-        return null;
+    public void disconnect() {
+        mContext = null;
     }
 
     /**

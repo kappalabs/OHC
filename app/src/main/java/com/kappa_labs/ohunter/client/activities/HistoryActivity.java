@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
@@ -56,6 +57,7 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
         /* Create a manager to control the player's score */
         mPointsManager = MainActivity.getPointsManager();
 
+        PhotosManager.connect(this);
         /* Retrieve targets from history */
         final List<Target> targets = SharedDataManager.getTargetsFromHistory(this);
         /* Sort the targets */
@@ -87,6 +89,20 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
                 }
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        /* To be able to load the target's photos */
+        PhotosManager.connect(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        /* Release the reference */
+        PhotosManager.disconnect(this);
     }
 
     @Override

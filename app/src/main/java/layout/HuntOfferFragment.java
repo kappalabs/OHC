@@ -122,6 +122,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             fetchingProgressBar.setVisibility(View.GONE);
         }
         updateSelection();
+        mAdapter.notifyDataSetChanged();
 
         /* Short click selects the tile */
         offerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -283,7 +284,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             public void onPlaceReady(Target target) {
                 targets.add(target);
                 SharedDataManager.saveTargets(getContext(), targets.toArray(_targets));
-//                SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
                 mAdapter.notifyDataSetChanged();
                 if (mListener != null) {
                     mListener.onTargetAdded();

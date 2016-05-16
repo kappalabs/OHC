@@ -137,4 +137,7 @@
     <string name="title_activity_statistics">Statistiky</string>
     <string name="statics_label_discovery">Body za objevení</string>
     <string name="statistics_label_similarity">Body za podobnost</string>
+    <string name="info_application_name">Jméno aplikace</string>
+    <string name="info_version">Verze</string>
+    <string name="info_version_name">Název verze</string>
 </resources>

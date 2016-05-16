@@ -89,6 +89,7 @@
             android:name=".activities.HistoryActivity"
             android:label="@string/title_activity_history"
             android:theme="@style/AppTheme.ActionBar" />
+        <activity android:name=".activities.AboutActivity"></activity>
     </application>
 
 </manifest>

@@ -132,12 +132,15 @@ public class MainActivity extends AppCompatActivity {
         mAboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
-                Long start = SharedDataManager.getStartTime(MainActivity.this);
-                if (start != null) {
-                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 4000);
-                    SharedDataManager.setStartTime(MainActivity.this, uprTime);
-                }
+//                // TODO: 16.5.16 odstranit
+//                Long start = SharedDataManager.getStartTime(MainActivity.this);
+//                if (start != null) {
+//                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 4000);
+//                    SharedDataManager.setStartTime(MainActivity.this, uprTime);
+//                }
+                Intent i = new Intent();
+                i.setClass(MainActivity.this, AboutActivity.class);
+                startActivity(i);
             }
         });
         Button mSettingsButton = (Button) findViewById(R.id.button_settings);
@@ -225,8 +228,8 @@ public class MainActivity extends AppCompatActivity {
         SharedDataManager.initNewHunt(this, false, 0);
         mContinueHuntButton.setVisibility(View.GONE);
         timeTextView.setVisibility(View.GONE);
-        if (HuntActivity.hunt != null) {
-            HuntActivity.hunt.finish();
+        if (HuntActivity.thisActivity != null) {
+            HuntActivity.thisActivity.finish();
         }
         /* Check if the player has enough points */
         checkPoints();

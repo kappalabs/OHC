@@ -63,7 +63,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         placeID = null;
         numberOfPhotos = 0;
         daytimeTexts = null;
-        photoBitmaps = null;
+        recycleBitmaps();
         infoList = null;
         maxHeightRatio = 0;
         dataInvalidated = true;
@@ -99,7 +99,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                     return;
                 }
                 selectedPhotoIndex = pos;
-                mPhotoImageView.setImageBitmap(getBitmapAt(pos));
+                Bitmap bitmap = getBitmapAt(pos);
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    mPhotoImageView.setImageBitmap(bitmap);
+                }
                 mPhotoInfoTextView.setText(daytimeTexts[pos]);
                 mPhotoCounterTextView.setText(String.format(
                         getResources().getString(R.string.place_fragment_photo_counter),
@@ -229,7 +232,10 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 mPhotoImageView.setScaleType(ImageView.ScaleType.FIT_START);
                 float step = (float) mPhotoSeekBar.getMax() / numberOfPhotos;
                 int progress = (int) Math.floor(selectedPhotoIndex * step + step / 2);
-                mPhotoImageView.setImageBitmap(photoBitmaps[selectedPhotoIndex]);
+                Bitmap selected = photoBitmaps[selectedPhotoIndex];
+                if (selected != null && !selected.isRecycled()) {
+                    mPhotoImageView.setImageBitmap(selected);
+                }
                 mPhotoSeekBar.setProgress(progress);
                 mPhotoInfoTextView.setText(daytimeTexts[selectedPhotoIndex]);
                 mPhotoCounterTextView.setText(String.format(
@@ -243,6 +249,19 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         dataInvalidated = false;
     }
 
+    private static void recycleBitmaps() {
+        if (photoBitmaps == null) {
+            return;
+        }
+        for (int i = 0; i < photoBitmaps.length; i++) {
+            if (photoBitmaps[i] != null && !photoBitmaps[i].isRecycled()) {
+                photoBitmaps[i].recycle();
+                photoBitmaps[i] = null;
+            }
+        }
+        photoBitmaps = null;
+    }
+
     /**
      * Sets information on this fragment to match given target. Passing null will clear the page.
      * Invalidates the fragment data, to draw changes (call update()).
@@ -251,11 +270,15 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @param target Information from this target object will be used.
      */
     public static void changePlace(Context context, Target target) {
-        /* Update information only when the place changes */
+        mPhotoImageView.setImageDrawable(null);
+        recycleBitmaps();
+
+        /* Update information only when the target changes */
         if (target == null && placeID != null) {
             placeID = null;
             maxHeightRatio = 0;
             numberOfPhotos = 0;
+            selectedPhotoIndex = 0;
             photoBitmaps = null;
             daytimeTexts = null;
         } else if (target != null/* && !Objects.equals(place.getID(), placeID)*/) {
@@ -269,6 +292,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             /* Initialize data for photos */
             for (int i = 0; i < numberOfPhotos; i++) {
                 Photo photo = target.getPhoto(i);
+                if (photo == null) {
+                    continue;
+                }
                 Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
                     @Override
                     public void onBitmapReady(Bitmap bitmap, Object data) {

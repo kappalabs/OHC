@@ -29,6 +29,7 @@ import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
@@ -73,7 +74,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     private static final int PERMISSIONS_LOCATION_START_UPDATES = 0x02;
 
     public static List<String> radarPlaceIDs = new ArrayList<>(0);
-    public static Activity hunt;
+    public static Activity thisActivity;
 
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
@@ -94,10 +95,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hunt);
 
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
+        /* Allows finalization of this activity from the main activity after end of hunt */
+        thisActivity = this;
 
-        hunt = this;
+        /* Allow loading/saving targets photos from cache */
+        PhotosManager.connect(this);
 
         /* Create the adapter that will return a fragment for each of the three
            primary sections of the activity */
@@ -246,13 +248,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     Log.e(TAG, "Camera button was not suppose to be available, selected target is null!");
                     return;
                 }
-                Photo photo = selected.getSelectedPhoto();
+                Photo photo = selected.getPhoto(selected.getPhotoIndex());
                 if (photo == null) {
                     Toast.makeText(HuntActivity.this, R.string.select_photo_error, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 /* Start the camera activity */
-                CameraActivity.initCamera(selected);
+                CameraActivity.initCamera(selected, photo.reference);
                 Intent intent = new Intent();
                 intent.setClass(HuntActivity.this, CameraActivity.class);
                 startActivityForResult(intent, MAKE_PHOTO_REQUEST);
@@ -392,6 +394,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (mGoogleApiClient.isConnected()) {
             startLocationUpdates();
         }
+        PhotosManager.connect(this);
     }
 
     @Override
@@ -406,7 +409,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     }
 
     protected void onStop() {
+        thisActivity = null;
         mGoogleApiClient.disconnect();
+        /* Release reference to this context */
+        PhotosManager.disconnect(this);
         super.onStop();
     }
 

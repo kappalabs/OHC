@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 
@@ -16,6 +17,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Class for storing basic, not memory intensive, information for TargetTileView.
@@ -148,12 +151,14 @@ public class Target extends Place implements Serializable, Comparable<Target> {
     private boolean highlighted;
     private TargetState mState = TargetState.UNAVAILABLE;
     private int photoIndex;
+    private int photoCount;
     private boolean isPhotoDrawn;
     private int discoveryGain, similarityGain;
     private int huntNumber;
     private int rejectLoss;
     private boolean isStateInvalidated;
     private transient Bitmap icon;
+    private transient Bitmap selectedPhoto;
 
 
     /**
@@ -175,9 +180,39 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         this.longitude = place.longitude;
         this.latitude = place.latitude;
         this.gfields = place.getGfields();
-        // TODO: 31.3.16 fotky spis loadovat externe, neukladat je tady
-        this.photos = place.getPhotos();
         this.icon = icon;
+
+        PhotosManager.addPhotosOfTarget(place.getID(), place.getPhotos());
+        photoCount = place.getNumberOfPhotos();
+    }
+
+    @Override
+    public List<Photo> getPhotos() {
+        return PhotosManager.getPhotosOfTarget(getPlaceID());
+    }
+
+    @Override
+    public Photo getPhoto(int index) {
+        return PhotosManager.getPhotoOfTarget(getPlaceID(), index);
+    }
+
+    @Override
+    public int getNumberOfPhotos() {
+        return photoCount;
+    }
+
+    @Override
+    public boolean addPhoto(Photo photo) {
+        PhotosManager.addPhotoOfTarget(getPlaceID(), photo, photoCount);
+        photoCount++;
+        return true;
+    }
+
+    @Override
+    public boolean addPhotos(Collection<? extends Photo> addPhotos) {
+        PhotosManager.addPhotosOfTarget(getPlaceID(), (Photo[]) addPhotos.toArray());
+        photoCount += addPhotos.size();
+        return true;
     }
 
     /**
@@ -365,7 +400,10 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      */
     public void removePhotos() {
         photos.clear();
+        photoCount = 0;
         photoIndex = 0;
+        selectedPhoto = null;
+        PhotosManager.removePhotosOfTarget(getPlaceID());
     }
 
     /**
@@ -375,7 +413,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * @return True if the photo index is in valid bounds, false otherwise.
      */
     public boolean isPhotoIndexValid(int index) {
-        return index >= 0 && index < photos.size();
+        return index >= 0 && index < photoCount;
     }
 
     /**
@@ -394,9 +432,29 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      */
     public Photo getSelectedPhoto() {
         if (isPhotoIndexValid()) {
-            return photos.get(photoIndex);
+            return getPhoto(photoIndex);
         }
         return null;
+    }
+
+    /**
+     * Gets small/preview version of the selected photo as Bitmap or null if not created from
+     * the Photo object yet and should be created.
+     *
+     * @return The small preview version of the selected photo as Bitmap. Null if it should be created.
+     */
+    public Bitmap getSelectedPhotoPreview() {
+        return selectedPhoto;
+    }
+
+    /**
+     * Set the small preview version of the selected photo for this target. This will be stored
+     * only in memory.
+     *
+     * @param photo The small preview version of the selected photo for this target.
+     */
+    public void setSelectedPhoto(Bitmap photo) {
+        selectedPhoto = photo;
     }
 
     /**
@@ -409,6 +467,7 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         if (this.photoIndex != photoIndex) {
             this.photoIndex = photoIndex;
             isPhotoDrawn = false;
+            selectedPhoto = null;
         }
     }
 
