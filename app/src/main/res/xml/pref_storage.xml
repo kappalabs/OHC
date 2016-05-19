@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="pref_delete_history_photos"
+        android:title="@string/pref_delete_history_photos_title"
+        android:summary="@string/pref_delete_history_photos_summary"
+        android:defaultValue="false" />
+
+    <CheckBoxPreference
+        android:key="pref_delete_history_information"
+        android:title="@string/pref_delete_history_information_title"
+        android:summary="@string/pref_delete_history_information_summary"
+        android:defaultValue="false" />
+
+</PreferenceScreen>

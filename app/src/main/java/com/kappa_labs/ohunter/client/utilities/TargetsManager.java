@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
 import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.lib.entities.Place;
@@ -57,16 +58,17 @@ public class TargetsManager {
     /**
      * Creates a new manager to retrieve targets from the server.
      *
-     * @param context Context of the caller.
      * @param listener The listener on this manager.
      * @param player Player requesting the targets.
      * @param placeIDs Place IDs of targets available for download.
      */
-    public TargetsManager(Context context, PlacesManagerListener listener, Player player, List<String> placeIDs) {
-        this.mContext = context;
+    public TargetsManager(PlacesManagerListener listener, Player player, List<String> placeIDs) {
         this.mListener = listener;
         this.mPlayer = player;
         this.placeIDs = placeIDs;
+
+        /* Provides context even when activity is in background */
+        mContext = DummyApplication.getContext();
     }
 
     /**
@@ -75,6 +77,9 @@ public class TargetsManager {
     public void prepareTargets() {
         mListener.onPreparationStarted();
         mTasks = new ArrayList<>();
+
+        /* Photos of targets will be saved externally, they need to initialize the manager */
+        PhotosManager.init();
 
         /* Randomize order of the given places */
         Collections.shuffle(placeIDs, new Random(System.nanoTime()));
@@ -146,13 +151,6 @@ public class TargetsManager {
         for (ResponseTask task : mTasks) {
             task.cancel(true);
         }
-    }
-
-    /**
-     * Removes context from this object.
-     */
-    public void disconnect() {
-        mContext = null;
     }
 
     /**

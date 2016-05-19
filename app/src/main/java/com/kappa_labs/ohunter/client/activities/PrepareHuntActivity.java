@@ -454,7 +454,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
         if (requestCode == REQUEST_RESOLVE_ERROR) {
             mResolvingError = false;
             if (resultCode == RESULT_OK) {
-                /* Make sure the app is not already connected or attempting to connect */
+                /* Make sure the app is not already connected or attempting to init */
                 if (!mGoogleApiClient.isConnecting() && !mGoogleApiClient.isConnected()) {
                     mGoogleApiClient.connect();
                 }

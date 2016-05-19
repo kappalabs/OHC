@@ -24,7 +24,6 @@ import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.entities.Target;
-import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.client.utilities.Wizard;
@@ -260,10 +259,8 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
         /* Store the photos for later use */
         if (SharedDataManager.setRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
             mTarget.setHuntNumber(SharedDataManager.getHuntNumber(CameraActivity.this));
-            PhotosManager.connect(this);
             mTarget.removePhotos();
             mTarget.addPhotos(Arrays.asList(request.getSimilarPhotos()));
-            PhotosManager.disconnect(CameraActivity.this);
             SharedDataManager.addRequestToHistory(CameraActivity.this, mTarget.getPlaceID(), request);
             SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
             finish();

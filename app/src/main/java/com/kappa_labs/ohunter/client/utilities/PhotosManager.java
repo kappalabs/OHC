@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.v4.util.LruCache;
 import android.util.Log;
 
+import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 
 import java.util.ArrayList;
@@ -140,31 +141,20 @@ public class PhotosManager {
     }
 
     /**
-     * Sets internal context to the given one, initializes the LRU-cache. This context is used
+     * Sets internal context, initializes the LRU-cache. Context is used
      * to load and save the cache from/to external memory.
-     *
-     * @param context Context which should be used to manage external memory.
      */
-    public static void connect(Context context) {
-        mContext = context;
+    public static void init() {
+        mContext = DummyApplication.getContext();
         if (mPhotosCache == null) {
             initMemoryCache();
         }
     }
 
     /**
-     * Releases the internal context if the given context is the same, releases the LRU-cache.
-     *
-     * @param context Context of the caller, which should be released.
+     * Releases the internal context.
      */
-    public static void disconnect(Context context) {
-        if (mContext != context) {
-            return;
-        }
-        if (mPhotosCache != null) {
-            mPhotosCache.evictAll();
-            mPhotosCache = null;
-        }
+    public static void disconnect() {
         mContext = null;
     }
 

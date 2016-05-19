@@ -99,7 +99,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         thisActivity = this;
 
         /* Allow loading/saving targets photos from cache */
-        PhotosManager.connect(this);
+        PhotosManager.init();
 
         /* Create the adapter that will return a fragment for each of the three
            primary sections of the activity */
@@ -204,6 +204,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                                             SharedDataManager.getNumAcceptable(HuntActivity.this) - 1);
                                 }
                             });
+                    checkTargetDistance();
                 } else {
                     Wizard.notEnoughAcceptableDialog(HuntActivity.this);
                 }
@@ -275,7 +276,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     return;
                 }
                 /* Show defer confirmation dialog */
-                Wizard.deferQuestionDialog(HuntActivity.this, PointsManager.getDeferCost(),
+                Wizard.openUpQuestionDialog(HuntActivity.this, PointsManager.getDeferCost(),
                         new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -394,7 +395,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         if (mGoogleApiClient.isConnected()) {
             startLocationUpdates();
         }
-        PhotosManager.connect(this);
+        PhotosManager.init();
     }
 
     @Override
@@ -411,9 +412,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
     protected void onStop() {
         thisActivity = null;
         mGoogleApiClient.disconnect();
-        /* Release reference to this context */
-        PhotosManager.disconnect(this);
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        /* Release the reference */
+        PhotosManager.disconnect();
+        super.onDestroy();
     }
 
     @Override

@@ -1,19 +1,15 @@
 <preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <header
         android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$GeneralPreferenceFragment"
-        android:icon="@drawable/ic_info_black_24dp"
+        android:icon="@drawable/ic_info"
         android:title="@string/pref_header_general" />
 
     <header
-        android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$NotificationPreferenceFragment"
-        android:icon="@drawable/ic_notifications_black_24dp"
-        android:title="@string/pref_header_notifications" />
-
-    <header
-        android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$DataSyncPreferenceFragment"
-        android:icon="@drawable/ic_sync_black_24dp"
-        android:title="@string/pref_header_data_sync" />
+        android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$StoragePreferenceFragment"
+        android:icon="@drawable/ic_game"
+        android:title="@string/pref_header_storage" />
 
     <header
         android:fragment="com.kappa_labs.ohunter.client.activities.SettingsActivity$OfferPreferenceFragment"

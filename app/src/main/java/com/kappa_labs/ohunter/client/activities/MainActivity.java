@@ -22,9 +22,6 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 /**
  * Holds main game menu and basic information about the current game and player.
@@ -107,23 +104,9 @@ public class MainActivity extends AppCompatActivity {
         mHelpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
-                //DEBUG: pouze test funkcionality nabidky
-                List<String> ids = new ArrayList<>();
-                ids.add("ChIJbcDGzgOVC0cRHVtUxuhyPyc");
-                ids.add("ChIJnzfcNpSUC0cR02jk07H0ROA");
-                ids.add("ChIJAyNP5o6UC0cRH2h_j6e-d9c");
-                ids.add("ChIJL-htB_-UC0cRw5332DTK3qk");
-                ids.add("ChIJTxbyv-OUC0cRFEhcU2Cq8po");
-                ids.add("ChIJF9p_IeqUC0cREiNdJH5eISQ");
-                ids.add("ChIJF-GOjz6uEmsRgENqSlnL0qA");
-                ids.add("ChIJNe6UFBWuEmsRm-raxeK9RdI");
-                HuntActivity.radarPlaceIDs = ids;
-                /* Reset the states for new hunt */
-                SharedDataManager.initNewHunt(MainActivity.this, false, System.currentTimeMillis());
-                /* Start the main game activity with these groups of places prepared */
                 Intent i = new Intent();
-                i.setClass(MainActivity.this, HuntActivity.class);
+                i.putExtra(HelpActivity.BUNDLE_NAME, "how_to_play");
+                i.setClass(MainActivity.this, HelpActivity.class);
                 startActivity(i);
             }
         });
@@ -132,12 +115,6 @@ public class MainActivity extends AppCompatActivity {
         mAboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                // TODO: 16.5.16 odstranit
-//                Long start = SharedDataManager.getStartTime(MainActivity.this);
-//                if (start != null) {
-//                    long uprTime = start - Math.abs(System.currentTimeMillis() - start - PointsManager.MAX_HUNT_TIME_MILLIS + 4000);
-//                    SharedDataManager.setStartTime(MainActivity.this, uprTime);
-//                }
                 Intent i = new Intent();
                 i.setClass(MainActivity.this, AboutActivity.class);
                 startActivity(i);
@@ -210,9 +187,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         stopTimer();
+
+        super.onDestroy();
     }
 
     private void startLoginActivity() {

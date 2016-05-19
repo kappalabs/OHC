@@ -205,18 +205,18 @@ public class Wizard {
         return dialogFragment;
     }
 
-    public static DialogFragment deferQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
+    public static DialogFragment openUpQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
             return null;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
-                context.getString(R.string.dialog_wizard_defer_question_title),
-                String.format(context.getString(R.string.dialog_wizard_defer_question_message),
+                context.getString(R.string.dialog_wizard_open_up_question_title),
+                String.format(context.getString(R.string.dialog_wizard_open_up_question_message),
                         context.getResources().getQuantityString(R.plurals.numberOfPoints, points, points)));
-        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_defer_question_positive), positiveListener);
-        dialogFragment.setNegative(context.getString(R.string.dialog_wizard_defer_question_negative), null);
-        commitFragment(context, dialogFragment, "deferQuestionDialogTag");
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_open_up_question_positive), positiveListener);
+        dialogFragment.setNegative(context.getString(R.string.dialog_wizard_open_up_question_negative), null);
+        commitFragment(context, dialogFragment, "openUpQuestionDialogTag");
         return dialogFragment;
     }
 
@@ -267,7 +267,7 @@ public class Wizard {
             return null;
         }
         if (targetCompletedDialog != null && targetCompletedDialog.isVisible()) {
-            targetCompletedDialog.dismissAllowingStateLoss();
+            return targetCompletedDialog;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(

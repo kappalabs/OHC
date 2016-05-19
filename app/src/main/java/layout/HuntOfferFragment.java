@@ -209,7 +209,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private void initTargets() {
         /* This class will prepare the places - load from local files or retrieve them from server */
         final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
-        manager = new TargetsManager(getContext(), new TargetsManager.PlacesManagerListener() {
+        manager = new TargetsManager(new TargetsManager.PlacesManagerListener() {
             @Override
             public void onPreparationStarted() {
                 fetchingProgressBar.setVisibility(View.VISIBLE);

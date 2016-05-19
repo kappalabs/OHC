@@ -24,6 +24,7 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 import com.kappa_labs.ohunter.lib.requests.CompleteTargetRequest;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,9 +58,17 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
         /* Create a manager to control the player's score */
         mPointsManager = MainActivity.getPointsManager();
 
-        PhotosManager.connect(this);
+        PhotosManager.init();
         /* Retrieve targets from history */
         final List<Target> targets = SharedDataManager.getTargetsFromHistory(this);
+        /* Remove targets without photos */
+        final List<Target> toRemove = new ArrayList<>();
+        for (Target target : targets) {
+            if (target.getPhoto(0) == null) {
+                toRemove.add(target);
+            }
+        }
+        targets.removeAll(toRemove);
         /* Sort the targets */
         Collections.sort(targets);
         for (Target target : targets) {
@@ -95,14 +104,14 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
     protected void onResume() {
         super.onResume();
         /* To be able to load the target's photos */
-        PhotosManager.connect(this);
+        PhotosManager.init();
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
         /* Release the reference */
-        PhotosManager.disconnect(this);
+        PhotosManager.disconnect();
+        super.onDestroy();
     }
 
     @Override
