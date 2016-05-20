@@ -131,13 +131,6 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                         fragment = mHuntPlaceFragment;
                         break;
                     case 2: // HuntActionFragment
-                        // TODO: 13.4.16 pouze pro debug, toto tlacitko zde mozna ani nebude
-                        Target selected = HuntOfferFragment.getSelectedTarget();
-                        if (selected != null && selected.getState().canPhotogenify()) {
-                            cameraFab.show();
-                        } else {
-                            cameraFab.hide();
-                        }
                         fragment = mHuntActionFragment;
                         break;
                 }
@@ -242,6 +235,8 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     mCurrentLocation.setLatitude(selected.latitude);
                     mCurrentLocation.setLongitude(selected.longitude);
                     checkTargetDistance();
+                    Toast.makeText(HuntActivity.this,
+                            "Uplatněna debug featura pro false navštívení!", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 /* Check if target is selected and its state is ready for camera */
@@ -271,27 +266,45 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             public void onClick(View v) {
                 /* Defer only if player has enough points */
                 if (!mPointsManager.canDefer()) {
-                    int points = mPointsManager.countMissingPoints(PointsManager.getDeferCost());
+                    int points = mPointsManager.countMissingPoints(PointsManager.getOpenUpCost());
                     Wizard.missingPointsDialog(HuntActivity.this, points);
                     return;
                 }
                 /* Show defer confirmation dialog */
-                Wizard.openUpQuestionDialog(HuntActivity.this, PointsManager.getDeferCost(),
+                Wizard.openUpQuestionDialog(HuntActivity.this, PointsManager.getOpenUpCost(),
                         new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         /* Change the state of the target */
-                        if (!HuntOfferFragment.restateSelectedTarget(Target.TargetState.OPENED)) {
-                            Log.e(TAG, "Cannot defer selected target. Incorrect state?");
+                        final Target selected = HuntOfferFragment.getSelectedTarget();
+                        if (selected == null || !selected.getState().canOpenUp()) {
+                            Log.e(TAG, "Cannot open up selected target. Incorrect state?");
                             return;
                         }
-                        if (mHuntActionFragment != null) {
-                            mHuntActionFragment.updateTargetMarks();
-                        }
-                        mPointsManager.removePoints(PointsManager.getDeferCost());
+                        mPointsManager.removePoints(PointsManager.getOpenUpCost());
 
                         /* Send information about the deferred target into the database on server */
-                        mPointsManager.updateInDatabase(HuntActivity.this, null);
+                        mPointsManager.updateInDatabase(HuntActivity.this, new ResponseTask.OnResponseTaskCompleted() {
+                            @Override
+                            public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
+                                /* Problem on the server side */
+                                if (ohex != null) {
+                                    mPointsManager.addPoints(PointsManager.getOpenUpCost());
+                                    Wizard.informOHException(HuntActivity.this, ohex);
+                                    return;
+                                }
+                                /* Problem on the client side */
+                                if (response == null) {
+                                    mPointsManager.addPoints(PointsManager.getOpenUpCost());
+                                    Wizard.informNullResponse(HuntActivity.this);
+                                    return;
+                                }
+                                HuntOfferFragment.restateTarget(selected, Target.TargetState.OPENED);
+                                if (mHuntActionFragment != null) {
+                                    mHuntActionFragment.updateTargetMarks();
+                                }
+                            }
+                        });
                     }
                 });
             }
@@ -506,7 +519,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
     private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
-        //TODO: behem komunikace se serverem prenastavit na mensi nebo vypnout pro zamezeni prehlceni
+        //TODO: behem komunikace se serverem je doporuceno prenastavit na delsi interval
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -618,7 +631,9 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         resolveButtonState(acceptFab, state.canAccept());
         resolveButtonState(openUpFab, state.canOpenUp());
         resolveButtonState(rejectFab, state.canReject());
-        resolveButtonState(cameraFab, state.canLock());
+        // TODO: 20.5.16 pouze pro debug
+        resolveButtonState(cameraFab, state.canLock() || state.canPhotogenify());
+//        resolveButtonState(cameraFab, state.canLock());
         resolveButtonState(evaluateFab, state.canComplete());
     }
 
@@ -676,33 +691,16 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         HuntOfferFragment.changeSelectedTargetPhoto(photoIndex);
     }
 
-    private void handleOHException(OHException exception) {
-        if (exception.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
-            Toast.makeText(HuntActivity.this, getString(R.string.ohex_serialization),
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(HuntActivity.this, getString(R.string.ohex_general) + " " + exception,
-                    Toast.LENGTH_SHORT).show();
-        }
-        Log.e(TAG, getString(R.string.ohex_general) + exception);
-    }
-
-    private void handleNullResponse() {
-        Log.e(TAG, "Problem on client side");
-        Toast.makeText(HuntActivity.this, getString(R.string.server_unreachable_error),
-                Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on the server side */
         if (ohex != null) {
-            handleOHException(ohex);
+            Wizard.informOHException(HuntActivity.this, ohex);
             return;
         }
         /* Problem on the client side */
         if (response == null) {
-            handleNullResponse();
+            Wizard.informNullResponse(HuntActivity.this);
             return;
         }
         /* Success */

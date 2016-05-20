@@ -118,21 +118,12 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on the server side */
         if (ohex != null) {
-            if (ohex.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
-                Toast.makeText(HistoryActivity.this, getString(R.string.ohex_serialization),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(HistoryActivity.this, getString(R.string.ohex_general) + " " + ohex,
-                        Toast.LENGTH_SHORT).show();
-            }
-            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+            Wizard.informOHException(this, ohex);
             return;
         }
         /* Problem on the client side */
         if (response == null) {
-            Log.e(TAG, "Problem on client side");
-            Toast.makeText(HistoryActivity.this, getString(R.string.server_unreachable_error),
-                    Toast.LENGTH_SHORT).show();
+            Wizard.informNullResponse(this);
             return;
         }
         /* Success */

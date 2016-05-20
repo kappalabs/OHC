@@ -16,7 +16,7 @@ public class PointsManager {
 
     public static final int MAX_BEGIN_AREA_COST = 20;
     public static final int MAX_REJECT_COST = 5;
-    public static final int MAX_DEFER_COST = 10;
+    public static final int MAX_OPEN_UP_COST = 10;
     public static final int MIN_PHOTOGRAPHED_GAIN = 1;
     public static final int SPOIL_FUNCTION_MAX = 10;
     public static final double SPOIL_FUNCTION_STAGTIME = 5f;
@@ -49,8 +49,8 @@ public class PointsManager {
      *
      * @return The cost of deferring a target.
      */
-    public static int getDeferCost() {
-        return MAX_DEFER_COST;
+    public static int getOpenUpCost() {
+        return MAX_OPEN_UP_COST;
     }
 
     /**
@@ -160,7 +160,7 @@ public class PointsManager {
      */
     public boolean canDefer() {
         Player player = SharedDataManager.getPlayer(mContext);
-        return player.getScore() >= getDeferCost();
+        return player.getScore() >= getOpenUpCost();
     }
 
     /**

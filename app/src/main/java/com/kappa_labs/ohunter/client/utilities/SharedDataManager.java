@@ -68,7 +68,7 @@ public class SharedDataManager {
     private static final String REQUEST_FILENAME = "request";
 
     private static final String HISTORY_DIRECTORY = "history";
-    private final static String TARGET_PHOTOS_DIRECTORY = "target_photos";
+    private final static String TARGET_PHOTOS_DIRECTORY = "photos_cache";
 
     private static SharedPreferences mPreferences;
     private static Player mPlayer;
@@ -185,17 +185,20 @@ public class SharedDataManager {
         try {
             File subDir = new File(context.getFilesDir(), directory);
             File[] files = subDir.listFiles();
-            boolean isOk = true;
             for (File file : files) {
-                if (file.delete()) {
-                    isOk = false;
-                }
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
             }
-            return subDir.delete() && isOk;
+            return subDir.delete();
         } catch (Exception e) {
             Log.e(TAG, "Cannot remove directory \'" + directory + "\': " + e);
             return false;
         }
+    }
+
+    private static boolean checkDirectory(Context context, String directory) {
+        File subDir = new File(context.getFilesDir(), directory);
+        return subDir.exists();
     }
 
     /**
@@ -376,6 +379,35 @@ public class SharedDataManager {
     }
 
     /**
+     * Removes history photos only when the settings allow that. Sets the settings back when operation
+     * is successful.
+     *
+     * @param context Context of the caller.
+     */
+    public static void tryRemoveHistoryPhotos(Context context) {
+        boolean remove = getSharedPreferences(context).getBoolean("pref_delete_history_photos", false);
+        if (!checkDirectory(context, TARGET_PHOTOS_DIRECTORY)
+                || (remove && removeDirectory(context, TARGET_PHOTOS_DIRECTORY))) {
+            getSharedPreferences(context).edit().putBoolean("pref_delete_history_photos", false).commit();
+        }
+    }
+
+    /**
+     * Removes history information only when the settings allow that. Sets the settings back when operation
+     * is successful.
+     *
+     * @param context Context of the caller.
+     */
+    public static void tryRemoveHistoryInformation(Context context) {
+        boolean remove = getSharedPreferences(context).getBoolean("pref_delete_history_information", false);
+        if (!checkDirectory(context, HISTORY_DIRECTORY)
+                || (remove && removeDirectory(context, HISTORY_DIRECTORY))) {
+            setHuntNumber(context, 0);
+            getSharedPreferences(context).edit().putBoolean("pref_delete_history_information", false).commit();
+        }
+    }
+
+    /**
      * Saves the start time of a hunt to shared preferences.
      *
      * @param context Context of the caller.
@@ -415,13 +447,22 @@ public class SharedDataManager {
     }
 
     /**
+     * Sets the number of hunts player played.
+     *
+     * @param context Context of the caller.
+     * @param number The number of hunts.
+     */
+    public static void setHuntNumber(Context context, int number) {
+        getSharedPreferences(context).edit().putInt(HUNT_NUMBER_KEY, number).commit();
+    }
+
+    /**
      * Increases the value storing the number of hunts by one.
      *
      * @param context Context of the caller.
      */
     public static void increaseHuntNumber(Context context) {
-        int huntNumber = getHuntNumber(context) + 1;
-        getSharedPreferences(context).edit().putInt(HUNT_NUMBER_KEY, huntNumber).commit();
+        setHuntNumber(context, getHuntNumber(context) + 1);
     }
 
     /**

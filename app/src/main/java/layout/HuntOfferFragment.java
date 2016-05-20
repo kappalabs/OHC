@@ -5,14 +5,12 @@ import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
@@ -45,8 +43,6 @@ import java.util.Random;
  * create an instance of this fragment.
  */
 public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
-
-    private static final String TAG = "HuntOfferFragment";
 
     private static OnFragmentInteractionListener mListener;
 
@@ -244,15 +240,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     @Override
                     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
                         if (ohex != null) {
-                            Toast.makeText(getContext(), getString(R.string.ohex_general) + " " + ohex,
-                                    Toast.LENGTH_SHORT).show();
-                            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+                            Wizard.informOHException(getContext(), ohex);
                             return;
                         }
                         if (response == null) {
-                            Log.e(TAG, "Problem on client side when starting a new area");
-                            Toast.makeText(getContext(), getString(R.string.server_unreachable_error),
-                                    Toast.LENGTH_SHORT).show();
+                            Wizard.informNullResponse(getContext());
                             return;
                         }
 

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,6 +56,8 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
         setContentView(R.layout.activity_statistics);
 
         listTableLayout = (TableLayout) findViewById(R.id.tableLayout_list);
+        lay = (LinearLayout) findViewById(R.id.linearlay);
+        horizontalListView = (HorizontalListView) findViewById(R.id.horizontalListView_chart);
 
         /* Find the current player */
         Player player = SharedDataManager.getPlayer(StatisticsActivity.this);
@@ -73,8 +74,9 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
         ResponseTask task = new ResponseTask(dialog, StatisticsActivity.this);
         task.execute(request);
 
-        /* Variables for chart */
         final List<Target> targets = SharedDataManager.getTargetsFromHistory(this);
+
+        /* Variables for chart */
         int numHunts = SharedDataManager.getHuntNumber(this);
         binsDiscovery = new Integer[numHunts];
         binsSimilarity = new Integer[numHunts];
@@ -92,12 +94,14 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
             binsSimilarity[target.getHuntNumber() - 1] += target.getSimilarityGain();
         }
 
-        lay = (LinearLayout) findViewById(R.id.linearlay);
-        horizontalListView = (HorizontalListView) findViewById(R.id.horizontalListView_chart);
-
-        List<Integer> a = Arrays.asList(binsDiscovery);
-        List<Integer> b = Arrays.asList(binsSimilarity);
-        highest = Math.max(Collections.max(a), Collections.max(b));
+        /* Nothing to show up */
+        if (!targets.isEmpty()) {
+            List<Integer> a = Arrays.asList(binsDiscovery);
+            List<Integer> b = Arrays.asList(binsSimilarity);
+            highest = Math.max(Collections.max(a), Collections.max(b));
+        } else {
+            highest = 1;
+        }
 
         discoveryHeights = new int[numHunts];
         similarityHeights = new int[numHunts];
@@ -107,16 +111,12 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
-            Toast.makeText(StatisticsActivity.this, getString(R.string.ohex_general) + " " + ohex,
-                    Toast.LENGTH_SHORT).show();
-            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+            Wizard.informOHException(this, ohex);
             return;
         }
         /* Problem on client side */
         if (response == null) {
-            Log.e(TAG, "Problem on client side -> cannot start the o-hunt yet...");
-            Toast.makeText(StatisticsActivity.this, getString(R.string.server_unreachable_error),
-                    Toast.LENGTH_SHORT).show();
+            Wizard.informNullResponse(this);
             return;
         }
         /* Success */

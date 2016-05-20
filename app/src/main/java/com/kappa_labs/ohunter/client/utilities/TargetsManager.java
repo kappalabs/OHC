@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.client.activities.PrepareHuntActivity;
@@ -134,8 +133,7 @@ public class TargetsManager {
                     mListener.onPlaceReady(retTarget);
                     preparedCount++;
                 } else if (ohException != null) {
-                    Log.e(TAG, ohException.getMessage());
-                    Toast.makeText(mContext, ohException.getMessage(), Toast.LENGTH_SHORT).show();
+                    Wizard.informOHException(mContext, ohException);
                 }
                 ((TargetsManager) data).prepareNextPlace();
             }

@@ -17,9 +17,12 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
+import com.kappa_labs.ohunter.lib.net.OHException;
 
 /**
  * Class providing instructions for the player throughout the game.
@@ -329,6 +332,37 @@ public class Wizard {
         mBuilder.setContentIntent(resultPendingIntent);
         NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
         mNotificationManager.notify(NOTIFICATION_PHOTOGENIFY_ID, mBuilder.build());
+    }
+
+    /**
+     * Shows toast informing about the OHException with respect to its type.
+     *
+     * @param context Context of the caller.
+     * @param exception OHException from server response.
+     */
+    public static void informOHException(Context context, OHException exception) {
+        if (exception.getExType() == OHException.EXType.SERIALIZATION_INCOMPATIBLE) {
+            Toast.makeText(context, context.getString(R.string.ohex_serialization),
+                    Toast.LENGTH_SHORT).show();
+        } else if (exception.getExType() == OHException.EXType.SERVER_OCCUPIED) {
+            Toast.makeText(context, context.getString(R.string.ohex_occupied),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, context.getString(R.string.ohex_general) + " " + exception,
+                    Toast.LENGTH_SHORT).show();
+        }
+        Log.e(context.getClass().getSimpleName(), context.getString(R.string.ohex_general) + exception);
+    }
+
+    /**
+     * Shows toast informing about null response.
+     *
+     * @param context Context of the caller.
+     */
+    public static void informNullResponse(Context context) {
+        Log.e(context.getClass().getSimpleName(), "Problem on client side");
+        Toast.makeText(context, context.getString(R.string.server_unreachable_error),
+                Toast.LENGTH_SHORT).show();
     }
 
 }

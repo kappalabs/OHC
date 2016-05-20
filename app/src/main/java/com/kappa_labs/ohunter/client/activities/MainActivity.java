@@ -182,6 +182,10 @@ public class MainActivity extends AppCompatActivity {
         /* Check if the player has enough points */
         checkPoints();
 
+        /* Update storage situation from preferences */
+        SharedDataManager.tryRemoveHistoryPhotos(this);
+        SharedDataManager.tryRemoveHistoryInformation(this);
+
         updateInfo();
     }
 

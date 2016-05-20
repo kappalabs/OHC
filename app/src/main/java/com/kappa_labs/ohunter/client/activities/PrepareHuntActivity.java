@@ -235,16 +235,12 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
         /* Problem on server side */
         if (ohex != null) {
-            Toast.makeText(PrepareHuntActivity.this, getString(R.string.ohex_general) + " " + ohex,
-                    Toast.LENGTH_SHORT).show();
-            Log.e(TAG, getString(R.string.ohex_general) + ohex);
+            Wizard.informOHException(PrepareHuntActivity.this, ohex);
             return;
         }
         /* Problem on client side */
         if (response == null) {
-            Log.e(TAG, "Problem on client side -> cannot start the o-hunt yet...");
-            Toast.makeText(PrepareHuntActivity.this, getString(R.string.server_unreachable_error),
-                    Toast.LENGTH_SHORT).show();
+            Wizard.informNullResponse(PrepareHuntActivity.this);
             return;
         }
         /* Success */

@@ -160,4 +160,5 @@
     <string name="pref_show_open_up_confirm_title">Potvrzení zpřístupnění</string>
     <string name="pref_show_reject_confirm_summary">Má být potvrzení zobrazeno při zamítání cíle?</string>
     <string name="pref_show_reject_confirm_title">Potvrzení zamítnutí</string>
+    <string name="ohex_occupied">Server je zaneprázdněn, zkus to později</string>
 </resources>
