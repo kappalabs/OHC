@@ -130,6 +130,16 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     }
 
     @Override
+    public void onDetach() {
+        map = null;
+        fragment = null;
+        mLastLocation = null;
+        targetMarks.clear();
+        markerTargetHashMap.clear();
+        super.onDetach();
+    }
+
+    @Override
     public void onPageSelected() {
         infoInvalidated = true;
         zoomInvalidated = true;
@@ -228,7 +238,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         }
         float[] results = new float[1];
         Location.distanceBetween(target.latitude, target.longitude, mLastLocation.getLatitude(), mLastLocation.getLongitude(), results);
-        return String.format(Locale.getDefault(), "%.6fm", results[0]);
+        return String.format(Locale.getDefault(), "%.2fm", results[0]);
     }
 
     /**

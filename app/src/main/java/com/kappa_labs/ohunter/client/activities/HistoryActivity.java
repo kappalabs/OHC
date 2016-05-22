@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import layout.HuntOfferFragment;
 
 
 /**
@@ -111,6 +114,9 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
     protected void onDestroy() {
         /* Release the reference */
         PhotosManager.disconnect();
+        if (mAdapter != null) {
+            mAdapter.disconnect();
+        }
         super.onDestroy();
     }
 
@@ -174,9 +180,34 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
             SharedDataManager.addTargetToHistory(this, target);
             SharedDataManager.addRequestToHistory(this, target.getPlaceID(), null);
             Wizard.targetCompletedDialog(this);
+            updateTargetStateInOffer(target);
             Log.d(TAG, "Completion of target " + placeID + " was written to database.");
         }
         mAdapter.notifyDataSetChanged();
+    }
+
+    private void updateTargetStateInOffer(Target target) {
+        List<Target> targets = HuntOfferFragment.getTargets();
+        if (targets != null && targets.size() > 0) {
+            for (int i = 0; i < targets.size(); i++) {
+                if (Objects.equals(targets.get(i).getPlaceID(), target.getPlaceID())) {
+                    targets.set(i, target);
+                    SharedDataManager.saveTargets(this, targets.toArray(new Target[targets.size()]));
+                    return;
+                }
+            }
+        } else {
+            Target[] loaded = SharedDataManager.loadTargets(this);
+            if (loaded == null) {
+                return;
+            }
+            for (int i = 0; i < loaded.length; i++) {
+                if (Objects.equals(loaded[i].getPlaceID(), target.getPlaceID())) {
+                    loaded[i] = target;
+                }
+            }
+            SharedDataManager.saveTargets(this, loaded);
+        }
     }
 
 }

@@ -402,7 +402,10 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         photos.clear();
         photoCount = 0;
         photoIndex = 0;
-        selectedPhoto = null;
+        if (selectedPhoto != null && !selectedPhoto.isRecycled()) {
+            selectedPhoto.recycle();
+            selectedPhoto = null;
+        }
         PhotosManager.removePhotosOfTarget(getPlaceID());
     }
 
@@ -454,6 +457,9 @@ public class Target extends Place implements Serializable, Comparable<Target> {
      * @param photo The small preview version of the selected photo for this target.
      */
     public void setSelectedPhoto(Bitmap photo) {
+        if (selectedPhoto != null && !selectedPhoto.isRecycled()) {
+            selectedPhoto.recycle();
+        }
         selectedPhoto = photo;
     }
 
@@ -467,7 +473,10 @@ public class Target extends Place implements Serializable, Comparable<Target> {
         if (this.photoIndex != photoIndex) {
             this.photoIndex = photoIndex;
             isPhotoDrawn = false;
-            selectedPhoto = null;
+            if (selectedPhoto != null && !selectedPhoto.isRecycled()) {
+                selectedPhoto.recycle();
+                selectedPhoto = null;
+            }
         }
     }
 

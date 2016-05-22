@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
 import com.kappa_labs.ohunter.client.utilities.SharedDataManager;
@@ -62,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
                 if (!mPointsManager.canBeginArea()) {
                     int points = mPointsManager.countMissingPoints(mPointsManager.getBeginAreaCost());
                     Wizard.missingPointsDialog(MainActivity.this, points);
+                    return;
+                } else if (SharedDataManager.isLockedTargetInHistory(MainActivity.this)) {
+                    Wizard.completeHistoryDialog(MainActivity.this);
                     return;
                 }
                 Intent i = new Intent();
@@ -164,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
         /* Request login if necessary */
         if (SharedDataManager.getPlayer(this) == null) {
             startLoginActivity();
+            return;
         }
 
         /* Continue button is visible only when the game can really continue... */
@@ -179,6 +184,10 @@ public class MainActivity extends AppCompatActivity {
             startTimer();
         }
 
+        /* Release static references of sub-activities */
+        HuntActivity.initNewHunt();
+        PhotosManager.disconnect();
+
         /* Check if the player has enough points */
         checkPoints();
 
@@ -192,6 +201,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         stopTimer();
+        if (mPointsManager != null) {
+            mPointsManager.disconnect();
+        }
 
         super.onDestroy();
     }

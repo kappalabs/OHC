@@ -123,6 +123,34 @@ public class Utils {
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
     }
 
+    /**
+     * Transforms given SImage to Android Bitmap with optimization respect to given desired size.
+     *
+     * @param sImage The SImage object from OHunter library.
+     * @param rectangularSize Desired rectangular sizes.
+     * @return Converted SImage object into Android Bitmap with possibly desired size.
+     */
+    public static Bitmap toBitmap(SImage sImage, int rectangularSize) {
+        byte[] imgBytes = sImage.getBytes();
+        if (imgBytes == null) {
+            Log.e(TAG, "s");
+            return null;
+        }
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length, options);
+
+        if (options.outHeight <= options.outWidth) {
+            options.inSampleSize = (int) ((double) options.outHeight / rectangularSize);
+        } else {
+            options.inSampleSize = (int) ((double) options.outWidth / rectangularSize);
+        }
+
+        options.inJustDecodeBounds = false;
+
+        return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length, options);
+    }
+
     public class BitmapWorkerTask extends AsyncTask<SImage, Void, Bitmap> {
 
         private OnBitmapReady mListener;
@@ -152,6 +180,10 @@ public class Utils {
         protected void onPostExecute(Bitmap bitmap) {
             if (mListener != null) {
                 mListener.onBitmapReady(bitmap, mData);
+            } else {
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
             }
         }
     }

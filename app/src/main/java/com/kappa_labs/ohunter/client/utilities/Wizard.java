@@ -140,7 +140,7 @@ public class Wizard {
     }
 
     public static DialogFragment gameInitializedDialog(Context context) {
-        if (context == null) {
+        if (context == null || !SharedDataManager.showWizardOnNewHunt(context)) {
             return null;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
@@ -183,6 +183,10 @@ public class Wizard {
         if (context == null) {
             return null;
         }
+        if (!SharedDataManager.showConfirmationOfAcceptTarget(context)) {
+            positiveListener.onClick(null, 0);
+            return null;
+        }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
         dialogFragment.setText(
                 context.getString(R.string.dialog_wizard_accept_question_title),
@@ -195,6 +199,10 @@ public class Wizard {
 
     public static DialogFragment rejectQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
+            return null;
+        }
+        if (!SharedDataManager.showConfirmationOfRejectTarget(context)) {
+            positiveListener.onClick(null, 0);
             return null;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
@@ -210,6 +218,10 @@ public class Wizard {
 
     public static DialogFragment openUpQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
+            return null;
+        }
+        if (!SharedDataManager.showConfirmationOfOpenUpTarget(context)) {
+            positiveListener.onClick(null, 0);
             return null;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
@@ -253,7 +265,7 @@ public class Wizard {
     }
 
     public static DialogFragment targetLockedDialog(Context context) {
-        if (context == null) {
+        if (context == null || !SharedDataManager.showWizardOnTargetLocked(context)) {
             return null;
         }
         BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
@@ -266,7 +278,7 @@ public class Wizard {
     }
 
     public static DialogFragment targetCompletedDialog(Context context) {
-        if (context == null) {
+        if (context == null || !SharedDataManager.showWizardOnTargetCompleted(context)) {
             return null;
         }
         if (targetCompletedDialog != null && targetCompletedDialog.isVisible()) {
@@ -314,6 +326,19 @@ public class Wizard {
                 context.getString(R.string.waiting_for_data));
     }
 
+    public static DialogFragment completeHistoryDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
+        BasicInfoDialogFragment dialogFragment = new BasicInfoDialogFragment();
+        dialogFragment.setText(
+                context.getString(R.string.dialog_wizard_complete_history_title),
+                context.getString(R.string.dialog_wizard_complete_history_message));
+        dialogFragment.setPositive(context.getString(R.string.dialog_wizard_complete_history_positive), null);
+        commitFragment(context, dialogFragment, "completeHistoryDialogTag");
+        return dialogFragment;
+    }
+
     public static void showPhotogenifiedNotification(Context context) {
         if (context == null) {
             return;
@@ -329,7 +354,7 @@ public class Wizard {
         stackBuilder.addParentStack(HuntActivity.class);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.setContentIntent(resultPendingIntent);
+        mBuilder.setContentIntent(resultPendingIntent).setAutoCancel(true);
         NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
         mNotificationManager.notify(NOTIFICATION_PHOTOGENIFY_ID, mBuilder.build());
     }

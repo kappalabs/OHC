@@ -68,6 +68,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         maxHeightRatio = 0;
         dataInvalidated = true;
         selectedPhotoIndex = -1;
+        mPhotoImageView = null;
     }
 
     /**
@@ -270,6 +271,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
      * @param target Information from this target object will be used.
      */
     public static void changePlace(Context context, Target target) {
+        if (mPhotoImageView == null) {
+            return;
+        }
         mPhotoImageView.setImageDrawable(null);
         recycleBitmaps();
 
@@ -300,6 +304,9 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                     public void onBitmapReady(Bitmap bitmap, Object data) {
                         if (data instanceof BitmapReferencer) {
                             BitmapReferencer referencer = (BitmapReferencer) data;
+                            if (referencer.bitmaps[referencer.index] != null && !referencer.bitmaps[referencer.index].isRecycled()) {
+                                referencer.bitmaps[referencer.index].recycle();
+                            }
                             referencer.bitmaps[referencer.index] = bitmap;
                             if (selectedPhotoIndex == referencer.index && mPhotoImageView != null) {
                                 mPhotoImageView.setImageBitmap(bitmap);

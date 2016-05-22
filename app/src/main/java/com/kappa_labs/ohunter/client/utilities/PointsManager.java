@@ -35,6 +35,10 @@ public class PointsManager {
         this.mContext = mContext;
     }
 
+    public void disconnect() {
+        mContext = null;
+    }
+
     /**
      * Gets the cost of rejecting a target.
      *

@@ -1,15 +1,14 @@
 package com.kappa_labs.ohunter.client.activities;
 
-import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -21,14 +20,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
+import com.kappa_labs.ohunter.client.utilities.GPSTracker;
 import com.kappa_labs.ohunter.client.utilities.PhotosManager;
 import com.kappa_labs.ohunter.client.utilities.PointsManager;
 import com.kappa_labs.ohunter.client.utilities.ResponseTask;
@@ -56,31 +51,26 @@ import layout.HuntPlaceFragment;
 /**
  * Activity holding the main game content consisting of three fragments.
  */
-public class HuntActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks, HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, GoogleApiClient.OnConnectionFailedListener, ResponseTask.OnResponseTaskCompleted {
+public class HuntActivity extends AppCompatActivity implements HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, ResponseTask.OnResponseTaskCompleted {
 
     public static final String TAG = "HuntActivity";
     public static final String LOCATION_KEY = "location_key";
     public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
 
-    private static final int UPDATE_INTERVAL_IN_MILLISECONDS = 8000;
-    private static final int FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
 
     /**
      * Default radius of active zone around a target (in meters).
      */
     public static final int DEFAULT_RADIUS = 150;
     private static final int MAKE_PHOTO_REQUEST = 0x01;
-    private static final int PERMISSIONS_LOCATION_ON_CONNECTED = 0x01;
-    private static final int PERMISSIONS_LOCATION_START_UPDATES = 0x02;
 
     public static List<String> radarPlaceIDs = new ArrayList<>(0);
     public static Activity thisActivity;
 
-    private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
-    private LocationRequest mLocationRequest;
     private String mLastUpdateTime;
     private PointsManager mPointsManager;
+    private GPSReceiver gpsReceiver;
 
     private FloatingActionButton acceptFab, openUpFab, rejectFab;
     private FloatingActionButton cameraFab, evaluateFab, rotateFab, sortFab;
@@ -97,6 +87,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Allows finalization of this activity from the main activity after end of hunt */
         thisActivity = this;
+
+        Intent serviceIntent = new Intent(this, GPSTracker.class);
+        startService(serviceIntent);
+
+        IntentFilter filter = new IntentFilter(GPSTracker.GPS_TRACKER_INTENT);
+        gpsReceiver = new GPSReceiver();
+        this.registerReceiver(gpsReceiver, filter);
 
         /* Allow loading/saving targets photos from cache */
         PhotosManager.init();
@@ -334,11 +331,13 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 } else {
                     /* Send all pending compare requests for evaluation */
                     Set<String> placeIDs = SharedDataManager.getPendingRequestsIDs(HuntActivity.this);
+                    List<String> toRemove = new ArrayList<>();
                     if (!placeIDs.isEmpty()) {
                         for (String placeID : placeIDs) {
                             Request request = SharedDataManager.getRequestForTarget(HuntActivity.this, placeID);
                             if (request == null) {
-                                Log.e(TAG, "Request for place " + placeID + " is not available, skipping...");
+                                Log.d(TAG, "Request for place " + placeID + " is not available, fixing...");
+                                toRemove.add(placeID);
                                 continue;
                             }
                             /* Asynchronously execute and wait for callback when result ready */
@@ -349,6 +348,10 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                     } else {
                         Toast.makeText(HuntActivity.this, getString(R.string.no_pending_evaluation),
                                 Toast.LENGTH_SHORT).show();
+                    }
+                    /* Remove from list of requests invalid entries */
+                    for (String placeID : toRemove) {
+                        SharedDataManager.removeRequestForTarget(HuntActivity.this, placeID);
                     }
                 }
             }
@@ -367,13 +370,11 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
 
         /* Update values using data stored in the Bundle */
         updateValuesFromBundle(savedInstanceState);
-
-        /* Create an instance of GoogleAPIClient */
-        buildGoogleApiClient();
     }
 
     /**
-     * Prepares the activity for a new game, must be called before starting this activity
+     * Prepares the activity for a new game, releases all references to static context, must
+     * be called before starting this activity.
      */
     public static void initNewHunt() {
         HuntOfferFragment.initNewHunt();
@@ -381,57 +382,42 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         HuntActionFragment.initNewHunt();
     }
 
-    /**
-     * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the
-     * LocationServices API.
-     */
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mGoogleApiClient.isConnected()) {
-            stopLocationUpdates();
-        }
-        HuntOfferFragment.saveTargets(this);
-    }
-
     @Override
     public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected()) {
-            startLocationUpdates();
-        }
         PhotosManager.init();
+        super.onResume();
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         HuntOfferFragment.cancelDownloadTasks();
+        super.onBackPressed();
     }
 
-    protected void onStart() {
-        mGoogleApiClient.connect();
-        super.onStart();
+    @Override
+    protected void onPause() {
+        HuntOfferFragment.saveTargets(this);
+        super.onPause();
     }
 
     protected void onStop() {
         thisActivity = null;
-        mGoogleApiClient.disconnect();
+        if (gpsReceiver != null) {
+            unregisterReceiver(gpsReceiver);
+            gpsReceiver = null;
+        }
+        stopService(new Intent(this, GPSTracker.class));
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
         /* Release the reference */
-        PhotosManager.disconnect();
+        mPointsManager = null;
+        mHuntOfferFragment = null;
+        mHuntPlaceFragment = null;
+        mHuntActionFragment = null;
+        mViewPager = null;
         super.onDestroy();
     }
 
@@ -453,7 +439,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             }
 
             if (mHuntActionFragment != null) {
-                mHuntActionFragment.changeLocation(mCurrentLocation);
+                mHuntActionFragment.changeLocation(new Location(mCurrentLocation));
             }
         }
 
@@ -472,7 +458,7 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
                 Log.d(TAG, "camera result ok...");
                 if (data != null) {
                     if (data.getBooleanExtra(CameraActivity.PHOTOS_TAKEN_KEY, false)) {
-                        Log.d(TAG, "camera result: bylo vyfoceno misto");
+                        Log.d(TAG, "camera result: target was photoed");
                         handlePhotoTaken();
                     }
                 }
@@ -494,92 +480,34 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
         Wizard.targetLockedDialog(this);
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        /* Connected to Google Play services */
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                Wizard.locationPermissionDialog(this);
-            } else {
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        PERMISSIONS_LOCATION_ON_CONNECTED
-                );
-            }
-            return;
-        }
-        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mHuntActionFragment != null) {
-            mHuntActionFragment.changeLocation(mLastLocation);
-        }
-        createLocationRequest();
-        startLocationUpdates();
-    }
-
-    private void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        //TODO: behem komunikace se serverem je doporuceno prenastavit na delsi interval
-        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    private void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                Wizard.locationPermissionDialog(this);
-            } else {
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        PERMISSIONS_LOCATION_START_UPDATES
-                );
-            }
-            return;
-        }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_LOCATION_ON_CONNECTED:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    onConnected(null);
-                }
-                break;
-            case PERMISSIONS_LOCATION_START_UPDATES:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startLocationUpdates();
-                }
-                break;
-        }
-    }
-
-    private void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.i(TAG, "Connection suspended");
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
+    private void onLocationChanged(Location location) {
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         if (mHuntActionFragment != null) {
-            mHuntActionFragment.changeLocation(mCurrentLocation);
+            mHuntActionFragment.changeLocation(new Location(mCurrentLocation));
         }
         checkTargetDistance();
+    }
+
+    private class GPSReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                GPSTracker.BroadcastType type = GPSTracker.BroadcastType.values()[extras.getInt(GPSTracker.BROADCAST_TYPE_KEY)];
+                switch (type) {
+                    case LOCATION_UPDATE:
+                        Location location = new Location("dummyProvider");
+                        location.setLatitude(extras.getDouble(GPSTracker.LATITUDE_KEY));
+                        location.setLatitude(extras.getDouble(GPSTracker.LONGITUDE_KEY));
+                        onLocationChanged(location);
+                        break;
+                    case PERMISSION_REQUEST:
+                        Wizard.locationPermissionDialog(getApplicationContext());
+                        break;
+                }
+            }
+        }
     }
 
     /**
@@ -743,13 +671,14 @@ public class HuntActivity extends AppCompatActivity implements LocationListener,
             int similarityGain = mPointsManager.getTargetSimilarityGain(response.similarity);
             Log.d(TAG, "discoveryGain = " + discoveryGain + ", similarityGain = " + similarityGain);
 
+            int huntNumber = SharedDataManager.getHuntNumber(HuntActivity.this);
             Request completeRequest = new CompleteTargetRequest(
                     SharedDataManager.getPlayer(this),
                     placeID,
                     photoReference,
                     discoveryGain,
                     similarityGain,
-                    SharedDataManager.getHuntNumber(HuntActivity.this)
+                    huntNumber
             );
             if (mHuntOfferFragment != null) {
                 DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());

@@ -146,7 +146,8 @@ public class TargetTileView extends View {
         super.onDraw(canvas);
 
         /* Draw image on background */
-        if (backgroundDrawable != null && !((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
+        if (backgroundDrawable != null && ((BitmapDrawable) backgroundDrawable).getBitmap() != null
+                && !((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
             backgroundDrawable.setBounds(0, 0, getWidth(), getHeight());
             backgroundDrawable.draw(canvas);
             mTarget.setIsPhotoDrawn(true);
@@ -389,26 +390,24 @@ public class TargetTileView extends View {
     }
 
     /**
-     * Sets the target for this tile view, updates
+     * Sets the target for this tile view, invalidates the target state for repaint.
      *
      * @param target The target for this tile view.
      */
     public void setTarget(Target target) {
         this.mTarget = target;
-        mTarget.setIsStateInvalidated(true);
-    }
 
-    public void setPlace(Target target) {
         /* Change the place only when it's necessary */
         if (target == null) {
             return;
         }
-        if (target.getNumberOfPhotos() > mTarget.getPhotoIndex()) {
-            this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
-        }
+
+        this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
         this.nameString = target.getGField("name");
         this.addressString = target.getGField("formatted_address");
         this.photosString = target.getNumberOfPhotos() + "";
+
+        mTarget.setIsStateInvalidated(true);
 
         /* Texts need to know the measurements of the view */
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -432,7 +431,7 @@ public class TargetTileView extends View {
         }
         Bitmap selected = mTarget.getSelectedPhotoPreview();
         if (selected == null || selected.isRecycled()) {
-            Bitmap photoBitmap = Utils.toBitmap(photo.sImage);
+            Bitmap photoBitmap = Utils.toBitmap(photo.sImage, MAX_PREVIEW_SIZE);
             Bitmap cropped = cropBitmap(photoBitmap);
             if (photoBitmap != cropped && photoBitmap != null && !photoBitmap.isRecycled()) {
                 photoBitmap.recycle();

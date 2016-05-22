@@ -28,8 +28,10 @@ public class TargetsManager {
 
     private static final String TAG = "TargetsManager";
 
-    public static final int DEFAULT_WIDTH = 480;
-    public static final int DEFAULT_HEIGHT = 320;
+//    public static final int DEFAULT_WIDTH = 480;
+//    public static final int DEFAULT_HEIGHT = 320;
+    public static final int DEFAULT_WIDTH = 800;
+    public static final int DEFAULT_HEIGHT = 600;
 
     /**
      * Default number of targets to be opened when a target is completed.
@@ -68,6 +70,13 @@ public class TargetsManager {
 
         /* Provides context even when activity is in background */
         mContext = DummyApplication.getContext();
+    }
+
+    /**
+     * Releases the internal context.
+     */
+    public void disconnect() {
+        mContext = null;
     }
 
     /**

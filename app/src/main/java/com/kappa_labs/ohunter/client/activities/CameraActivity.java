@@ -1,7 +1,9 @@
 package com.kappa_labs.ohunter.client.activities;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,6 +13,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -34,6 +39,9 @@ import com.kappa_labs.ohunter.lib.entities.SImage;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -48,6 +56,9 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     public static final int DEFAULT_ALPHA = 100;
     public static final int DEFAULT_NUM_ATTEMPTS = 3;
     public static final int DEFAULT_MIN_ATTEMPTS = 1;
+
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 0x01;
+    private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 0x02;
 
     public static final String PHOTOS_TAKEN_KEY = "photos_taken";
     public static final String PHOTOS_EVALUATED_KEY = "photos_evaluated";
@@ -76,6 +87,16 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+
+        /* Request required permissions on Marshmallow */
+        if (!checkPermissionForCamera()) {
+            requestPermissionForCamera();
+        }
+        if (SharedDataManager.storePhotosExternally(this)) {
+            if (!checkPermissionForExternalStorage()) {
+                requestPermissionForExternalStorage();
+            }
+        }
 
         lastPhotoImageView = (ImageView) findViewById(R.id.imageView_lastPhoto);
 
@@ -194,6 +215,10 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
         /* Create an instance of Camera, our Preview view and set it as the content of our activity */
         mCamera = getCameraInstance();
+        if (mCamera == null) {
+            finish();
+            return;
+        }
         mPreview = new CameraOverlay(this, mCamera);
         previewFrameLayout = (FrameLayout) findViewById(R.id.frameLayout_cam_preview);
         assert previewFrameLayout != null;
@@ -218,15 +243,45 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
      * @return Camera object if available, null if camera is unavailable.
      */
     @SuppressWarnings("deprecation")
-    private static Camera getCameraInstance(){
-        Camera c = null;
-        try {
-            c = Camera.open();
+    private static Camera getCameraInstance() {
+        Camera cam = null;
+        int cameraCount = Camera.getNumberOfCameras();
+        for (int i = 0; i < cameraCount; i++) {
+            if (cam == null) {
+                try {
+                    cam = Camera.open(i);
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "Camera failed to open: " + e.getLocalizedMessage());
+                }
+            }
         }
-        catch (Exception e){
-            /* Camera is not available (in use or does not exist) */
+        return cam;
+    }
+
+    private boolean checkPermissionForCamera(){
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        return result == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermissionForCamera() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)){
+            Toast.makeText(this, "Camera permission needed. Please allow in App Settings for additional functionality.", Toast.LENGTH_LONG).show();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
         }
-        return c;
+    }
+
+    private boolean checkPermissionForExternalStorage() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        return result == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void requestPermissionForExternalStorage(){
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            Toast.makeText(this, "External Storage permission needed. Please allow in App Settings for additional functionality.", Toast.LENGTH_LONG).show();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE);
+        }
     }
 
     private CompareRequest makeCompareRequest() {
@@ -257,17 +312,17 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     private void storeRequestForEvaluation(CompareRequest request) {
         /* Store the photos for later use */
-        if (SharedDataManager.setRequestForTarget(CameraActivity.this, request, mTarget.getPlaceID())) {
-            mTarget.setHuntNumber(SharedDataManager.getHuntNumber(CameraActivity.this));
+        if (SharedDataManager.setRequestForTarget(this, request, mTarget.getPlaceID())) {
+            int huntNumber = SharedDataManager.getHuntNumber(this);
+            mTarget.setHuntNumber(huntNumber);
             mTarget.removePhotos();
             mTarget.addPhotos(Arrays.asList(request.getSimilarPhotos()));
-            SharedDataManager.addRequestToHistory(CameraActivity.this, mTarget.getPlaceID(), request);
-            SharedDataManager.clearPhotosOfTarget(CameraActivity.this, mTarget.getPlaceID());
+            SharedDataManager.addRequestToHistory(this, mTarget.getPlaceID(), request);
+            SharedDataManager.clearPhotosOfTarget(this, mTarget.getPlaceID());
             finish();
         } else {
             Log.e(TAG, "cannot write the compare request");
-            Toast.makeText(CameraActivity.this,
-                    getString(R.string.cannot_save_request), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.cannot_save_request), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -386,6 +441,32 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
     @Override
     public void onImageReady() {
+        /* Save the photo locally so that user can see the target in gallery */
+        if (SharedDataManager.storePhotosExternally(this)) {
+            FileOutputStream out = null;
+            try {
+                File sd = Environment.getExternalStorageDirectory();
+                File sdDir = new File(sd.getAbsolutePath() + "/ohunter/photos");
+                //noinspection ResultOfMethodCallIgnored
+                sdDir.mkdirs();
+                File bmpFile = new File(sdDir, System.currentTimeMillis() + ".jpg");
+                out = new FileOutputStream(bmpFile);
+                CameraOverlay.mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                Log.d(TAG, "Picture saved to gallery: " + bmpFile.getAbsolutePath());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.flush();
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         /* Store the new photo */
         Bitmap picture = getCroppedCameraPicture();
         if (picture == null) {

@@ -195,7 +195,7 @@
     <string name="pref_delete_history_photos_title">Delete history photos</string>
     <string name="pref_delete_history_photos_summary">Delete all photos of photoed targets from history</string>
     <string name="pref_delete_history_information_title">Delete history</string>
-    <string name="pref_delete_history_information_summary">Start numbering of hunts from 1 again</string>
+    <string name="pref_delete_history_information_summary">Delete history targets locally</string>
     <string name="pref_header_offer">Offer page</string>
     <string name="pref_title_offer_columns_portrait">Number of columns in portrait orientation</string>
     <string name="pref_title_offer_columns_landscape">Number of columns in landscape orientation</string>
@@ -205,4 +205,9 @@
     <string name="info_application_name">Application Name</string>
     <string name="info_version">Version</string>
     <string name="info_version_name">Version Name</string>
+    <string name="pref_store_photos_externally_title">Store photos externally</string>
+    <string name="pref_store_photos_externally_summary">Store photos to externall gallery directory</string>
+    <string name="dialog_wizard_complete_history_title">History evaluation</string>
+    <string name="dialog_wizard_complete_history_message">Evaluate all locked targets in history before starting a new hunt</string>
+    <string name="dialog_wizard_complete_history_positive">OK</string>
 </resources>

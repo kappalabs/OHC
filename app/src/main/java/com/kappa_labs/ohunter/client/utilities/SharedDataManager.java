@@ -402,9 +402,78 @@ public class SharedDataManager {
         boolean remove = getSharedPreferences(context).getBoolean("pref_delete_history_information", false);
         if (!checkDirectory(context, HISTORY_DIRECTORY)
                 || (remove && removeDirectory(context, HISTORY_DIRECTORY))) {
-            setHuntNumber(context, 0);
             getSharedPreferences(context).edit().putBoolean("pref_delete_history_information", false).commit();
         }
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show wizard dialog on new hunt.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show wizard dialog on new hunt.
+     */
+    public static boolean showWizardOnNewHunt(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_new_hunt_wizard", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show wizard dialog on target lock.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show wizard dialog on target lock.
+     */
+    public static boolean showWizardOnTargetLocked(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_locked_wizard", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show wizard dialog on target completion.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show wizard dialog on target completion.
+     */
+    public static boolean showWizardOnTargetCompleted(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_completed_wizard", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show confirmation wizard dialog on target rejection.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show confirmation wizard dialog on target rejection.
+     */
+    public static boolean showConfirmationOfRejectTarget(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_reject_confirm", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show confirmation wizard dialog when opening up target.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show confirmation wizard dialog when opening up target.
+     */
+    public static boolean showConfirmationOfOpenUpTarget(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_open_up_confirm", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to show confirmation wizard dialog when accepting target.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to show confirmation wizard dialog when accepting target.
+     */
+    public static boolean showConfirmationOfAcceptTarget(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_show_accept_confirm", true);
+    }
+
+    /**
+     * Reads value from settings, if the player wants to save the photos from camera externally to gallery.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to save the photos from camera externally to gallery.
+     */
+    public static boolean storePhotosExternally(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_store_photos_externally", true);
     }
 
     /**
@@ -743,6 +812,28 @@ public class SharedDataManager {
             }
         }
         return targets;
+    }
+
+    /**
+     * Finds out, if some locked target is currently in history.
+     *
+     * @param context Context of the caller.
+     * @return If some locked target is currently in history.
+     */
+    public static boolean isLockedTargetInHistory(Context context) {
+        File dir = new File(context.getFilesDir() + "/" + HISTORY_DIRECTORY);
+        String[] files = dir.list();
+        if (files != null) {
+            for (String file : files) {
+                if (file.startsWith(HISTORY_TARGET_PREFIX)) {
+                    Target target = (Target) readObject(context, file, HISTORY_DIRECTORY);
+                    if (target != null && target.getState() == Target.TargetState.LOCKED) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

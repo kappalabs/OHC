@@ -6,15 +6,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -65,6 +62,10 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        if (mCamera == null) {
+            Log.e(TAG, "surfaceCreated: Camera is unavailable!");
+            return;
+        }
         try {
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
@@ -192,28 +193,6 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
             mBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
             /* Scale the picture to match the sizes of the preview/template one */
             mBitmap = Bitmap.createScaledBitmap(mBitmap, mPreviewSize.width, mPreviewSize.height, true);
-
-            /* Save the photo locally so that user can see the target in gallery */
-            // TODO: 1.5.16 do nastaveni moznost zapnout nebo vypnout tuto moznost
-            FileOutputStream out = null;
-            try {
-                File sd = Environment.getExternalStorageDirectory();
-                File bmpFile = new File(sd, System.currentTimeMillis()+".jpg");
-                out = new FileOutputStream(bmpFile);
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                System.out.println("picture saved to " + bmpFile.getAbsolutePath());
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (out != null) {
-                        out.flush();
-                        out.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
 
             /* Allows to see the preview again */
             mCamera.stopPreview();

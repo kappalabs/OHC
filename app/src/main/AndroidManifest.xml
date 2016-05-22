@@ -11,8 +11,10 @@
     <!-- Camera permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <uses-feature android:name="android.hardware.camera" />
-    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <uses-feature android:name="android.hardware.wifi" android:required="true" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
     <!-- To have permission to save and read the photos and other files -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
@@ -98,6 +100,10 @@
             android:name=".activities.HelpActivity"
             android:label="@string/title_activity_help"
             android:theme="@style/AppTheme.ActionBar" />
+        <service
+            android:name=".utilities.GPSTracker"
+            android:label="GPSTracker"
+            android:exported="false" />
     </application>
 
 </manifest>

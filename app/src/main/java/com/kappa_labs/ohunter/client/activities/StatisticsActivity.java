@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,7 @@ import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.BestPlayersRequest;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -80,19 +82,39 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
         int numHunts = SharedDataManager.getHuntNumber(this);
         binsDiscovery = new Integer[numHunts];
         binsSimilarity = new Integer[numHunts];
-        labels = new String[numHunts];
         for (int i = 0; i < numHunts; i++) {
             binsDiscovery[i] = 0;
             binsSimilarity[i] = 0;
-            labels[i] = (i + 1) + ".";
         }
         for (Target target : targets) {
+            /* Count score for only completed targets (-> not locked ones) */
             if (target.getState() != Target.TargetState.COMPLETED) {
                 continue;
             }
-            binsDiscovery[target.getHuntNumber() - 1] += target.getDiscoveryGain();
-            binsSimilarity[target.getHuntNumber() - 1] += target.getSimilarityGain();
+            if (0 <= target.getHuntNumber() - 1 && target.getHuntNumber() - 1 < numHunts) {
+                binsDiscovery[target.getHuntNumber() - 1] += target.getDiscoveryGain();
+                binsSimilarity[target.getHuntNumber() - 1] += target.getSimilarityGain();
+            } else {
+                Log.e(TAG, "This target (" + target.getPlaceID()+ ") should not be in" +
+                        " history! Its hunt number is " + target.getHuntNumber());
+            }
         }
+
+        /* Show only bins with some values */
+        List<Integer> _binsDiscovery = new ArrayList<>();
+        List<Integer> _binsSimilarity = new ArrayList<>();
+        List<String> _labels = new ArrayList<>();
+        for (int i = 0; i < numHunts; i++) {
+            if (binsDiscovery[i] > 0 || binsSimilarity[i] > 0) {
+                _binsDiscovery.add(binsDiscovery[i]);
+                _binsSimilarity.add(binsSimilarity[i]);
+                _labels.add((i + 1) + ".");
+            }
+        }
+        numHunts = _labels.size();
+        binsDiscovery = _binsDiscovery.toArray(new Integer[numHunts]);
+        binsSimilarity = _binsSimilarity.toArray(new Integer[numHunts]);
+        labels = _labels.toArray(new String[numHunts]);
 
         /* Nothing to show up */
         if (!targets.isEmpty()) {

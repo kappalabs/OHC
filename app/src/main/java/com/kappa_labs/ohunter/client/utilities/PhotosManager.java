@@ -155,6 +155,10 @@ public class PhotosManager {
      * Releases the internal context.
      */
     public static void disconnect() {
+        if (mPhotosCache != null) {
+            mPhotosCache.evictAll();
+            mPhotosCache = null;
+        }
         mContext = null;
     }
 

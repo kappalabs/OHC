@@ -3,6 +3,7 @@ package layout;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import com.kappa_labs.ohunter.client.R;
+import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
 import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
@@ -67,6 +69,13 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         selectedIndex = -1;
         loadingTargets = false;
         manager = null;
+        for (Target target : targets) {
+            Bitmap bitmap = target.getSelectedPhotoPreview();
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+                target.setSelectedPhoto(null);
+            }
+        }
         targets.clear();
     }
 
@@ -102,7 +111,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         offerGridView.setVerticalScrollBarEnabled(true);
 
         if (mAdapter == null) {
-            mAdapter = new TileAdapter(getContext(), targets);
+            mAdapter = new TileAdapter(DummyApplication.getContext(), targets);
         }
         offerGridView.setAdapter(mAdapter);
 
@@ -213,6 +222,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
             @Override
             public void onPreparationEnded() {
+                manager.disconnect();
                 loadingTargets = false;
                 fetchingProgressBar.setVisibility(View.GONE);
                 if (mListener != null) {
@@ -306,6 +316,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     public static void cancelDownloadTasks() {
         if (manager != null && loadingTargets) {
             manager.cancelTask();
+            manager.disconnect();
             loadingTargets = false;
             manager = null;
         }
@@ -573,11 +584,16 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         }
         /* Resolves problems with rotation when async task is running*/
         setRetainInstance(true);
+        if (mAdapter != null) {
+            mAdapter.connect(DummyApplication.getContext(), targets);
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        fetchingProgressBar = null;
+        mAdapter.disconnect();
         mListener = null;
     }
 

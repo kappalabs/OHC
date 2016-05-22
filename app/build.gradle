@@ -2,9 +2,11 @@ apply plugin: 'com.android.application'
 
 android {
     dexOptions {
-        incremental true;
+        incremental false
         maxProcessCount = 4;
-        javaMaxHeapSize = 3g;
+        javaMaxHeapSize = 4g;
+        javaMaxHeapSize "2048M"
+        preDexLibraries = false
     }
 
     compileSdkVersion 23
@@ -12,10 +14,12 @@ android {
 
     defaultConfig {
         applicationId 'com.kappa_labs.ohunter.client'
-        minSdkVersion 22
+        minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
         versionName "0.1"
+
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -30,8 +34,9 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.3.0'
-    compile 'com.android.support:design:23.3.0'
-    compile 'com.google.android.gms:play-services:8.4.0'
-    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:multidex:1.0.1'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:design:23.4.0'
+    compile 'com.google.android.gms:play-services:9.0.0'
+    compile 'com.android.support:support-v4:23.4.0'
 }
