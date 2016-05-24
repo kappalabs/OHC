@@ -236,7 +236,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
                 /* No target is available */
                 if (targets.isEmpty()) {
-                    Wizard.noTargetAvailableDialog(DummyApplication.getContext(), new DialogInterface.OnClickListener() {
+                    Wizard.noTargetAvailableDialog(getContext(), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             getActivity().finish();
@@ -255,11 +255,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                     @Override
                     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
                         if (ohex != null) {
-                            Wizard.informOHException(DummyApplication.getContext(), ohex);
+                            Wizard.informOHException(getContext(), ohex);
                             return;
                         }
                         if (response == null) {
-                            Wizard.informNullResponse(DummyApplication.getContext());
+                            Wizard.informNullResponse(getContext());
                             return;
                         }
 
@@ -282,7 +282,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         mAdapter.notifyDataSetChanged();
 
                         SharedDataManager.initNewHunt(DummyApplication.getContext(), true, System.currentTimeMillis());
-                        Wizard.gameInitializedDialog(DummyApplication.getContext());
+                        Wizard.gameInitializedDialog(getContext());
                         saveTargets(DummyApplication.getContext());
                     }
                 });

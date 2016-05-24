@@ -155,7 +155,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                             public void onClick(DialogInterface dialogInterface, int which) {
                                 /* Send information about the rejected target into the database on server */
                                 String placeID = selected.getPlaceID();
-                                DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
+                                DialogFragment dialog = Wizard.getServerCommunicationDialog(HuntActivity.this);
                                 ResponseTask task = new ResponseTask(dialog, HuntActivity.this);
                                 task.execute(new RejectPlaceRequest(
                                         SharedDataManager.getPlayer(HuntActivity.this),
@@ -323,7 +323,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                         return;
                     }
                     /* Asynchronously execute and wait for callback when result ready */
-                    DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
+                    DialogFragment dialog = Wizard.getServerCommunicationDialog(HuntActivity.this);
                     ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
                     task.execute(request);
                 } else {
@@ -339,7 +339,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                                 continue;
                             }
                             /* Asynchronously execute and wait for callback when result ready */
-                            DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
+                            DialogFragment dialog = Wizard.getServerCommunicationDialog(HuntActivity.this);
                             ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
                             task.execute(request);
                         }
@@ -512,7 +512,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                         onLocationChanged(location);
                         break;
                     case PERMISSION_REQUEST:
-                        Wizard.locationPermissionDialog(DummyApplication.getContext());
+                        Wizard.locationPermissionDialog(HuntActivity.this);
                         break;
                 }
             }
@@ -692,7 +692,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                     similarityGain,
                     huntNumber
             );
-            DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
+            DialogFragment dialog = Wizard.getServerCommunicationDialog(HuntActivity.this);
             ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
             task.execute(completeRequest);
 
