@@ -27,7 +27,18 @@ public class ResponseTask extends AsyncTask<Request, Void, Response> {
     private Object mData;
     private Request mRequest;
 
+    /**
+     * Interface for response listening.
+     */
     public interface OnResponseTaskCompleted {
+        /**
+         * Called when the task completes with or without error.
+         *
+         * @param request Original sent request.
+         * @param response Response to the request. Can be null.
+         * @param ohex OHException thrown on server, null otherwise.
+         * @param data Data registered to the task on which this method calls back.
+         */
         void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data);
     }
 
@@ -67,6 +78,7 @@ public class ResponseTask extends AsyncTask<Request, Void, Response> {
         }
     }
 
+    @Override
     protected void onPostExecute(Response response) {
         if (mListener != null) {
             mListener.onResponseTaskCompleted(mRequest, response, ohException, mData);
@@ -76,7 +88,7 @@ public class ResponseTask extends AsyncTask<Request, Void, Response> {
         }
     }
 
-    public static Response getServerResponse(Request request) throws OHException {
+    private static Response getServerResponse(Request request) throws OHException {
         /* Check if server address is set */
         if (Utils.getAddress() == null || Utils.getPort() == 0) {
             throw new RuntimeException("Utils must have server set before any communication!");

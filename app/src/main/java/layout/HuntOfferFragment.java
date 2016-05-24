@@ -16,7 +16,6 @@ import android.widget.ProgressBar;
 import com.kappa_labs.ohunter.client.R;
 import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.client.activities.HuntActivity;
-import com.kappa_labs.ohunter.client.activities.MainActivity;
 import com.kappa_labs.ohunter.client.adapters.PageChangeAdapter;
 import com.kappa_labs.ohunter.client.adapters.TileAdapter;
 import com.kappa_labs.ohunter.client.entities.Target;
@@ -51,7 +50,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static List<Target> targets = new ArrayList<>();
     private static TileAdapter mAdapter;
 
-    private ProgressBar fetchingProgressBar;
+    private static ProgressBar fetchingProgressBar;
 
     private static int selectedIndex = -1;
     private static boolean loadingTargets;
@@ -90,7 +89,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        SharedDataManager.saveTargets(getContext(), targets.toArray(new Target[targets.size()]));
+        saveTargets(DummyApplication.getContext());
 
         super.onSaveInstanceState(outState);
     }
@@ -112,6 +111,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
         if (mAdapter == null) {
             mAdapter = new TileAdapter(DummyApplication.getContext(), targets);
+        } else {
+            mAdapter.connect(DummyApplication.getContext(), targets);
         }
         offerGridView.setAdapter(mAdapter);
 
@@ -124,6 +125,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (loadingTargets) {
             fetchingProgressBar.setVisibility(View.VISIBLE);
         } else {
+            fetchingProgressBar.clearAnimation();
             fetchingProgressBar.setVisibility(View.GONE);
         }
         updateSelection();
@@ -213,25 +215,28 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
 
     private void initTargets() {
         /* This class will prepare the places - load from local files or retrieve them from server */
-        final Target[] _targets = new Target[HuntActivity.radarPlaceIDs.size()];
         manager = new TargetsManager(new TargetsManager.PlacesManagerListener() {
             @Override
             public void onPreparationStarted() {
-                fetchingProgressBar.setVisibility(View.VISIBLE);
+                if (fetchingProgressBar != null) {
+                    fetchingProgressBar.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onPreparationEnded() {
-                manager.disconnect();
                 loadingTargets = false;
-                fetchingProgressBar.setVisibility(View.GONE);
+                if (fetchingProgressBar != null) {
+                    fetchingProgressBar.clearAnimation();
+                    fetchingProgressBar.setVisibility(View.GONE);
+                }
                 if (mListener != null) {
                     mListener.onItemUnselected();
                 }
 
                 /* No target is available */
                 if (targets.isEmpty()) {
-                    Wizard.noTargetAvailableDialog(getContext(), new DialogInterface.OnClickListener() {
+                    Wizard.noTargetAvailableDialog(DummyApplication.getContext(), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             getActivity().finish();
@@ -241,20 +246,20 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                 }
 
                 /* Increase the number of hunts */
-                SharedDataManager.increaseHuntNumber(getContext());
+                SharedDataManager.increaseHuntNumber(DummyApplication.getContext());
 
                 /* Remove points from the player for starting a new area (hunt) */
-                PointsManager manager = MainActivity.getPointsManager();
+                PointsManager manager = new PointsManager();
                 manager.removePoints(manager.getBeginAreaCost());
-                manager.updateInDatabase(getContext(), new ResponseTask.OnResponseTaskCompleted() {
+                manager.updateInDatabase(DummyApplication.getContext(), new ResponseTask.OnResponseTaskCompleted() {
                     @Override
                     public void onResponseTaskCompleted(Request request, Response response, OHException ohex, Object data) {
                         if (ohex != null) {
-                            Wizard.informOHException(getContext(), ohex);
+                            Wizard.informOHException(DummyApplication.getContext(), ohex);
                             return;
                         }
                         if (response == null) {
-                            Wizard.informNullResponse(getContext());
+                            Wizard.informNullResponse(DummyApplication.getContext());
                             return;
                         }
 
@@ -276,27 +281,29 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
                         Collections.sort(targets);
                         mAdapter.notifyDataSetChanged();
 
-                        SharedDataManager.initNewHunt(getContext(), true, System.currentTimeMillis());
-                        Wizard.gameInitializedDialog(getActivity());
+                        SharedDataManager.initNewHunt(DummyApplication.getContext(), true, System.currentTimeMillis());
+                        Wizard.gameInitializedDialog(DummyApplication.getContext());
+                        saveTargets(DummyApplication.getContext());
                     }
                 });
             }
 
             @Override
-            public void onPlaceReady(Target target) {
+            public void onTargetReady(Target target) {
                 targets.add(target);
-                SharedDataManager.saveTargets(getContext(), targets.toArray(_targets));
+                saveTargets(DummyApplication.getContext());
                 mAdapter.notifyDataSetChanged();
                 if (mListener != null) {
                     mListener.onTargetAdded();
                 }
             }
-        }, SharedDataManager.getPlayer(getContext()), HuntActivity.radarPlaceIDs);
+        }, SharedDataManager.getPlayer(DummyApplication.getContext()), HuntActivity.radarPlaceIDs);
         /* Do not download data again if the game is already running */
-        if (!SharedDataManager.isHuntReady(getContext())) {
+        if (!SharedDataManager.isHuntReady(DummyApplication.getContext())) {
             manager.prepareTargets();
         } else {
-            Target[] loaded = SharedDataManager.loadTargets(getContext());
+            System.out.println("loading targets");
+            Target[] loaded = SharedDataManager.loadTargets(DummyApplication.getContext());
             if (loaded != null) {
                 for (Target target : loaded) {
                     if (target != null) {
@@ -306,7 +313,10 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             }
             mAdapter.notifyDataSetChanged();
             loadingTargets = false;
-            fetchingProgressBar.setVisibility(View.GONE);
+            if (fetchingProgressBar != null) {
+                fetchingProgressBar.clearAnimation();
+                fetchingProgressBar.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -316,7 +326,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     public static void cancelDownloadTasks() {
         if (manager != null && loadingTargets) {
             manager.cancelTask();
-            manager.disconnect();
             loadingTargets = false;
             manager = null;
         }
@@ -367,7 +376,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
      * @param context Context of the caller.
      */
     public static void saveTargets(Context context) {
-        SharedDataManager.saveTargets(context, targets.toArray(new Target[targets.size()]));
+        if (targets != null) {
+            SharedDataManager.saveTargets(context, targets.toArray(new Target[targets.size()]));
+        } else {
+            SharedDataManager.saveTargets(context, null);
+        }
     }
 
     /**
@@ -550,7 +563,8 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onPageSelected() {
         mAdapter.notifyDataSetChanged();
-        if (!loadingTargets) {
+        if (!loadingTargets && fetchingProgressBar != null) {
+            fetchingProgressBar.clearAnimation();
             fetchingProgressBar.setVisibility(View.GONE);
         }
         if (mListener == null) {
@@ -577,6 +591,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
@@ -586,32 +601,54 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         setRetainInstance(true);
         if (mAdapter != null) {
             mAdapter.connect(DummyApplication.getContext(), targets);
+            mAdapter.notifyDataSetChanged();
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        fetchingProgressBar = null;
+
+        if (fetchingProgressBar != null) {
+            fetchingProgressBar.clearAnimation();
+            fetchingProgressBar.setVisibility(View.GONE);
+            fetchingProgressBar = null;
+        }
         mAdapter.disconnect();
         mListener = null;
     }
 
     /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
+     * Interface which must be implemented by the parent activity.
      */
     public interface OnFragmentInteractionListener {
+        /**
+         * Called when the target selection changes.
+         *
+         * @param target The new selected target.
+         */
         void onTargetChanged(Target target);
+
+        /**
+         * Called when new target is added to the offer list.
+         */
         void onTargetAdded();
+
+        /**
+         * Called when a target's tile is selected.
+         *
+         * @param targetState The state of selected target.
+         */
         void onItemSelected(Target.TargetState targetState);
+
+        /**
+         * When next page should be shown (details for selected target are requested).
+         */
         void onRequestNextPage();
+
+        /**
+         * When no target becomes selected.
+         */
         void onItemUnselected();
     }
 

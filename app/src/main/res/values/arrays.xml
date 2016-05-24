@@ -7,7 +7,7 @@
         <item name="night">@string/daytime_night</item>
     </string-array>
 
-    <string-array name="dummyarray">
+    <string-array name="dummyarray" translatable="false">
         <item name="1">dummy</item>
         <item name="2">dummy</item>
         <item name="3">dummy</item>
@@ -23,7 +23,7 @@
         <item name="13">dummy13</item>
     </string-array>
 
-    <string-array name="pref_offer_number_of_columns_portrait">
+    <string-array name="pref_offer_number_of_columns_portrait" translatable="false">
         <item>1</item>
         <item>2</item>
         <item>3</item>
@@ -33,7 +33,7 @@
         <item>7</item>
     </string-array>
 
-    <string-array name="pref_offer_number_of_columns_landscape">
+    <string-array name="pref_offer_number_of_columns_landscape" translatable="false">
         <item>1</item>
         <item>2</item>
         <item>3</item>

@@ -13,10 +13,6 @@
         android:id="@+id/relativeLayout_cam"
         android:layout_weight="1">
 
-        <!--<client.ohunter.fojjta.cekuj.net.ohunter.CameraOverlay-->
-            <!--android:id="@+id/cam_preview"-->
-            <!--android:layout_width="fill_parent"-->
-            <!--android:layout_height="fill_parent" />-->
         <FrameLayout
             android:id="@+id/frameLayout_cam_preview"
             android:layout_width="fill_parent"
@@ -83,7 +79,7 @@
                     style="?android:attr/buttonStyleSmall"
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
-                    android:text="Shoot"
+                    android:text="@string/take_a_photo_button"
                     android:id="@+id/button_shoot" />
 
                 <SeekBar
@@ -98,16 +94,20 @@
                     android:layout_height="match_parent">
 
                     <Button
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:textSize="30sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="&lt;-"
+                        android:text="@string/rotate_left_button"
                         android:id="@+id/button_rotateLeft"
                         android:layout_weight="1" />
 
                     <Button
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:textSize="30sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="->"
+                        android:text="@string/rotate_right_button"
                         android:id="@+id/button_rotateRight"
                         android:layout_weight="1" />
                 </LinearLayout>

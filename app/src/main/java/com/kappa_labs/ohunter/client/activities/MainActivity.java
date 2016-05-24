@@ -23,6 +23,8 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
 
+import layout.HuntOfferFragment;
+
 
 /**
  * Holds main game menu and basic information about the current game and player.
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mContinueHuntButton;
 
     private Handler mHandler;
-    private static PointsManager mPointsManager;
+    private PointsManager mPointsManager;
 
     private static boolean requestingPoints;
 
@@ -48,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mPointsManager = new PointsManager(this);
 
         playerTextView = (TextView) findViewById(R.id.textView_player);
         serverTextView = (TextView) findViewById(R.id.textView_server);
@@ -152,13 +152,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Gets the PointsManager with context of the main activity.
-     *
-     * @return The PointsManager with context of the main activity.
-     */
-    public static PointsManager getPointsManager() {
-        return mPointsManager;
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        /* Create a manager to control the player's score */
+        if (mPointsManager == null) {
+            mPointsManager = new PointsManager();
+        }
     }
 
     @Override
@@ -170,6 +171,9 @@ public class MainActivity extends AppCompatActivity {
             startLoginActivity();
             return;
         }
+
+        /* Stop downloading targets */
+        HuntOfferFragment.cancelDownloadTasks();
 
         /* Continue button is visible only when the game can really continue... */
         if (SharedDataManager.isHuntReady(this)) {
@@ -199,13 +203,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
+        super.onStop();
+
         stopTimer();
         if (mPointsManager != null) {
             mPointsManager.disconnect();
         }
-
-        super.onDestroy();
     }
 
     private void startLoginActivity() {
@@ -237,6 +241,10 @@ public class MainActivity extends AppCompatActivity {
     private void checkPoints() {
         /* If the score is not high enough, add points to the player, but only when the previous hunt ended */
         if (mPointsManager.getScore() < 20 && !SharedDataManager.isHuntReady(this)) {
+            /* Before the 30 points 'reward', player must have no locked target in history */
+            if (SharedDataManager.isLockedTargetInHistory(MainActivity.this)) {
+                return;
+            }
             mPointsManager.setScore(30);
             updateInfo();
             try {
@@ -313,7 +321,9 @@ public class MainActivity extends AppCompatActivity {
      * Stops the timer showing remaining time on the main screen.
      */
     public void stopTimer() {
-        mHandler.removeCallbacks(mStatusChecker);
+        if (mHandler != null) {
+            mHandler.removeCallbacks(mStatusChecker);
+        }
     }
 
     private Runnable mStatusChecker = new Runnable() {

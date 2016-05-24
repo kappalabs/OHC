@@ -24,10 +24,19 @@ import java.util.Formatter;
  */
 public class Utils {
 
-    public static final String TAG = "Utils";
+    private static final String TAG = "Utils";
 
+    /**
+     * Default server IP address.
+     */
     public static final String DEFAULT_ADDRESS = "localhost";
+    /**
+     * Default server port.
+     */
     public static final int DEFAULT_PORT = 4242;
+    /**
+     * Default timeout for a single server task.
+     */
     public static final int DEFAULT_TIMEOUT = 5000;
 
     private static String mAddress = DEFAULT_ADDRESS;
@@ -37,23 +46,9 @@ public class Utils {
     private static final int[][] SOBEL_ROW = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
     private static final int[][] SOBEL_DIAG = {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}};
 
-    private static Utils mInstance = null;
-
 
     private Utils() {
         /* Exists only to defeat instantiation */
-    }
-
-    /**
-     * Get instance of this singleton class.
-     *
-     * @return The instance of this singleton class.
-     */
-    public static Utils getInstance() {
-        if (mInstance == null) {
-            mInstance = new Utils();
-        }
-        return mInstance;
     }
 
     /**
@@ -73,7 +68,7 @@ public class Utils {
      * @param address The server IP:port to be used.
      */
     public static boolean initServer(String address) {
-        System.out.println("initing with "+address);
+        System.out.println("Initializing server with "+address);
         String[] parts = address.split(":");
         if (parts.length != 2) {
             mAddress = DEFAULT_ADDRESS;
@@ -151,16 +146,34 @@ public class Utils {
         return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length, options);
     }
 
-    public class BitmapWorkerTask extends AsyncTask<SImage, Void, Bitmap> {
+    /**
+     * Class providing reading a bitmap in background async task.
+     */
+    public static class BitmapWorkerTask extends AsyncTask<SImage, Void, Bitmap> {
 
         private OnBitmapReady mListener;
         private Object mData;
 
+        /**
+         * Interface for callback when bitmap is ready.
+         */
+        public interface OnBitmapReady {
 
-//        public BitmapWorkerTask(OnBitmapReady caller) {
-//            this.mListener = caller;
-//        }
+            /**
+             * Called when the bitmap is ready.
+             *
+             * @param bitmap The prepared bitmap.
+             * @param data Data associated with the preceding bitmap task.
+             */
+            void onBitmapReady(Bitmap bitmap, Object data);
+        }
 
+        /**
+         * Create new task for reading bitmap.
+         *
+         * @param caller Listener on bitmap preparation.
+         * @param data Optional object specifying this task will be returned when bitmap is ready.
+         */
         public BitmapWorkerTask(OnBitmapReady caller, Object data) {
             this.mListener = caller;
             this.mData = data;
@@ -188,20 +201,39 @@ public class Utils {
         }
     }
 
-    public interface OnBitmapReady {
-        void onBitmapReady(Bitmap bitmap, Object data);
-    }
-
-    public class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
+    /**
+     * Async task for counting edges in background.
+     */
+    public static class CountEdgesTask extends AsyncTask<Void, Void, Bitmap> {
 
         private DialogFragment mDialog;
         private Bitmap mBitmap;
         private OnEdgesTaskCompleted mListener;
 
+        /**
+         * Interface for callback when the edges task is ready.
+         */
+        public interface OnEdgesTaskCompleted{
+
+            /**
+             * Called when the edges task is ready.
+             *
+             * @param edges The counted bitmap.
+             */
+            void onEdgesTaskCompleted(Bitmap edges);
+        }
+
+        /**
+         * Creates a new task for counting edges of given bitmap.
+         *
+         * @param caller Listener on the task.
+         * @param dialog Dialog, which should be shown when this task is working.
+         * @param original Original bitmap to be used for edges result.
+         */
         public CountEdgesTask(OnEdgesTaskCompleted caller, DialogFragment dialog, Bitmap original) {
+            mListener = caller;
             mDialog = dialog;
             mBitmap = original;
-            mListener = caller;
         }
 
         @Override
@@ -221,11 +253,7 @@ public class Utils {
         }
     }
 
-    public interface OnEdgesTaskCompleted{
-        void onEdgesTaskCompleted(Bitmap edges);
-    }
-
-    private Bitmap sobel(Bitmap referenceImage) {
+    private static Bitmap sobel(Bitmap referenceImage) {
         int blurFactor = 2;
         /* Blur the image by changing the size */
         Bitmap smallerOrig = Bitmap.createScaledBitmap(referenceImage,
@@ -359,28 +387,22 @@ public class Utils {
     }
 
     /**
-     * Changes color of given bitmap to specified value.
+     * Changes color of given bitmap to specified value. The original bitmap is not released.
      *
      * @param sourceBitmap The bitmap to be colored.
      * @param color The RGB color of color filter.
      * @return The colored bitmap.
      */
     public static Bitmap changeBitmapColor(Bitmap sourceBitmap, int color) {
-        Bitmap resultBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0,
-                sourceBitmap.getWidth(), sourceBitmap.getHeight());
-        Bitmap mutableResult = resultBitmap;
-        if (!resultBitmap.isMutable()) {
-            mutableResult = resultBitmap.copy(Bitmap.Config.ARGB_8888, true);
-//            resultBitmap.recycle();
-        }
+        Bitmap resultBitmap = sourceBitmap.copy(sourceBitmap.getConfig(), true);
         Paint p = new Paint();
         ColorFilter filter = new LightingColorFilter(color, 0);
         p.setColorFilter(filter);
 
-        Canvas canvas = new Canvas(mutableResult);
-        canvas.drawBitmap(mutableResult, 0, 0, p);
+        Canvas canvas = new Canvas(resultBitmap);
+        canvas.drawBitmap(resultBitmap, 0, 0, p);
 
-        return mutableResult;
+        return resultBitmap;
     }
 
 }

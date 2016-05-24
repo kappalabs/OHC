@@ -53,10 +53,10 @@ import layout.HuntPlaceFragment;
  */
 public class HuntActivity extends AppCompatActivity implements HuntOfferFragment.OnFragmentInteractionListener, HuntPlaceFragment.OnFragmentInteractionListener, ResponseTask.OnResponseTaskCompleted {
 
-    public static final String TAG = "HuntActivity";
+    private static final String TAG = "HuntActivity";
+
     public static final String LOCATION_KEY = "location_key";
     public static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_string_key";
-
 
     /**
      * Default radius of active zone around a target (in meters).
@@ -101,9 +101,6 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
         /* Create the adapter that will return a fragment for each of the three
            primary sections of the activity */
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-        /* Create a manager to control the player's score */
-        mPointsManager = MainActivity.getPointsManager();
 
         /* Set up the ViewPager with the sections adapter */
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -158,7 +155,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                             public void onClick(DialogInterface dialogInterface, int which) {
                                 /* Send information about the rejected target into the database on server */
                                 String placeID = selected.getPlaceID();
-                                DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                                DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
                                 ResponseTask task = new ResponseTask(dialog, HuntActivity.this);
                                 task.execute(new RejectPlaceRequest(
                                         SharedDataManager.getPlayer(HuntActivity.this),
@@ -226,15 +223,16 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
             @Override
             public void onClick(View v) {
                 Target selected = HuntOfferFragment.getSelectedTarget();
-                // TODO: 13.4.16 pouze pro debug, aby nebylo nutne k cili primo chodit
-                if (selected != null && selected.getState() != Target.TargetState.PHOTOGENIC) {
-                    mCurrentLocation = new Location("dummyprovider");
-                    mCurrentLocation.setLatitude(selected.latitude);
-                    mCurrentLocation.setLongitude(selected.longitude);
-                    checkTargetDistance();
-                    Toast.makeText(HuntActivity.this,
-                            "Uplatněna debug featura pro false navštívení!", Toast.LENGTH_SHORT).show();
-                    return;
+                if (SharedDataManager.debugActiveZone(HuntActivity.this)) {
+                    if (selected != null && selected.getState() != Target.TargetState.PHOTOGENIC) {
+                        mCurrentLocation = new Location("dummyprovider");
+                        mCurrentLocation.setLatitude(selected.latitude);
+                        mCurrentLocation.setLongitude(selected.longitude);
+                        checkTargetDistance();
+                        Toast.makeText(HuntActivity.this,
+                                "Uplatněna debug featura pro false navštívení!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                 }
                 /* Check if target is selected and its state is ready for camera */
                 if (selected == null || selected.getState() != Target.TargetState.PHOTOGENIC) {
@@ -325,7 +323,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                         return;
                     }
                     /* Asynchronously execute and wait for callback when result ready */
-                    DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                    DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
                     ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
                     task.execute(request);
                 } else {
@@ -341,7 +339,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                                 continue;
                             }
                             /* Asynchronously execute and wait for callback when result ready */
-                            DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
+                            DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
                             ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
                             task.execute(request);
                         }
@@ -383,42 +381,53 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
     }
 
     @Override
-    public void onResume() {
-        PhotosManager.init();
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
+
+        /* Create a manager to control the player's score */
+        if (mPointsManager == null) {
+            mPointsManager = new PointsManager();
+        }
     }
 
     @Override
-    public void onBackPressed() {
-        HuntOfferFragment.cancelDownloadTasks();
-        super.onBackPressed();
+    public void onResume() {
+        super.onResume();
+
+        PhotosManager.init();
     }
 
     @Override
     protected void onPause() {
-        HuntOfferFragment.saveTargets(this);
         super.onPause();
+
+        HuntOfferFragment.saveTargets(DummyApplication.getContext());
     }
 
     protected void onStop() {
+        super.onStop();
+
         thisActivity = null;
         if (gpsReceiver != null) {
             unregisterReceiver(gpsReceiver);
             gpsReceiver = null;
         }
         stopService(new Intent(this, GPSTracker.class));
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        /* Release the reference */
-        mPointsManager = null;
+        /* Release the references to prevent memory leaks */
+        if (mPointsManager != null) {
+            mPointsManager.disconnect();
+        }
         mHuntOfferFragment = null;
         mHuntPlaceFragment = null;
         mHuntActionFragment = null;
         mViewPager = null;
-        super.onDestroy();
+        acceptFab = null;
+        openUpFab = null;
+        rejectFab = null;
+        cameraFab = null;
+        evaluateFab = null;
+        rotateFab = null;
+        sortFab = null;
     }
 
     @Override
@@ -503,7 +512,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                         onLocationChanged(location);
                         break;
                     case PERMISSION_REQUEST:
-                        Wizard.locationPermissionDialog(getApplicationContext());
+                        Wizard.locationPermissionDialog(DummyApplication.getContext());
                         break;
                 }
             }
@@ -559,13 +568,16 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
         resolveButtonState(acceptFab, state.canAccept());
         resolveButtonState(openUpFab, state.canOpenUp());
         resolveButtonState(rejectFab, state.canReject());
-        // TODO: 20.5.16 pouze pro debug
-        resolveButtonState(cameraFab, state.canLock() || state.canPhotogenify());
-//        resolveButtonState(cameraFab, state.canLock());
+        if (SharedDataManager.debugActiveZone(this)) {
+            resolveButtonState(cameraFab, state.canLock() || state.canPhotogenify());
+        } else {
+            resolveButtonState(cameraFab, state.canLock());
+        }
         resolveButtonState(evaluateFab, state.canComplete());
     }
 
     private void resolveButtonState(FloatingActionButton fab, boolean show) {
+        fab.clearAnimation();
         if (show) {
             fab.show();
         } else {
@@ -650,7 +662,7 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                     mHuntActionFragment.updateTargetMarks();
                 }
             }
-            SharedDataManager.setPlayer(HuntActivity.this, response.player);
+            SharedDataManager.setPlayer(this, response.player);
             Log.d(TAG, "Rejected target was written to the database. Target ID: " + placeID);
         } else if (data instanceof String && request instanceof CompareRequest) {
             /* Request to evaluate similarity successfully finished */
@@ -680,11 +692,9 @@ public class HuntActivity extends AppCompatActivity implements HuntOfferFragment
                     similarityGain,
                     huntNumber
             );
-            if (mHuntOfferFragment != null) {
-                DialogFragment dialog = Wizard.getServerCommunicationDialog(mHuntOfferFragment.getActivity());
-                ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
-                task.execute(completeRequest);
-            }
+            DialogFragment dialog = Wizard.getServerCommunicationDialog(DummyApplication.getContext());
+            ResponseTask task = new ResponseTask(dialog, placeID, HuntActivity.this);
+            task.execute(completeRequest);
 
             /* If the complete result fails, compare is not going to be done again */
             SharedDataManager.setRequestForTarget(this, completeRequest, placeID);

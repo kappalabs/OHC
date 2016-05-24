@@ -166,4 +166,7 @@
     <string name="dialog_wizard_complete_history_positive">Rozumím</string>
     <string name="dialog_wizard_complete_history_title">Vyhodnocení historie</string>
     <string name="dialog_wizard_complete_history_message">Před zahájením lovu musíš vyhodnotit všechny cíle v historii</string>
+    <string name="pref_debug_active_zone_summary">Zobrazí tlačítko s kamerou pro falešné navštívení cíle</string>
+    <string name="pref_debug_active_zone_title">Debug aktivní zóny</string>
+    <string name="take_a_photo_button">Fotit</string>
 </resources>

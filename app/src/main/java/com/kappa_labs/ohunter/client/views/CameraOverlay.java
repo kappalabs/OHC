@@ -15,6 +15,9 @@ import android.view.ViewGroup;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Class for camera preview.
+ */
 public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback {
 
     public static final String TAG = "CameraOverlay";
@@ -27,6 +30,12 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
     private Camera.Size mPreviewSize;
 
 
+    /**
+     * Creates a new custom camera preview surface.
+     *
+     * @param context Context of the parent.
+     * @param camera Opened camera object.
+     */
     public CameraOverlay(Context context, Camera camera) {
         super(context);
         mCamera = camera;
@@ -34,11 +43,24 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
         init(context);
     }
 
+    /**
+     * Creates a new custom camera preview surface.
+     *
+     * @param context Context of the parent.
+     * @param attrs Attributes for the surface view.
+     */
     public CameraOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
+    /**
+     * Creates a new custom camera preview surface.
+     *
+     * @param context Context of the parent.
+     * @param attrs Attributes for the surface view.
+     * @param defStyle Style for the surface view.
+     */
     public CameraOverlay(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context);
@@ -75,7 +97,6 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
     }
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-//        Log.d("Camera", "Vybiram nejlepsi pro rozmery w*h = "+w+"*"+h);
         final double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double)h / w;
 
@@ -102,7 +123,6 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
                 }
             }
         }
-//        Log.d("Camera", "nejlepsi je "+optimalSize.width+"*"+optimalSize.height);
         return optimalSize;
     }
 
@@ -119,27 +139,21 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        // If your preview can change or rotate, take care of those events here.
-        // Make sure to stop the preview before resizing or reformatting it.
-
-        if (mHolder.getSurface() == null){
-            // preview surface does not exist
+        if (mHolder.getSurface() == null) {
+            /* Preview surface does not exist */
             return;
         }
 
-        // stop preview before making changes
+        /* Stop preview before making changes */
         try {
             mCamera.stopPreview();
         } catch (Exception e){
-            // ignore: tried to stop a non-existent preview
+            /* ignore: tried to stop a non-existent preview */
         }
 
-        // set preview size and make any resize, rotate or
-        // reformatting changes here
+        /* Set preview size and make any resize, rotate or reformatting changes here */
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-//        parameters.setPreviewSize(parameters.getPictureSize().width / mPreviewSize.width,
-//                parameters.getPictureSize().height / mPreviewSize.height);
         mCamera.setParameters(parameters);
 
         ViewGroup.LayoutParams params = this.getLayoutParams();
@@ -173,14 +187,14 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
     }
 
     /**
-     *  Take a picture and and convert it from bytes[] to Bitmap.
+     * Take a picture and and convert it from bytes[] to Bitmap.
      */
     public void takeAPicture() {
         TakePictureTask takePictureTask = new TakePictureTask();
         takePictureTask.execute();
     }
 
-    Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
+    private Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -220,8 +234,21 @@ public class CameraOverlay extends SurfaceView implements SurfaceHolder.Callback
 
     }
 
+    /**
+     * Interface for listener on this camera preview.
+     */
     public interface OnCameraActionListener {
+        /**
+         * Called when the size of this view changes.
+         *
+         * @param width New width of this view.
+         * @param height New height of this view.
+         */
         void onPreviewSizeChange(int width, int height);
+
+        /**
+         * Called when the image was taken and is ready to use.
+         */
         void onImageReady();
     }
 

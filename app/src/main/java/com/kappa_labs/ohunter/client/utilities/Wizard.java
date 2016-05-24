@@ -33,7 +33,10 @@ public class Wizard {
 
     private static DialogFragment targetCompletedDialog;
 
-
+    
+    /**
+     * Class providing basic DialogFragment with given texts.
+     */
     public static class BasicInfoDialogFragment extends DialogFragment {
 
         private String mTitle, mMessage;
@@ -41,21 +44,45 @@ public class Wizard {
         private DialogInterface.OnClickListener mPositiveListener, mNeutralListener, mNegativeListener;
 
 
+        /**
+         * Sets title and message of this dialog.
+         *
+         * @param title The title of this dialog.
+         * @param message The message in this dialog.
+         */
         public void setText(String title, String message) {
             this.mTitle = title;
             this.mMessage = message;
         }
 
+        /**
+         * Sets positive button label and listener.
+         *
+         * @param positive The positive button label.
+         * @param positiveListener The positive button click listener.
+         */
         public void setPositive(String positive, DialogInterface.OnClickListener positiveListener) {
             this.mPositive = positive;
             this.mPositiveListener = positiveListener;
         }
 
+        /**
+         * Sets neutral button label and listener.
+         *
+         * @param neutral The neutral button label.
+         * @param neutralListener The neutral button click listener.
+         */
         public void setNeutral(String neutral, DialogInterface.OnClickListener neutralListener) {
             this.mNeutral = neutral;
             this.mNeutralListener = neutralListener;
         }
 
+        /**
+         * Sets negative button label and listener.
+         *
+         * @param negative The negative button label.
+         * @param negativeListener The negative button click listener.
+         */
         public void setNegative(String negative, DialogInterface.OnClickListener negativeListener) {
             this.mNegative = negative;
             this.mNegativeListener = negativeListener;
@@ -90,11 +117,20 @@ public class Wizard {
 
     }
 
+    /**
+     * Class for creating basic dialogFragment showing progress.
+     */
     public static class BasicProgressDialogFragment extends DialogFragment {
 
         private static String mTitle, mMessage;
 
 
+        /**
+         * Sets title and message of this dialog.
+         *
+         * @param title The title of this dialog.
+         * @param message The message in this dialog.
+         */
         public void setTexts(String title, String message) {
             mTitle = title;
             mMessage = message;
@@ -139,6 +175,12 @@ public class Wizard {
         }
     }
 
+    /**
+     * Creates and shows dialog informing about new game. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment gameInitializedDialog(Context context) {
         if (context == null || !SharedDataManager.showWizardOnNewHunt(context)) {
             return null;
@@ -152,6 +194,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about no available targets on new game.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment noTargetAvailableDialog(Context context, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
             return null;
@@ -166,6 +214,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about no possibility to accept more targets.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment notEnoughAcceptableDialog(Context context) {
         if (context == null) {
             return null;
@@ -179,6 +233,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog questioning about target acceptation. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment acceptQuestionDialog(Context context, int amount, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
             return null;
@@ -197,6 +257,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog questioning about target acceptation. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment rejectQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
             return null;
@@ -216,6 +282,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog questioning about opening up a target. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment openUpQuestionDialog(Context context, int points, DialogInterface.OnClickListener positiveListener) {
         if (context == null) {
             return null;
@@ -235,6 +307,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about missing points.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment missingPointsDialog(Context context, int points) {
         if (context == null) {
             return null;
@@ -249,6 +327,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog questioning about storing targets for evaluation.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment storeForEvaluationDialog(Context context, DialogInterface.OnClickListener positiveListener, DialogInterface.OnClickListener neutralListener, DialogInterface.OnClickListener negativeListener) {
         if (context == null) {
             return null;
@@ -264,6 +348,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about locked target. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment targetLockedDialog(Context context) {
         if (context == null || !SharedDataManager.showWizardOnTargetLocked(context)) {
             return null;
@@ -277,6 +367,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about completed target. Showed only when user allowed that in settings.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment targetCompletedDialog(Context context) {
         if (context == null || !SharedDataManager.showWizardOnTargetCompleted(context)) {
             return null;
@@ -294,6 +390,12 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog informing about location permission needs.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment locationPermissionDialog(Context context) {
         if (context == null) {
             return null;
@@ -307,25 +409,12 @@ public class Wizard {
         return dialogFragment;
     }
 
-    public static DialogFragment getStandardProgressDialog(Context context, String title, String message) {
-        if (context == null) {
-            return null;
-        }
-        BasicProgressDialogFragment dialogFragment = new BasicProgressDialogFragment();
-        dialogFragment.setTexts(title, message);
-        dialogFragment.setCancelable(false);
-        commitFragment(context, dialogFragment, "getStandardProgressDialogTag");
-        return dialogFragment;
-    }
-
-    public static DialogFragment getServerCommunicationDialog(Context context) {
-        if (context == null) {
-            return null;
-        }
-        return getStandardProgressDialog(context, context.getString(R.string.server_communication),
-                context.getString(R.string.waiting_for_data));
-    }
-
+    /**
+     * Creates and shows dialog informing about need to complete targets in history before starting new hunt.
+     *
+     * @param context Context of the caller.
+     * @return The dialog fragment that was created and shown, null when no dialog was created.
+     */
     public static DialogFragment completeHistoryDialog(Context context) {
         if (context == null) {
             return null;
@@ -339,6 +428,42 @@ public class Wizard {
         return dialogFragment;
     }
 
+    /**
+     * Creates and shows dialog showing indefinite progress.
+     *
+     * @param context Context of the caller.
+     * @return The progress dialog fragment that was created and shown, null when no dialog was created.
+     */
+    public static DialogFragment getStandardProgressDialog(Context context, String title, String message) {
+        if (context == null) {
+            return null;
+        }
+        BasicProgressDialogFragment dialogFragment = new BasicProgressDialogFragment();
+        dialogFragment.setTexts(title, message);
+        dialogFragment.setCancelable(false);
+        commitFragment(context, dialogFragment, "getStandardProgressDialogTag");
+        return dialogFragment;
+    }
+
+    /**
+     * Creates and shows indefinite progress dialog with information regarding server connection.
+     *
+     * @param context Context of the caller.
+     * @return The progress dialog fragment that was created and shown, null when no dialog was created.
+     */
+    public static DialogFragment getServerCommunicationDialog(Context context) {
+        if (context == null) {
+            return null;
+        }
+        return getStandardProgressDialog(context, context.getString(R.string.server_communication),
+                context.getString(R.string.waiting_for_data));
+    }
+
+    /**
+     * Creates and shows notification informing about photogenified target.
+     *
+     * @param context Context of the caller.
+     */
     public static void showPhotogenifiedNotification(Context context) {
         if (context == null) {
             return;

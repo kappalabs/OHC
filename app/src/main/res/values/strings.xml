@@ -210,4 +210,9 @@
     <string name="dialog_wizard_complete_history_title">History evaluation</string>
     <string name="dialog_wizard_complete_history_message">Evaluate all locked targets in history before starting a new hunt</string>
     <string name="dialog_wizard_complete_history_positive">OK</string>
+    <string name="pref_debug_active_zone_title">Debug active zone</string>
+    <string name="pref_debug_active_zone_summary">Provides camera button to false visit the target</string>
+    <string name="take_a_photo_button">Photo</string>
+    <string name="rotate_left_button" translatable="false"><![CDATA[<-]]></string>
+    <string name="rotate_right_button" translatable="false"><![CDATA[->]]></string>
 </resources>

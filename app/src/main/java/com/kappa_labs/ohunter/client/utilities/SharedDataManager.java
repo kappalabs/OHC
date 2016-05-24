@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class SharedDataManager {
 
-    public static final String TAG = "SharedDataManager";
+    private static final String TAG = "SharedDataManager";
 
     /**
      * Default number of available targets in the initial offer.
@@ -55,6 +55,7 @@ public class SharedDataManager {
     private static final String LAST_AREA_LATITUDE_KEY = "last_area_latitude";
     private static final String LAST_AREA_RADIUS_KEY = "last_area_radius";
     private static final String NUM_ACCEPTABLE_KEY = "num_acceptable";
+    private static final String PREFERRED_DAYTIME_KEY = "preferred_daytime";
 
     private static final String PHOTO_PREFIX = "photo_";
     private static final String TARGET_PREFIX = "target_";
@@ -386,10 +387,15 @@ public class SharedDataManager {
      */
     public static void tryRemoveHistoryPhotos(Context context) {
         boolean remove = getSharedPreferences(context).getBoolean("pref_delete_history_photos", false);
-        if (!checkDirectory(context, TARGET_PHOTOS_DIRECTORY)
-                || (remove && removeDirectory(context, TARGET_PHOTOS_DIRECTORY))) {
-            getSharedPreferences(context).edit().putBoolean("pref_delete_history_photos", false).commit();
+        if (checkDirectory(context, TARGET_PHOTOS_DIRECTORY) && remove) {
+            List<Target> history = getTargetsFromHistory(context);
+            for (Target target : history) {
+                if (target != null && target.getState() == Target.TargetState.COMPLETED) {
+                    target.removePhotos();
+                }
+            }
         }
+        getSharedPreferences(context).edit().putBoolean("pref_delete_history_photos", false).commit();
     }
 
     /**
@@ -400,10 +406,26 @@ public class SharedDataManager {
      */
     public static void tryRemoveHistoryInformation(Context context) {
         boolean remove = getSharedPreferences(context).getBoolean("pref_delete_history_information", false);
-        if (!checkDirectory(context, HISTORY_DIRECTORY)
-                || (remove && removeDirectory(context, HISTORY_DIRECTORY))) {
-            getSharedPreferences(context).edit().putBoolean("pref_delete_history_information", false).commit();
+        if (checkDirectory(context, HISTORY_DIRECTORY) && remove) {
+            List<Target> history = getTargetsFromHistory(context);
+            for (Target target : history) {
+                if (target != null && target.getState() == Target.TargetState.COMPLETED) {
+                    target.removePhotos();
+                    removeObject(context, HISTORY_TARGET_PREFIX + target.getPlaceID(), HISTORY_DIRECTORY);
+                }
+            }
         }
+        getSharedPreferences(context).edit().putBoolean("pref_delete_history_information", false).commit();
+    }
+
+    /**
+     * Reads value from settings, if the player wants to use debug mode for visiting targets.
+     *
+     * @param context Context of the caller.
+     * @return If the player wants to use debug mode for visiting targets.
+     */
+    public static boolean debugActiveZone(Context context) {
+        return getSharedPreferences(context).getBoolean("pref_debug_active_zone", false);
     }
 
     /**
@@ -474,6 +496,26 @@ public class SharedDataManager {
      */
     public static boolean storePhotosExternally(Context context) {
         return getSharedPreferences(context).getBoolean("pref_store_photos_externally", true);
+    }
+
+    /**
+     * Gets the daytime preferred by user.
+     *
+     * @param context Context of the caller.
+     * @return The daytime preferred by user.
+     */
+    public static Photo.DAYTIME getPreferredDaytime(Context context) {
+        return Photo.DAYTIME.values()[getSharedPreferences(context).getInt(PREFERRED_DAYTIME_KEY, 0)];
+    }
+
+    /**
+     * Sets the daytime preferred by user.
+     *
+     * @param context Context of the caller.
+     * @param daytime The daytime preferred by user.
+     */
+    public static void setPreferredDaytime(Context context, Photo.DAYTIME daytime) {
+        getSharedPreferences(context).edit().putInt(PREFERRED_DAYTIME_KEY, daytime.ordinal()).commit();
     }
 
     /**
@@ -678,6 +720,17 @@ public class SharedDataManager {
      * @param context Context of the caller.
      */
     public static void removeTargets(Context context) {
+        /* Remove photos of all targets which are not in history */
+        Target[] targets = loadTargets(context);
+        if (targets != null) {
+            for (Target target : targets) {
+                if (target != null && target.getState() != Target.TargetState.LOCKED
+                        && target.getState() != Target.TargetState.COMPLETED) {
+                    target.removePhotos();
+                }
+            }
+        }
+        /* Remove directories of all targets */
         String[] fileList = context.getFilesDir().list();
         List<String> placeDirNames = new ArrayList<>();
         /* Locate the directories containing the target files */
@@ -792,7 +845,7 @@ public class SharedDataManager {
     }
 
     /**
-     * Gets all the targets saved in history.
+     * Gets all the targets saved in history. Always not null.
      *
      * @param context Context of the caller.
      * @return All the targets saved in history.
@@ -966,19 +1019,5 @@ public class SharedDataManager {
         /* Remove the list of photos from preferences of this place */
         preferences.edit().remove(PHOTOS_SET_KEY).apply();
     }
-
-//    /**
-//     * Removes value witch given key from the preferences.
-//     *
-//     * @param context Context of the caller.
-//     * @param key The key of the value, that should be removed.
-//     */
-//    public void remove(Context context, String key) {
-//        getSharedPreferences(context).edit().remove(key).commit();
-//    }
-
-//    public boolean clear(Context context) {
-//        return getSharedPreferences(context).edit().clear().commit();
-//    }
 
 }

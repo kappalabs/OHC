@@ -2,6 +2,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <CheckBoxPreference
+        android:key="pref_debug_active_zone"
+        android:title="@string/pref_debug_active_zone_title"
+        android:summary="@string/pref_debug_active_zone_summary"
+        android:defaultValue="false" />
+
+    <CheckBoxPreference
         android:key="pref_show_new_hunt_wizard"
         android:title="@string/pref_show_new_hunt_wizard_title"
         android:summary="@string/pref_show_new_hunt_wizard_summary"

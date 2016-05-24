@@ -63,12 +63,12 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
         placeID = null;
         numberOfPhotos = 0;
         daytimeTexts = null;
+        mPhotoImageView = null;
         recycleBitmaps();
         infoList = null;
         maxHeightRatio = 0;
         dataInvalidated = true;
         selectedPhotoIndex = -1;
-        mPhotoImageView = null;
     }
 
     /**
@@ -145,6 +145,13 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
             mPhotoImageView.setImageDrawable(null);
             update();
         }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        initNewHunt();
     }
 
     /**
@@ -299,7 +306,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
                 if (photo == null) {
                     continue;
                 }
-                Utils.BitmapWorkerTask bitmapTask = Utils.getInstance().new BitmapWorkerTask(new Utils.OnBitmapReady() {
+                Utils.BitmapWorkerTask bitmapTask = new Utils.BitmapWorkerTask(new Utils.BitmapWorkerTask.OnBitmapReady() {
                     @Override
                     public void onBitmapReady(Bitmap bitmap, Object data) {
                         if (data instanceof BitmapReferencer) {
@@ -349,6 +356,7 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
@@ -359,20 +367,19 @@ public class HuntPlaceFragment extends Fragment implements PageChangeAdapter {
     @Override
     public void onDetach() {
         super.onDetach();
+
         mListener = null;
     }
 
     /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
+     * Interface that parent activity must implement.
      */
     public interface OnFragmentInteractionListener {
+        /**
+         * Called when target's reference photo is changed.
+         *
+         * @param photoIndex Index of new selected reference photo.
+         */
         void onSelectionChanged(int photoIndex);
     }
 

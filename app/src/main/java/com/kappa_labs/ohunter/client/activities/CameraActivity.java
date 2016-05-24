@@ -49,7 +49,7 @@ import java.util.Arrays;
  * status bar and navigation/system bar) with user interaction.
  * Provides taking photos of targets, camera preview is shown on the screen.
  */
-public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener {
+public class CameraActivity extends AppCompatActivity implements Utils.CountEdgesTask.OnEdgesTaskCompleted, CameraOverlay.OnCameraActionListener {
 
     public static final String TAG = "CameraActivity";
 
@@ -207,8 +207,7 @@ public class CameraActivity extends AppCompatActivity implements Utils.OnEdgesTa
 
         /* Show the reference photo edges on top of the photo preview */
         templateImageView = (ImageView) findViewById(R.id.imageView_template);
-        Utils.CountEdgesTask edgesTask = Utils.getInstance().
-                new CountEdgesTask(this, Wizard.getStandardProgressDialog(this,
+        Utils.CountEdgesTask edgesTask = new Utils.CountEdgesTask(this, Wizard.getStandardProgressDialog(this,
                 getString(R.string.executing_task),
                 getString(R.string.waiting_for_result)), referenceImage);
         edgesTask.execute();

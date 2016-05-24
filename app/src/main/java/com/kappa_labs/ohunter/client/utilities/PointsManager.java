@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.client.utilities;
 import android.content.Context;
 import android.support.v4.app.DialogFragment;
 
+import com.kappa_labs.ohunter.client.activities.DummyApplication;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
 
@@ -28,13 +29,14 @@ public class PointsManager {
 
     /**
      * Creates a new manager of the score/points.
-     *
-     * @param mContext Context of the caller to enable reading/writing from/to local files.
      */
-    public PointsManager(Context mContext) {
-        this.mContext = mContext;
+    public PointsManager() {
+        this.mContext = DummyApplication.getContext();
     }
 
+    /**
+     * Releases internal context.
+     */
     public void disconnect() {
         mContext = null;
     }
@@ -84,7 +86,6 @@ public class PointsManager {
      * @param points Number of points to add (can be negative to subtract/remove).
      * @return True on success, false on fail, when saving the change.
      */
-    @SuppressWarnings("unused")
     public boolean addPoints(int points) {
         Player player = SharedDataManager.getPlayer(mContext);
         player.setScore(player.getScore() + points);

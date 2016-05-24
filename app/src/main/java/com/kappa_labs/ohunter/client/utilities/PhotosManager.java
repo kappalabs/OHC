@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.client.utilities;
 
 
-import android.content.Context;
 import android.support.v4.util.LruCache;
 import android.util.Log;
 
@@ -20,7 +19,6 @@ public class PhotosManager {
     private static final String TAG = "PhotosManager";
 
     private static LruCache<TargetPhotoKey, Photo> mPhotosCache;
-    private static Context mContext;
 
 
     /**
@@ -82,7 +80,7 @@ public class PhotosManager {
         if (mPhotosCache != null) {
             mPhotosCache.remove(new TargetPhotoKey(placeID, index));
         }
-        SharedDataManager.saveTargetPhoto(mContext, placeID, index, photo);
+        SharedDataManager.saveTargetPhoto(DummyApplication.getContext(), placeID, index, photo);
     }
 
     /**
@@ -118,7 +116,7 @@ public class PhotosManager {
         TargetPhotoKey targetPhotoKey = new TargetPhotoKey(placeID, index);
         Photo photo = mPhotosCache.get(targetPhotoKey);
         if (photo == null) {
-            photo = SharedDataManager.getTargetPhoto(mContext, placeID, index);
+            photo = SharedDataManager.getTargetPhoto(DummyApplication.getContext(), placeID, index);
             if (photo != null) {
                 mPhotosCache.put(targetPhotoKey, photo);
             }
@@ -137,29 +135,27 @@ public class PhotosManager {
                 mPhotosCache.remove(new TargetPhotoKey(placeID, i));
             }
         }
-        SharedDataManager.removeTargetPhotos(mContext, placeID);
+        SharedDataManager.removeTargetPhotos(DummyApplication.getContext(), placeID);
     }
 
     /**
-     * Sets internal context, initializes the LRU-cache. Context is used
+     * Initializes the LRU-cache. Context is used
      * to load and save the cache from/to external memory.
      */
     public static void init() {
-        mContext = DummyApplication.getContext();
         if (mPhotosCache == null) {
             initMemoryCache();
         }
     }
 
     /**
-     * Releases the internal context.
+     * Releases the LRU-cache content.
      */
     public static void disconnect() {
         if (mPhotosCache != null) {
             mPhotosCache.evictAll();
             mPhotosCache = null;
         }
-        mContext = null;
     }
 
     private static class TargetPhotoKey {

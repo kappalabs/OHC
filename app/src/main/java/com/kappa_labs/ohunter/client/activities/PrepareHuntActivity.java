@@ -92,16 +92,11 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
     private GoogleApiClient mGoogleApiClient;
     private Circle mCircle;
 
-    public static Photo.DAYTIME preferredDaytime = Photo.DAYTIME.UNKNOWN;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_prepare_hunt);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mDaytimeSpinner = (Spinner) findViewById(R.id.spinner_daytime);
         mDaytimeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -110,15 +105,15 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
                 switch (position) {
                     case 0:
                         /* Requests all the types */
-                        preferredDaytime = Photo.DAYTIME.UNKNOWN;
+                        SharedDataManager.setPreferredDaytime(PrepareHuntActivity.this, Photo.DAYTIME.UNKNOWN);
                         break;
                     case 1:
                         /* Requests only non-dark photos */
-                        preferredDaytime = Photo.DAYTIME.DAY;
+                        SharedDataManager.setPreferredDaytime(PrepareHuntActivity.this, Photo.DAYTIME.DAY);
                         break;
                     case 2:
                         /* Requests only dark photos */
-                        preferredDaytime = Photo.DAYTIME.NIGHT;
+                        SharedDataManager.setPreferredDaytime(PrepareHuntActivity.this, Photo.DAYTIME.NIGHT);
                         break;
                 }
             }
@@ -301,18 +296,21 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     @Override
     protected void onStart() {
+        super.onStart();
+
         if (!mResolvingError && mGoogleApiClient != null) {
             mGoogleApiClient.connect();
         }
-        super.onStart();
     }
 
     @Override
     protected void onStop() {
+        super.onStop();
+
         if (!mResolvingError && mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
+            mGoogleApiClient = null;
         }
-        super.onStop();
     }
 
     @Override
@@ -403,12 +401,14 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     @Override
     public void onConnectionSuspended(int cause) {
-        // The connection has been interrupted.
-        // Disable any UI components that depend on Google APIs
-        // until onConnected() is called.
+        /* The connection has been interrupted. */
     }
 
-    /* Creates a dialog for an error message */
+    /**
+     * Creates a dialog for an error message.
+     *
+     * @param errorCode Error code of ConnectionResult.
+     */
     private void showErrorDialog(int errorCode) {
         /* Create a fragment for the error dialog */
         ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
@@ -416,11 +416,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
         Bundle args = new Bundle();
         args.putInt(DIALOG_ERROR, errorCode);
         dialogFragment.setArguments(args);
-        dialogFragment.show(getSupportFragmentManager(), "errorDialog");
+        dialogFragment.show(getSupportFragmentManager(), "errorDialogTag");
     }
 
-    /* Called from ErrorDialogFragment when the dialog is dismissed. */
-    public void onDialogDismissed() {
+    private void onDialogDismissed() {
         mResolvingError = false;
     }
 
@@ -460,12 +459,10 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-
     }
 
     @Override
@@ -488,10 +485,6 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-//        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-//        map.setTrafficEnabled(true);
-//        map.setIndoorEnabled(true);
-//        map.setBuildingsEnabled(true);
         map.getUiSettings().setZoomControlsEnabled(true);
         map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override

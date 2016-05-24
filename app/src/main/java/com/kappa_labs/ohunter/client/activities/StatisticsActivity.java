@@ -117,7 +117,7 @@ public class StatisticsActivity extends AppCompatActivity implements ResponseTas
         labels = _labels.toArray(new String[numHunts]);
 
         /* Nothing to show up */
-        if (!targets.isEmpty()) {
+        if (binsDiscovery.length != 0 && binsSimilarity.length != 0) {
             List<Integer> a = Arrays.asList(binsDiscovery);
             List<Integer> b = Arrays.asList(binsSimilarity);
             highest = Math.max(Collections.max(a), Collections.max(b));

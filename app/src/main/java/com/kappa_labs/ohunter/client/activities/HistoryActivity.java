@@ -58,9 +58,6 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
             historyGrid.setNumColumns(SharedDataManager.getOfferColumnsLandscape(this));
         }
 
-        /* Create a manager to control the player's score */
-        mPointsManager = MainActivity.getPointsManager();
-
         PhotosManager.init();
         /* Retrieve targets from history */
         final List<Target> targets = SharedDataManager.getTargetsFromHistory(this);
@@ -104,20 +101,35 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        /* Create a manager to control the player's score */
+        if (mPointsManager == null) {
+            mPointsManager = new PointsManager();
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+
         /* To be able to load the target's photos */
         PhotosManager.init();
     }
 
     @Override
-    protected void onDestroy() {
-        /* Release the reference */
+    protected void onStop() {
+        super.onStop();
+
+        /* Release the references */
         PhotosManager.disconnect();
         if (mAdapter != null) {
             mAdapter.disconnect();
         }
-        super.onDestroy();
+        if (mPointsManager != null) {
+            mPointsManager.disconnect();
+        }
     }
 
     @Override
@@ -138,7 +150,7 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
             Target target = (Target) data;
             String photoReference = ((CompareRequest) request).getReferencePhoto().reference;
 
-            Toast.makeText(HistoryActivity.this, String.format(getString(R.string.similarity_is),
+            Toast.makeText(this, String.format(getString(R.string.similarity_is),
                     response.similarity * 100), Toast.LENGTH_SHORT).show();
             Log.d(TAG, "response similarity: " + response.similarity);
 
@@ -153,10 +165,10 @@ public class HistoryActivity extends AppCompatActivity implements ResponseTask.O
                     photoReference,
                     discoveryGain,
                     similarityGain,
-                    SharedDataManager.getHuntNumber(HistoryActivity.this)
+                    SharedDataManager.getHuntNumber(this)
             );
-            DialogFragment dialog = Wizard.getServerCommunicationDialog(HistoryActivity.this);
-            ResponseTask task = new ResponseTask(dialog, target, HistoryActivity.this);
+            DialogFragment dialog = Wizard.getServerCommunicationDialog(this);
+            ResponseTask task = new ResponseTask(dialog, target, this);
             task.execute(completeRequest);
 
             /* If the complete result fails, compare is not going to be done again */

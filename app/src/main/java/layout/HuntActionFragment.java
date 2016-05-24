@@ -3,6 +3,7 @@ package layout;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
@@ -116,6 +117,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
         FragmentManager fm = getChildFragmentManager();
         fragment = (SupportMapFragment) fm.findFragmentById(R.id.map_layout);
         if (fragment == null) {
@@ -131,12 +133,13 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
 
     @Override
     public void onDetach() {
+        super.onDetach();
+
         map = null;
         fragment = null;
         mLastLocation = null;
         targetMarks.clear();
         markerTargetHashMap.clear();
-        super.onDetach();
     }
 
     @Override
@@ -149,6 +152,7 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
     @Override
     public void onResume() {
         super.onResume();
+
         if (map == null) {
             fragment.getMapAsync(this);
         }
@@ -284,11 +288,15 @@ public class HuntActionFragment extends Fragment implements OnMapReadyCallback, 
         /* Add new marks */
         markerTargetHashMap.clear();
         for (Target target : HuntOfferFragment.getTargets()) {
+            Bitmap icon = target.getIcon();
+            if (icon == null || icon.isRecycled()) {
+                continue;
+            }
             MarkerOptions options = new MarkerOptions()
                     .position(new LatLng(target.latitude, target.longitude))
                     .title(target.getName())
                     .icon(BitmapDescriptorFactory.fromBitmap(Utils.changeBitmapColor(
-                            target.getIcon(), target.getState().getColor(getContext()))))
+                            icon, target.getState().getColor(getContext()))))
                     .anchor(0.5f, 0.5f);
             Marker targetMark = map.addMarker(options);
             targetMarks.add(targetMark);

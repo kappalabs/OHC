@@ -27,13 +27,13 @@ import com.kappa_labs.ohunter.client.entities.Target;
 import com.kappa_labs.ohunter.client.utilities.Utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 
+import java.util.Objects;
+
 /**
  * Tile view to show basic information about one target. Shows its state by color, basic information
  * on the other side of the itself and number of points given/taken for manipulation with its target.
  */
 public class TargetTileView extends View {
-
-//    private static final String TAG = "PlaceTileView";
 
     private static final int MAX_PREVIEW_SIZE = 256;
 
@@ -58,12 +58,20 @@ public class TargetTileView extends View {
     private boolean showName = true;
     private boolean showAddress = true;
 
+    private int paintedPhotoIndex = -1;
+    private String paintedTargetID = null;
+
     private Paint mPaint = new Paint();
     private Path mPath = new Path();
 
     private Target mTarget;
 
 
+    /**
+     * Creates a new target tile.
+     *
+     * @param context Context of the parent.
+     */
     public TargetTileView(Context context) {
         super(context);
 
@@ -76,10 +84,10 @@ public class TargetTileView extends View {
         photosString = "#";
         gainString = lossString = "";
         backgroundDrawable = null;
-        float textDimension = 24;
-        float titleTextDimension = 27;
-        float scoreTextDimension = 150;
-        int outlineWidth = 8;
+        final float textDimension = 24;
+        final float titleTextDimension = 27;
+        final float scoreTextDimension = 150;
+        final int outlineWidth = 8;
 
         /* Set up a default TextPaint object */
         mTextPaint = new TextPaint();
@@ -150,6 +158,8 @@ public class TargetTileView extends View {
                 && !((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
             backgroundDrawable.setBounds(0, 0, getWidth(), getHeight());
             backgroundDrawable.draw(canvas);
+            paintedTargetID = mTarget.getPlaceID();
+            paintedPhotoIndex = mTarget.getPhotoIndex();
             mTarget.setIsPhotoDrawn(true);
         }
 
@@ -334,7 +344,10 @@ public class TargetTileView extends View {
             anim.start();
         }
         if (!mTarget.isPhotoDrawn()) {
-            backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
+            if (!Objects.equals(paintedTargetID, mTarget.getPlaceID()) || paintedPhotoIndex != mTarget.getPhotoIndex()) {
+                this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
+                mTarget.setIsPhotoDrawn(false);
+            }
         }
         /* Score text needs to know the measurements of this view */
         if (mTarget.isStateInvalidated()) {
@@ -354,6 +367,9 @@ public class TargetTileView extends View {
         invalidate();
     }
 
+    /**
+     * Updates score information on the tile.
+     */
     public void updateScore() {
         gainString = mTarget.getDiscoveryGain() + "+" + mTarget.getSimilarityGain();
         lossString = mTarget.getRejectLoss() + "";
@@ -402,7 +418,10 @@ public class TargetTileView extends View {
             return;
         }
 
-        this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
+        if (!Objects.equals(paintedTargetID, mTarget.getPlaceID()) || paintedPhotoIndex != mTarget.getPhotoIndex()) {
+            this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
+            mTarget.setIsPhotoDrawn(false);
+        }
         this.nameString = target.getGField("name");
         this.addressString = target.getGField("formatted_address");
         this.photosString = target.getNumberOfPhotos() + "";
@@ -425,6 +444,9 @@ public class TargetTileView extends View {
         invalidate();
     }
 
+    /**
+     * NOTE: async task neni vhodny, nebot je pri stahovani cilu blokovan jinymi async-tasky...
+     */
     private BitmapDrawable getCroppedSelected(Photo photo) {
         if (photo == null) {
             return null;
