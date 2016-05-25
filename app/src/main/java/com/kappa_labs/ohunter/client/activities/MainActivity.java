@@ -143,13 +143,6 @@ public class MainActivity extends AppCompatActivity {
                 startLoginActivity();
             }
         });
-
-        /* Set the last used server address */
-        if (!Utils.initServer(SharedDataManager.getLastServer(this))) {
-            /* Wrong server address */
-//            logout();
-            updateInfo();
-        }
     }
 
     @Override
@@ -170,6 +163,13 @@ public class MainActivity extends AppCompatActivity {
         if (SharedDataManager.getPlayer(this) == null) {
             startLoginActivity();
             return;
+        }
+
+        /* Set the last used server address */
+        if (!Utils.initServer(SharedDataManager.getLastServer(this))) {
+            /* Wrong server address */
+//            logout();
+            updateInfo();
         }
 
         /* Stop downloading targets */

@@ -5,7 +5,6 @@ android {
         incremental false
         maxProcessCount = 4;
         javaMaxHeapSize = 4g;
-        javaMaxHeapSize "2048M"
         preDexLibraries = false
     }
 
@@ -37,6 +36,7 @@ dependencies {
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
-    compile 'com.google.android.gms:play-services:9.0.0'
+    compile 'com.google.android.gms:play-services-maps:9.0.0'
+    compile 'com.google.android.gms:play-services-location:9.0.0'
     compile 'com.android.support:support-v4:23.4.0'
 }
