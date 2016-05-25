@@ -343,11 +343,10 @@ public class TargetTileView extends View {
             });
             anim.start();
         }
-        if (!mTarget.isPhotoDrawn()) {
-            if (!Objects.equals(paintedTargetID, mTarget.getPlaceID()) || paintedPhotoIndex != mTarget.getPhotoIndex()) {
-                this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
-                mTarget.setIsPhotoDrawn(false);
-            }
+        if (backgroundDrawable == null || ((BitmapDrawable) backgroundDrawable).getBitmap() == null
+                || ((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
+            this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
+            mTarget.setIsPhotoDrawn(false);
         }
         /* Score text needs to know the measurements of this view */
         if (mTarget.isStateInvalidated()) {
@@ -418,7 +417,9 @@ public class TargetTileView extends View {
             return;
         }
 
-        if (!Objects.equals(paintedTargetID, mTarget.getPlaceID()) || paintedPhotoIndex != mTarget.getPhotoIndex()) {
+        if (!Objects.equals(paintedTargetID, mTarget.getPlaceID()) || paintedPhotoIndex != mTarget.getPhotoIndex()
+                || backgroundDrawable == null || ((BitmapDrawable) backgroundDrawable).getBitmap() == null
+                || ((BitmapDrawable) backgroundDrawable).getBitmap().isRecycled()) {
             this.backgroundDrawable = getCroppedSelected(mTarget.getPhoto(mTarget.getPhotoIndex()));
             mTarget.setIsPhotoDrawn(false);
         }
@@ -445,7 +446,8 @@ public class TargetTileView extends View {
     }
 
     /**
-     * NOTE: async task neni vhodny, nebot je pri stahovani cilu blokovan jinymi async-tasky...
+     * NOTE: async task neni pro pripraveni obrazku vhodny, nebot je pri stahovani cilu
+     * blokovan jinymi async-tasky...
      */
     private BitmapDrawable getCroppedSelected(Photo photo) {
         if (photo == null) {

@@ -376,7 +376,7 @@ public class SharedDataManager {
      * @return The preferred number of columns on offer page from user settings in landscape orientation.
      */
     public static int getOfferColumnsLandscape(Context context) {
-        return Integer.parseInt(getSharedPreferences(context).getString("offer_columns_landscape", "2"));
+        return Integer.parseInt(getSharedPreferences(context).getString("offer_columns_landscape", "3"));
     }
 
     /**

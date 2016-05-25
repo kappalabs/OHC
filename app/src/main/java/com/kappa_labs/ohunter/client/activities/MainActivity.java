@@ -51,6 +51,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /* Fix for bug, when the last activity after return from background is not returned to */
+        if (!isTaskRoot()) {
+            Intent intent = getIntent();
+            String action = intent.getAction();
+            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && action != null && action.equals(Intent.ACTION_MAIN)) {
+                finish();
+                return;
+            }
+        }
+
         playerTextView = (TextView) findViewById(R.id.textView_player);
         serverTextView = (TextView) findViewById(R.id.textView_server);
         timeTextView = (TextView) findViewById(R.id.textView_time);

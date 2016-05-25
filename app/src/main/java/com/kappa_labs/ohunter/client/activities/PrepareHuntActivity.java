@@ -140,6 +140,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
                     /* Start the login screen activity */
                     Intent i = new Intent();
                     i.setClass(PrepareHuntActivity.this, LoginActivity.class);
+                    finish();
                     startActivity(i);
 
                     return;
@@ -244,7 +245,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
             Collections.addAll(places, response.places);
         }
         if (request instanceof RadarSearchRequest) {
-            Log.d(TAG, "RadarSearch vratil " + places.size() + " mist");
+            Log.d(TAG, "RadarSearch returned " + places.size() + " place IDs");
             List<String> radarPlaceIDs = new ArrayList<>();
             for (Place place : places) {
                 radarPlaceIDs.add(place.getID());
@@ -254,6 +255,7 @@ public class PrepareHuntActivity extends AppCompatActivity implements ResponseTa
             /* Start the main game activity with these groups of places prepared */
             Intent i = new Intent();
             i.setClass(PrepareHuntActivity.this, HuntActivity.class);
+            finish();
             startActivity(i);
         }
     }

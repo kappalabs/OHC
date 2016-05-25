@@ -51,6 +51,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
     private static TileAdapter mAdapter;
 
     private static ProgressBar fetchingProgressBar;
+    private static GridView offerGridView;
 
     private static int selectedIndex = -1;
     private static boolean loadingTargets;
@@ -100,7 +101,7 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         View view = inflater.inflate(R.layout.fragment_hunt_offer, container, false);
 
         fetchingProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_fetching);
-        GridView offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
+        offerGridView = (GridView) view.findViewById(R.id.gridView_offer);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
             offerGridView.setNumColumns(SharedDataManager.getOfferColumnsPortrait(getContext()));
         } else {
@@ -302,7 +303,6 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
         if (!SharedDataManager.isHuntReady(DummyApplication.getContext())) {
             manager.prepareTargets();
         } else {
-            System.out.println("loading targets");
             Target[] loaded = SharedDataManager.loadTargets(DummyApplication.getContext());
             if (loaded != null) {
                 for (Target target : loaded) {
@@ -613,6 +613,11 @@ public class HuntOfferFragment extends Fragment implements PageChangeAdapter {
             fetchingProgressBar.clearAnimation();
             fetchingProgressBar.setVisibility(View.GONE);
             fetchingProgressBar = null;
+        }
+        if (offerGridView != null) {
+            offerGridView.setOnItemClickListener(null);
+            offerGridView.setOnItemLongClickListener(null);
+            offerGridView = null;
         }
         mAdapter.disconnect();
         mListener = null;

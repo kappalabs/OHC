@@ -68,7 +68,7 @@ public class Utils {
      * @param address The server IP:port to be used.
      */
     public static boolean initServer(String address) {
-        System.out.println("Initializing server with "+address);
+        Log.d(TAG, "Initializing server with " + address);
         String[] parts = address.split(":");
         if (parts.length != 2) {
             mAddress = DEFAULT_ADDRESS;
